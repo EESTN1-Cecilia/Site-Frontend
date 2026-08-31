@@ -1,6 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
+import { ThemeToggle } from "./ThemeToggle";
+
+
 const NAV = [
   { to: "/", label: "Inicio" },
   { to: "/novedades", label: "Novedades" },
