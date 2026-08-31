@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as NovedadesRouteImport } from './routes/novedades'
+import { Route as PreviasRouteImport } from './routes/previas'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +23,40 @@ const NovedadesRoute = NovedadesRouteImport.update({
   path: '/novedades',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PreviasRoute = PreviasRouteImport.update({
+  id: '/previas',
+  path: '/previas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/novedades': typeof NovedadesRoute
+  '/previas': typeof PreviasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/novedades': typeof NovedadesRoute
+  '/previas': typeof PreviasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/novedades': typeof NovedadesRoute
+  '/previas': typeof PreviasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/novedades'
+  fullPaths: '/' | '/novedades' | '/previas'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/novedades'
-  id: '__root__' | '/' | '/novedades'
+  to: '/' | '/novedades' | '/previas'
+  id: '__root__' | '/' | '/novedades' | '/previas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   NovedadesRoute: typeof NovedadesRoute
+  PreviasRoute: typeof PreviasRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NovedadesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/previas': {
+      id: '/previas'
+      path: '/previas'
+      fullPath: '/previas'
+      preLoaderRoute: typeof PreviasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   NovedadesRoute: NovedadesRoute,
+  PreviasRoute: PreviasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
