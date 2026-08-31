@@ -22,7 +22,7 @@ export const previasSections: Section[] = [
     "items": [
       {
         "type": "text",
-        "text": "Ingresá al siguiente link y accedé al formulario de inscripción para materias pendientes de acreditació n completa carrera https://forms.gle/euECqFMK7wDeovMq6",
+        "text": "Formulario de inscripción a materias pendientes y completa carrera",
         "href": "https://forms.gle/euECqFMK7wDeovMq6"
       }
     ]
