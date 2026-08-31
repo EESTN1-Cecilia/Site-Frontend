@@ -19,23 +19,33 @@ function extOf(name: string) {
 
 export function DocLink({ item }: { item: DocItem }) {
   const ext = extOf(item.name);
-  const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+    <a
+      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-soft hover:shadow-[var(--shadow-lift)]"
+      href={`https://drive.google.com/file/d/${item.id}/view`}
+      target="_blank"
+      rel="noopener noreferrer"
     >
-      <a
-        className="doc-link group"
-        href={`https://drive.google.com/file/d/${item.id}/view`}
-        target="_blank"
-        rel="noopener noreferrer"
-        onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
-      >
+      {/* Portada del documento */}
+      {failed ? (
+        <div className="flex h-36 items-center justify-center bg-accent">
+          <span className="text-2xl font-bold tracking-widest text-accent-foreground/60">
+            {ext}
+          </span>
+        </div>
+      ) : (
+        <img
+          src={`https://drive.google.com/thumbnail?id=${item.id}&sz=w480`}
+          alt={`Portada de ${item.label}`}
+          loading="lazy"
+          className="h-36 w-full bg-muted object-cover object-top"
+          onError={() => setFailed(true)}
+        />
+      )}
+
+      <div className="flex items-center gap-3 border-t border-border p-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent text-[0.65rem] font-bold tracking-wide text-accent-foreground">
           {ext}
         </span>
@@ -55,28 +65,7 @@ export function DocLink({ item }: { item: DocItem }) {
         >
           <path d="M7 17 17 7M9 7h8v8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-      </a>
-
-      {open ? (
-        <div className="doc-preview" role="tooltip">
-          {failed ? (
-            <p className="p-4 text-xs text-muted-foreground">
-              Vista previa no disponible. Hacé clic para abrir el documento.
-            </p>
-          ) : (
-            <img
-              src={`https://drive.google.com/thumbnail?id=${item.id}&sz=w480`}
-              alt={`Vista previa de ${item.label}`}
-              loading="lazy"
-              className="h-44 w-full bg-muted object-cover object-top"
-              onError={() => setFailed(true)}
-            />
-          )}
-          <p className="truncate border-t border-border px-3 py-2 text-xs text-muted-foreground">
-            {item.name}
-          </p>
-        </div>
-      ) : null}
-    </div>
+      </div>
+    </a>
   );
 }
