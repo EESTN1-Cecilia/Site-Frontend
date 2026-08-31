@@ -37,7 +37,7 @@ export function DocLink({ item }: { item: DocItem }) {
         </div>
       ) : (
         <img
-          src={`https://drive.google.com/thumbnail?id=${item.id}&sz=w480`}
+          src={`/api/public/thumb?id=${item.id}`}
           alt={`Portada de ${item.label}`}
           loading="lazy"
           className="h-36 w-full bg-muted object-cover object-top"
