@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EEST N°1 Monte Grande — Novedades y Previas</title>
+    <meta
+      name="description"
+      content="Portal de la Escuela de Educación Secundaria Técnica N°1 de Monte Grande: novedades, cuadernillos e información de intensificación y materias previas."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="EEST N°1 Monte Grande — Novedades y Previas" />
+    <meta property="og:description" content="Novedades, cuadernillos e información de intensificación y materias previas de la Técnica N°1 de Monte Grande." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches))
+          document.documentElement.classList.add("dark");
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="/">
+          <span class="brand-badge">T1</span>
+          <span>
+            <span class="brand-title">EEST N°1</span>
+            <span class="brand-sub">Monte Grande · Esteban Echeverría</span>
+          </span>
+        </a>
+        <nav class="nav">
+          <a href="/">Inicio</a>
+          <a href="/novedades.html">Novedades</a>
+          <a href="/previas.html">Intensificación / Previas</a>
+          <button class="theme-toggle" type="button" data-theme-toggle></button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="hero">
+      <div class="wrap">
+        <span class="rule"></span>
+        <h1>Escuela Técnica N°1</h1>
+        <p>
+          Monte Grande, Esteban Echeverría. Accedé de forma rápida a la información académica y a
+          los documentos de la escuela.
+        </p>
+      </div>
+    </div>
+
+    <main class="wrap">
+      <div class="home-grid">
+        <a class="card home-card" href="/novedades.html">
+          <span class="rule"></span>
+          <h2>Novedades</h2>
+          <p>Actividades para nuevos ingresantes, cuadernillos, Conectar Igualdad y comunicados.</p>
+          <span class="more">Ver sección →</span>
+        </a>
+        <a class="card home-card" href="/previas.html">
+          <span class="rule"></span>
+          <h2>Intensificación y Previas</h2>
+          <p>Fechas de mesas, formularios de inscripción y trabajos por año y especialidad.</p>
+          <span class="more">Ver sección →</span>
+        </a>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        Escuela de Educación Secundaria Técnica N°1 · Monte Grande, Esteban Echeverría. Todos los
+        documentos se abren en Google Drive.
+      </div>
+    </footer>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
