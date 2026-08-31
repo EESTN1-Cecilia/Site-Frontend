@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Intensificación y Previas — EEST N°1 Monte Grande</title>
+    <meta
+      name="description"
+      content="Fechas de mesas de previas, formularios de inscripción y trabajos de intensificación por año y especialidad de la Técnica N°1 de Monte Grande."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Intensificación y Previas — EEST N°1 Monte Grande" />
+    <meta property="og:description" content="Fechas de mesas, formularios de inscripción y trabajos de intensificación por año y especialidad." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches))
+          document.documentElement.classList.add("dark");
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="/">
+          <span class="brand-badge">T1</span>
+          <span>
+            <span class="brand-title">EEST N°1</span>
+            <span class="brand-sub">Monte Grande · Esteban Echeverría</span>
+          </span>
+        </a>
+        <nav class="nav">
+          <a href="/">Inicio</a>
+          <a href="/novedades.html">Novedades</a>
+          <a href="/previas.html">Intensificación / Previas</a>
+          <button class="theme-toggle" type="button" data-theme-toggle></button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="hero">
+      <div class="wrap">
+        <span class="rule"></span>
+        <h1>Intensificación y Previas</h1>
+        <p>
+          Fechas de mesas, formularios de inscripción y trabajos por año y especialidad. Cada
+          documento se abre directamente en Google Drive.
+        </p>
+      </div>
+    </div>
+
+    <main class="wrap" data-sections="previas"></main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        Escuela de Educación Secundaria Técnica N°1 · Monte Grande, Esteban Echeverría. Todos los
+        documentos se abren en Google Drive.
+      </div>
+    </footer>
+
+    <script src="/data.js"></script>
+    <script src="/app.js" defer></script>
+  </body>
+</html>
