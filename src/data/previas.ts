@@ -2,7 +2,7 @@
 export type DocItem = { type: "file"; id: string; name: string; label: string };
 export type TextItem = { type: "text"; text: string; href?: string };
 export type Item = DocItem | TextItem;
-export type Section = { title: string; items: Item[] };
+export type Section = { title: string; subtitle?: string; items: Item[] };
 
 export const previasSections: Section[] = [
   {
@@ -14,11 +14,8 @@ export const previasSections: Section[] = [
         "name": "PREVIAS AGOSTO 2026.xlsx",
         "label": "PREVIAS AGOSTO 2026.xlsx"
       }
-    ]
-  },
-  {
-    "title": "Fechas ,horarios y profesores designados",
-    "items": []
+    ],
+    "subtitle": "Fechas ,horarios y profesores designados"
   },
   {
     "title": "Formulario de inscripción Agosto 2026",
@@ -62,11 +59,8 @@ export const previasSections: Section[] = [
         "name": "PREVIAS febrero 2025.xlsx",
         "label": "PREVIAS febrero 2025.xlsx"
       }
-    ]
-  },
-  {
-    "title": "Fechas ,horarios y profesores designados para rendir materias previas.",
-    "items": []
+    ],
+    "subtitle": "Fechas ,horarios y profesores designados para rendir materias previas."
   },
   {
     "title": "EQUIVALENCIAS DE TALLER",
@@ -844,10 +838,7 @@ export const previasSections: Section[] = [
         "type": "text",
         "text": "FORMULARIO DE INSCRIPCIÓN"
       }
-    ]
-  },
-  {
-    "title": "FECHAS PARA COMPLETA CARRERA MARZO 2026",
-    "items": []
+    ],
+    "subtitle": "FECHAS PARA COMPLETA CARRERA MARZO 2026"
   }
 ] as Section[];
