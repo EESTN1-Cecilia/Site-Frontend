@@ -1,6 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
+import { ThemeToggle } from "./ThemeToggle";
+
+
 const NAV = [
   { to: "/", label: "Inicio" },
   { to: "/novedades", label: "Novedades" },
@@ -32,21 +35,25 @@ export function SiteLayout({
             </span>
           </Link>
 
-          <nav className="flex flex-wrap gap-1.5">
-            {NAV.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="rounded-full px-3.5 py-2 text-sm font-medium text-primary-foreground/85 transition-colors hover:bg-primary-foreground/15"
-                activeOptions={{ exact: item.to === "/" }}
-                activeProps={{ className: "bg-primary-foreground/20 text-primary-foreground" }}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <nav className="flex flex-wrap gap-1.5">
+              {NAV.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="rounded-full px-3.5 py-2 text-sm font-medium text-primary-foreground/85 transition-colors hover:bg-primary-foreground/15"
+                  activeOptions={{ exact: item.to === "/" }}
+                  activeProps={{ className: "bg-primary-foreground/20 text-primary-foreground" }}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
+
 
       <div className="border-b border-border bg-card">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
