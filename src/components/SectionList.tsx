@@ -1,7 +1,7 @@
 import type { Section } from "@/data/previas";
 import { DocLink } from "./DocLink";
 
-function TextBlock({ text, href }: { text: string; href?: string }) {
+function TextBlock({ text, href }: { text: string; href?: string | undefined }) {
   if (href) {
     return (
       <a
