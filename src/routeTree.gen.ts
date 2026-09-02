@@ -10,11 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as NovedadesRouteImport } from './routes/novedades'
+import { Route as PreviasRouteImport } from './routes/previas'
 import { Route as ApiPublicThumbRouteImport } from './routes/api/public/thumb'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NovedadesRoute = NovedadesRouteImport.update({
+  id: '/novedades',
+  path: '/novedades',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreviasRoute = PreviasRouteImport.update({
+  id: '/previas',
+  path: '/previas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicThumbRoute = ApiPublicThumbRouteImport.update({
@@ -25,27 +37,35 @@ const ApiPublicThumbRoute = ApiPublicThumbRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/novedades': typeof NovedadesRoute
+  '/previas': typeof PreviasRoute
   '/api/public/thumb': typeof ApiPublicThumbRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/novedades': typeof NovedadesRoute
+  '/previas': typeof PreviasRoute
   '/api/public/thumb': typeof ApiPublicThumbRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/novedades': typeof NovedadesRoute
+  '/previas': typeof PreviasRoute
   '/api/public/thumb': typeof ApiPublicThumbRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/thumb'
+  fullPaths: '/' | '/novedades' | '/previas' | '/api/public/thumb'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/thumb'
-  id: '__root__' | '/' | '/api/public/thumb'
+  to: '/' | '/novedades' | '/previas' | '/api/public/thumb'
+  id: '__root__' | '/' | '/novedades' | '/previas' | '/api/public/thumb'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  NovedadesRoute: typeof NovedadesRoute
+  PreviasRoute: typeof PreviasRoute
   ApiPublicThumbRoute: typeof ApiPublicThumbRoute
 }
 
@@ -56,6 +76,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/novedades': {
+      id: '/novedades'
+      path: '/novedades'
+      fullPath: '/novedades'
+      preLoaderRoute: typeof NovedadesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/previas': {
+      id: '/previas'
+      path: '/previas'
+      fullPath: '/previas'
+      preLoaderRoute: typeof PreviasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/thumb': {
@@ -70,6 +104,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  NovedadesRoute: NovedadesRoute,
+  PreviasRoute: PreviasRoute,
   ApiPublicThumbRoute: ApiPublicThumbRoute,
 }
 export const routeTree = rootRouteImport
