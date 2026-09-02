@@ -68,9 +68,40 @@
     return a;
   }
 
+  function slugOf(title, index) {
+    var s = String(title)
+      .toLowerCase()
+      .normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return "sec-" + (s || index);
+  }
+
+  function buildSectionNav(sections, mount) {
+    var nav = el("div", "section-nav");
+    var select = el("select");
+    select.setAttribute("aria-label", "Ir a una sección");
+    var first = el("option", null, "Elegí una sección…");
+    first.value = "";
+    select.appendChild(first);
+    sections.forEach(function (section, i) {
+      var opt = el("option", null, section.title);
+      opt.value = slugOf(section.title, i);
+      select.appendChild(opt);
+    });
+    select.addEventListener("change", function () {
+      var target = document.getElementById(select.value);
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    nav.appendChild(select);
+    mount.appendChild(nav);
+  }
+
   function renderSections(sections, mount) {
-    sections.forEach(function (section) {
+    if (sections.length > 2) buildSectionNav(sections, mount);
+    sections.forEach(function (section, i) {
       var wrap = el("section", "card section");
+      wrap.id = slugOf(section.title, i);
       var head = document.createElement("header");
       head.appendChild(el("h2", null, section.title));
       if (section.subtitle) head.appendChild(el("p", null, section.subtitle));
