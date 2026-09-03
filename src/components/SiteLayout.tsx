@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
+import logo from "@/assets/logo.png";
+import escuelaBanner from "@/assets/escuela.PNG";
 import { ThemeToggle } from "./ThemeToggle";
 
 type Props = {
@@ -15,7 +17,9 @@ export function SiteLayout({ title, intro, children }: Props) {
       <header className="site-header">
         <div className="wrap header-inner">
           <Link className="brand" to="/">
-            <span className="brand-badge">T1</span>
+            <span className="brand-badge">
+              <img className="brand-logo" src={logo} alt="Logo EEST N°1" />
+            </span>
             <span>
               <span className="brand-title">EEST N°1</span>
               <span className="brand-sub">Monte Grande · Esteban Echeverría</span>
@@ -35,6 +39,12 @@ export function SiteLayout({ title, intro, children }: Props) {
           </nav>
         </div>
       </header>
+
+      <div
+        className="site-banner"
+        style={{ backgroundImage: `url(${escuelaBanner})` }}
+        aria-hidden="true"
+      />
 
       <div className="hero">
         <div className="wrap">

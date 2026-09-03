@@ -101,6 +101,13 @@ a {
   background: rgba(255, 255, 255, 0.15);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
   font-weight: 700;
+  overflow: hidden;
+}
+
+.brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .brand-title {
@@ -163,6 +170,12 @@ a {
 }
 
 /* Hero */
+.site-banner {
+  height: clamp(12rem, 30vh, 20rem);
+  background-size: cover;
+  background-position: center;
+}
+
 .hero {
   background: var(--card);
   border-bottom: 1px solid var(--border);
