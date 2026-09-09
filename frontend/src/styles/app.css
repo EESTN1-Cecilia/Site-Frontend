@@ -131,6 +131,10 @@ img {
   color: var(--bordo-oscuro);
 }
 
+.nav__user {
+  color: var(--rojo-institucional);
+}
+
 .cta {
   display: flex;
   align-items: center;
@@ -737,6 +741,98 @@ img {
 
 .volver-arriba:hover {
   background: var(--rojo-institucional);
+}
+
+/* ---------- Modales de autenticación y carga ---------- */
+.modal__fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(44, 10, 10, 0.58);
+}
+
+.modal {
+  position: relative;
+  width: min(100%, 440px);
+  padding: clamp(26px, 5vw, 42px);
+  border-radius: 24px;
+  background: var(--blanco);
+  box-shadow: 0 20px 70px rgba(44, 10, 10, 0.25);
+}
+
+.modal__cerrar {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  color: var(--gris-medio);
+}
+
+.modal__titulo {
+  color: var(--bordo-oscuro);
+  font-size: clamp(28px, 5vw, 38px);
+  font-weight: 500;
+}
+
+.modal__texto {
+  margin-top: 10px;
+  color: var(--gris-oscuro);
+  line-height: 1.5;
+}
+
+.modal__form {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.modal__form label {
+  display: grid;
+  gap: 7px;
+  color: var(--bordo-oscuro);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.modal__form input,
+.modal__form select {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid var(--gris-claro);
+  border-radius: 10px;
+  background: var(--blanco);
+  color: var(--gris-oscuro);
+  font: inherit;
+}
+
+.modal__form input:focus,
+.modal__form select:focus {
+  outline: 2px solid var(--rojo-suave);
+  outline-offset: 1px;
+}
+
+.modal__form .cta {
+  justify-content: center;
+  width: 100%;
+}
+
+.modal__form .cta:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.form__error {
+  color: #a31616;
+  font-size: 14px;
+}
+
+.form__message {
+  color: var(--rojo-institucional);
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 /* ---------- Tablet: el nav completo ya no entra ---------- */

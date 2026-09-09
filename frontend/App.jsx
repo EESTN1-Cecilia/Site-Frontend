@@ -2,6 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@iconify/react";
 import ProposalCard from "./src/components/ProposalCard.jsx";
 import {
+  cerrarSesion,
+  iniciarSesion,
+  obtenerUsuario,
+  subirPdf,
+} from "./src/services/api.js";
+import {
   courses,
   facade,
   facts,
@@ -17,6 +23,26 @@ function App() {
   const sections = useRef({});
   const [showTop, setShowTop] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [usuario, setUsuario] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem("site_token"));
+  const [modal, setModal] = useState(null);
+  const [authError, setAuthError] = useState("");
+  const [cargando, setCargando] = useState(false);
+  const [archivo, setArchivo] = useState(null);
+  const [destino, setDestino] = useState("");
+  const [uploadMessage, setUploadMessage] = useState("");
+
+  useEffect(() => {
+    if (!token) return;
+
+    obtenerUsuario(token)
+      .then(({ usuario: usuarioActual }) => setUsuario(usuarioActual))
+      .catch(() => {
+        localStorage.removeItem("site_token");
+        setToken(null);
+        setUsuario(null);
+      });
+  }, [token]);
 
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 420);
@@ -31,6 +57,66 @@ function App() {
       behavior: "smooth",
       block: "start",
     });
+  };
+
+  const abrirLogin = () => {
+    setAuthError("");
+    setModal("login");
+  };
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    setCargando(true);
+    setAuthError("");
+
+    const formData = new FormData(event.currentTarget);
+    try {
+      const respuesta = await iniciarSesion(
+        formData.get("username"),
+        formData.get("password"),
+      );
+      localStorage.setItem("site_token", respuesta.token);
+      setToken(respuesta.token);
+      setUsuario(respuesta.usuario);
+      setModal(null);
+    } catch (error) {
+      setAuthError(error.message);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (token) {
+      try {
+        await cerrarSesion(token);
+      } catch (error) {
+        console.warn("No se pudo notificar el cierre de sesión:", error.message);
+      }
+    }
+    localStorage.removeItem("site_token");
+    setToken(null);
+    setUsuario(null);
+    setModal(null);
+  };
+
+  const handleUpload = async (event) => {
+    event.preventDefault();
+    if (!archivo) return;
+
+    const form = event.currentTarget;
+    setCargando(true);
+    setUploadMessage("");
+    try {
+      const respuesta = await subirPdf(token, archivo, destino);
+      setUploadMessage(`Archivo subido correctamente: ${respuesta.nombreArchivo}`);
+      setArchivo(null);
+      form.reset();
+    } catch (error) {
+      setUploadMessage(error.message);
+    } finally {
+      setCargando(false);
+    }
   };
 
   const enlaces = (
@@ -50,6 +136,22 @@ function App() {
           aria-hidden="true"
         />
       </button>
+      {usuario ? (
+        <>
+          <button className="nav__link" onClick={() => setModal("upload")}>
+            <Icon icon="ph:upload-simple" width={16} height={16} aria-hidden="true" />
+            Subir PDF
+          </button>
+          <button className="nav__link nav__user" onClick={handleLogout}>
+            {usuario.username} · Salir
+          </button>
+        </>
+      ) : (
+        <button className="nav__link" onClick={abrirLogin}>
+          <Icon icon="ph:sign-in" width={16} height={16} aria-hidden="true" />
+          Ingresar
+        </button>
+      )}
     </>
   );
 
@@ -286,6 +388,72 @@ function App() {
         >
           <Icon icon="ph:arrow-up" width={20} height={20} aria-hidden="true" />
         </button>
+      )}
+
+      {modal && (
+        <div className="modal__fondo" role="presentation" onClick={() => setModal(null)}>
+          <section
+            className="modal"
+            role="dialog"
+            aria-modal="true"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button className="modal__cerrar" onClick={() => setModal(null)} aria-label="Cerrar">
+              <Icon icon="ph:x" width={22} height={22} aria-hidden="true" />
+            </button>
+            {modal === "login" ? (
+              <>
+                <p className="chip">ACCESO INSTITUCIONAL</p>
+                <h2 className="modal__titulo">Ingresar</h2>
+                <p className="modal__texto">Usá tu cuenta institucional para subir materiales.</p>
+                <form className="modal__form" onSubmit={handleLogin}>
+                  <label>
+                    Usuario
+                    <input name="username" required autoComplete="username" />
+                  </label>
+                  <label>
+                    Contraseña
+                    <input name="password" type="password" required autoComplete="current-password" />
+                  </label>
+                  {authError && <p className="form__error">{authError}</p>}
+                  <button className="cta" type="submit" disabled={cargando}>
+                    {cargando ? "Ingresando..." : "Ingresar"}
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                <p className="chip">MATERIALES</p>
+                <h2 className="modal__titulo">Subir un PDF</h2>
+                <p className="modal__texto">El backend validará el destino según tu rol.</p>
+                <form className="modal__form" onSubmit={handleUpload}>
+                  {usuario?.rol === "direccion" && (
+                    <label>
+                      Destino
+                      <select value={destino} onChange={(event) => setDestino(event.target.value)} required>
+                        <option value="">Seleccioná un destino</option>
+                        {usuario.destinos?.map((item) => <option key={item} value={item}>{item}</option>)}
+                      </select>
+                    </label>
+                  )}
+                  <label>
+                    Archivo PDF
+                    <input
+                      type="file"
+                      accept="application/pdf,.pdf"
+                      required
+                      onChange={(event) => setArchivo(event.target.files?.[0] || null)}
+                    />
+                  </label>
+                  {uploadMessage && <p className="form__message">{uploadMessage}</p>}
+                  <button className="cta" type="submit" disabled={cargando || !archivo}>
+                    {cargando ? "Subiendo..." : "Subir archivo"}
+                  </button>
+                </form>
+              </>
+            )}
+          </section>
+        </div>
       )}
     </>
   );
