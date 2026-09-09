@@ -1,70 +1,59 @@
-import { useState } from "react";
-import { Image, Pressable, Text, View } from "react-native";
+import { Icon } from "@iconify/react";
 
-export default function ProposalCard({
-  title,
-  text,
-  image,
-  course,
-  index,
-  styles,
-}) {
-  const [hovered, setHovered] = useState(false);
-  const [hoveredCourse, setHoveredCourse] = useState(null);
-  const [coursesHeight, setCoursesHeight] = useState(0);
-
+export default function ProposalCard({ title, text, image, course, index }) {
   return (
-    <Pressable
-      style={styles.card}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      accessibilityRole="button"
-      accessibilityLabel={`${title}, ver cursos`}
-    >
-      <Image
-        source={image}
-        style={[styles.cardImage, hovered && styles.cardImageHovered]}
-        resizeMode="cover"
-      />
-      <View style={styles.cardShade} />
-      <View
-        style={[
-          styles.cardContent,
-          hovered && { transform: [{ translateY: -(coursesHeight + 18) }] },
-        ]}
-      >
-        <Text style={styles.cardTitle}>{title}</Text>
-        <Text style={styles.cardText}>{text}</Text>
-      </View>
-      <View
-        style={[styles.cardCourses, hovered && styles.cardCoursesHovered]}
-        onLayout={(event) => setCoursesHeight(event.nativeEvent.layout.height)}
-      >
-        <Text style={styles.cardCoursesTitle}>{course.eyebrow}</Text>
-        <View style={styles.cardCourseList}>
+    <article className="card">
+      <div className="card__media">
+        <img className="card__img" src={image} alt={title} />
+        <span className="card__numero">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+      </div>
+      <p className="card__meta">
+        <span>{course.eyebrow}</span>
+        <span>·</span>
+        <span>{course.items.length} divisiones</span>
+      </p>
+      <h3 className="card__titulo">{title}</h3>
+      <p className="card__texto">{text}</p>
+      {/* <details> arranca cerrado en cada carga; no necesita estado */}
+      <details className="desplegable">
+        <summary className="desplegable__boton">
+          Ver divisiones
+          <Icon
+            className="desplegable__flecha"
+            icon="ph:caret-down"
+            width={16}
+            height={16}
+            aria-hidden="true"
+          />
+        </summary>
+        <div className="card__lista">
           {course.items.map((item) => {
             const [label, url] = Array.isArray(item) ? item : [item, null];
 
-            return (
-              <Pressable
-                style={[
-                  styles.cardCourse,
-                  hoveredCourse === label && styles.cardCourseHovered,
-                ]}
+            return url ? (
+              <a
+                className="division"
                 key={label}
-                accessibilityRole={url ? "link" : "text"}
-                onMouseEnter={() => setHoveredCourse(label)}
-                onMouseLeave={() => setHoveredCourse(null)}
-                onPress={() =>
-                  url && window.open(url, "_blank", "noopener,noreferrer")
-                }
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <Text style={styles.cardCourseText}>{label}</Text>
-              </Pressable>
+                {label}
+              </a>
+            ) : (
+              <span
+                className="division division--vacia"
+                key={label}
+                title="Sin materiales cargados"
+              >
+                {label}
+              </span>
             );
           })}
-        </View>
-      </View>
-    </Pressable>
+        </div>
+      </details>
+    </article>
   );
 }
