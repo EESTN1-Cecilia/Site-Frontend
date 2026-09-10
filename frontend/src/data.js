@@ -138,10 +138,11 @@ export const courses = [
 ];
 
 export const navItems = [
-  ["cursos", "Ver cursos", "ph:graduation-cap"],
-  ["evaluacion", "Evaluación de saberes", "ph:clipboard-text"],
-  ["previas", "Intensificación/Previas", "ph:arrows-clockwise"],
-  ["novedades", "Novedades", "ph:megaphone"],
+  ["/", "Inicio", "ph:house"],
+  ["/evaluacion", "Evaluación de saberes", "ph:clipboard-text"],
+  ["/previas", "Intensificación/Previas", "ph:arrows-clockwise"],
+  ["/novedades", "Novedades", "ph:megaphone"],
+  ["/panel", "Gestión", "ph:squares-four"],
 ];
 export const facts = [
   [

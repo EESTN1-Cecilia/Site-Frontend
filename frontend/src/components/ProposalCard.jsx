@@ -1,21 +1,33 @@
 import { Icon } from "@iconify/react";
+import { ir } from "../router.js";
 
-export default function ProposalCard({ title, text, image, course, index }) {
+export default function ProposalCard({ title, text, image, course, index, destino }) {
+  const abrir = () => ir(`/proyectos/${destino}`);
+
   return (
     <article className="card">
-      <div className="card__media">
+      <button className="card__media" onClick={abrir} aria-label={`Ver proyectos de ${title}`}>
         <img className="card__img" src={image} alt={title} />
         <span className="card__numero">
           {String(index + 1).padStart(2, "0")}
         </span>
-      </div>
+        <span className="card__lupa">
+          <Icon icon="ph:arrow-up-right" width={20} height={20} aria-hidden="true" />
+        </span>
+      </button>
       <p className="card__meta">
         <span>{course.eyebrow}</span>
         <span>·</span>
         <span>{course.items.length} divisiones</span>
       </p>
-      <h3 className="card__titulo">{title}</h3>
+      <button className="card__titulo card__titulo--enlace" onClick={abrir}>
+        {title}
+      </button>
       <p className="card__texto">{text}</p>
+      <button className="card__link" onClick={abrir}>
+        Ver proyectos y herramientas
+        <Icon icon="ph:arrow-right" width={15} height={15} aria-hidden="true" />
+      </button>
       {/* <details> arranca cerrado en cada carga; no necesita estado */}
       <details className="desplegable">
         <summary className="desplegable__boton">
