@@ -2,13 +2,17 @@ import { useState } from "react";
 import { Icon } from "@iconify/react";
 import Layout from "./Layout.jsx";
 import { etiquetasPermisos, rolesPermisos } from "../../panelData.js";
-import { quitarPublicacion, usePublicaciones } from "../../publicaciones.js";
+import {
+  aprobarPublicacion,
+  devolverPublicacion,
+  usePublicaciones,
+} from "../../publicaciones.js";
 import { ir } from "../../router.js";
 import VistaPrevia from "../../components/VistaPrevia.jsx";
 
 export default function Direccion({ ruta }) {
   const [permisos, setPermisos] = useState(rolesPermisos);
-  const pendientes = usePublicaciones();
+  const pendientes = usePublicaciones().filter((p) => p.estado === "pendiente");
   const [vista, setVista] = useState(null);
   const [aviso, setAviso] = useState("");
 
@@ -23,7 +27,7 @@ export default function Direccion({ ruta }) {
 
   const resolver = (id, accion) => {
     const publicacion = pendientes.find((p) => p.id === id);
-    quitarPublicacion(id);
+    (accion === "fue publicada" ? aprobarPublicacion : devolverPublicacion)(id);
     setVista(null);
     setAviso(`“${publicacion.titulo}” ${accion}.`);
   };

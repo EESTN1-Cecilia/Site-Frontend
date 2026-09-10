@@ -14,6 +14,12 @@ import { puedeEditar } from "../../sesion.js";
 
 const TOPE_IMAGEN = 1.5 * 1024 * 1024;
 
+const estados = {
+  pendiente: ["aviso", "Esperando aprobación"],
+  publicada: ["ok", "Publicada"],
+  devuelta: ["alerta", "Devuelta con cambios"],
+};
+
 const tipos = [
   ["titulo", "ph:text-h", "Título"],
   ["parrafo", "ph:text-align-left", "Texto"],
@@ -186,9 +192,15 @@ export default function Publicaciones({ ruta, usuario }) {
     setSueltoLibre(false);
   };
 
+  /* Lo que no guarda Dirección vuelve a esperar su aprobación. */
   const guardar = () => {
-    guardarPublicacion(borrador);
-    setAviso(`“${borrador.titulo}” guardada.`);
+    const estado = usuario?.rol === "direccion" ? borrador.estado : "pendiente";
+    guardarPublicacion({ ...borrador, estado });
+    setAviso(
+      estado === "pendiente"
+        ? `“${borrador.titulo}” guardada y enviada a Dirección para aprobar.`
+        : `“${borrador.titulo}” guardada.`,
+    );
     setAbiertaId(null);
     setBorrador(null);
   };
@@ -232,6 +244,11 @@ export default function Publicaciones({ ruta, usuario }) {
                   {pub.seccion} · {pub.autor} · {pub.fecha} ·{" "}
                   {pub.bloques.length} bloques
                 </p>
+                <span
+                  className={`etiqueta etiqueta--${(estados[pub.estado] || estados.pendiente)[0]}`}
+                >
+                  {(estados[pub.estado] || estados.pendiente)[1]}
+                </span>
               </div>
               <div className="acciones-fila">
                 <a
