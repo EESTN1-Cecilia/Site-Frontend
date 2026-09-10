@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import Encabezado from "../components/Encabezado.jsx";
+import VisorPdf from "../components/VisorPdf.jsx";
 import { criterios, periodos, valoraciones } from "../contenido.js";
 import { cuadernillos } from "../saberes.js";
 import { logo } from "../data.js";
@@ -46,11 +47,7 @@ function Visor({ doc, cerrar }) {
             </button>
           </div>
         </div>
-        <iframe
-          className="visor__pdf"
-          src={`${doc.pdf}#toolbar=1&navpanes=1`}
-          title={doc.titulo}
-        />
+        <VisorPdf url={doc.pdf} archivo={doc.archivo} />
       </div>
     </div>
   );

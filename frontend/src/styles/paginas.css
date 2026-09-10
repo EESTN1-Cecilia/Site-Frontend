@@ -1019,7 +1019,8 @@
 }
 
 /* Visor del cuadernillo */
-.visor {
+/* Doble clase para ganarle al ancho de .modal__caja (panel.css). */
+.modal__caja.visor {
   width: min(1080px, 100%);
   height: min(90vh, 900px);
 }
@@ -1057,11 +1058,63 @@
   }
 }
 
-.visor__pdf {
+/* El chip del año nunca se parte en varias líneas. */
+.modal__barra .chip {
+  white-space: nowrap;
+}
+
+/* Visor propio: las páginas del PDF dibujadas como canvas. */
+.visor-pdf {
+  position: relative;
   flex: 1;
-  width: 100%;
-  border: 0;
+  min-height: 0;
+  overflow: auto;
   background: #f2eceb;
+}
+
+.visor-pdf__paginas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.visor-pdf__pagina {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  background: var(--blanco);
+  box-shadow: 0 4px 14px rgba(31, 10, 10, 0.12);
+}
+
+.visor-pdf__estado {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: var(--gris-medio);
+  font-size: 15px;
+  text-align: center;
+}
+
+.visor-pdf__estado .acciones-fila {
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.visor-pdf__giro {
+  color: var(--rojo-institucional);
+  animation: visor-giro 900ms linear infinite;
+}
+
+@keyframes visor-giro {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ---------- Descargas ---------- */
