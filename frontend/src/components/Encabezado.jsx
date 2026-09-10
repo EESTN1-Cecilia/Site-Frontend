@@ -5,7 +5,8 @@ export default function Encabezado({ chip, titulo, destacado, texto, children })
       <div className="contenedor">
         <p className="chip chip--claro">{chip}</p>
         <h1 className="pagina__titulo">
-          {titulo} {destacado && <span>{destacado}</span>}
+          {titulo}{" "}
+          {destacado && <span className="pagina__destacado">{destacado}</span>}
         </h1>
         {texto && <p className="pagina__bajada">{texto}</p>}
         {children}

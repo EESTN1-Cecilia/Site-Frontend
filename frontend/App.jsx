@@ -26,7 +26,11 @@ import Grilla from "./src/pages/panel/Grilla.jsx";
 import Curricular from "./src/pages/panel/Curricular.jsx";
 import ProyectosPanel from "./src/pages/panel/ProyectosPanel.jsx";
 import Publicaciones from "./src/pages/panel/Publicaciones.jsx";
-import InicioPanel from "./src/pages/panel/InicioPanel.jsx";
+import Mesas from "./src/pages/panel/Mesas.jsx";
+import Programas from "./src/pages/panel/Programas.jsx";
+import Sitio from "./src/pages/panel/Sitio.jsx";
+import SitioPagina from "./src/pages/panel/SitioPagina.jsx";
+import { useAjustes } from "./src/ajustes.js";
 import Server from "./src/pages/panel/Server.jsx";
 import Direccion from "./src/pages/panel/Direccion.jsx";
 import "./src/styles/app.css";
@@ -52,7 +56,10 @@ const paginas = {
   "/panel/curricular": Curricular,
   "/panel/proyectos": ProyectosPanel,
   "/panel/publicaciones": Publicaciones,
-  "/panel/inicio": InicioPanel,
+  "/panel/mesas": Mesas,
+  "/panel/programas": Programas,
+  "/panel/sitio": Sitio,
+  "/panel/sitio/pagina": SitioPagina,
   "/panel/server": Server,
   "/panel/direccion": Direccion,
 };
@@ -72,7 +79,7 @@ function SinAcceso({ usuario }) {
       <div className="centrado">
         <p className="chip">SIN PERMISO</p>
         <h1 className="titulo">
-          Esta sección no está <span>habilitada</span> para tu perfil.
+          Esta sección no está <span className="titulo__destacado">habilitada</span> para tu perfil.
         </h1>
         <p className="texto">
           Ingresaste como {nombrePerfil(usuario.rol)}. Si necesitás acceso,
@@ -91,6 +98,7 @@ function SinAcceso({ usuario }) {
 function App() {
   const ruta = useRuta();
   const usuario = useSesion();
+  const { inscripcionAbierta } = useAjustes();
   const [showTop, setShowTop] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
 
@@ -147,10 +155,12 @@ function App() {
         </div>
       ) : (
         <>
-          <button className="nav__link" onClick={() => ir("/inscripcion")}>
-            <Icon icon="ph:user-plus" width={16} height={16} aria-hidden="true" />
-            Inscripción
-          </button>
+          {inscripcionAbierta && (
+            <button className="nav__link" onClick={() => ir("/inscripcion")}>
+              <Icon icon="ph:user-plus" width={16} height={16} aria-hidden="true" />
+              Inscripción
+            </button>
+          )}
           <button className="cta" onClick={() => ir("/login")}>
             Ingresar
             <Icon icon="ph:sign-in" width={15} height={15} aria-hidden="true" />
@@ -216,7 +226,11 @@ function App() {
             <nav>
               <p className="footer__heading">NAVEGACIÓN</p>
               {enlacesPie
-                .filter(([destino]) => destino !== "/panel" || verPanel(usuario))
+                .filter(
+                  ([destino]) =>
+                    (destino !== "/panel" || verPanel(usuario)) &&
+                    (destino !== "/inscripcion" || inscripcionAbierta),
+                )
                 .map(([destino, label]) => (
                 <button
                   className="footer__link"
@@ -244,14 +258,14 @@ function App() {
         </div>
       </footer>
 
-      {/* Cinta de vista previa. Los borradores avisan que no están publicados;
-          en proyectos el contenido ya está en el sitio. */}
+      {/* Cinta de vista previa. Sólo las publicaciones son borradores sin publicar;
+          proyectos y programas ya están en el sitio. */}
       {enVistaPrevia && (
         <p className="cinta-previa">
           <Icon icon="ph:eye" width={16} height={16} aria-hidden="true" />
-          {camino.startsWith("/proyectos")
-            ? "Vista previa · así lo ven los alumnos"
-            : "Vista previa · este contenido todavía no está publicado"}
+          {["/novedades", "/previas"].includes(camino)
+            ? "Vista previa · este contenido todavía no está publicado"
+            : "Vista previa · así lo ven los alumnos"}
         </p>
       )}
 

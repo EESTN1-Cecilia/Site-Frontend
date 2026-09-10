@@ -1,11 +1,17 @@
-/* Render de sólo lectura de los bloques de una publicación.
-   Lo usan la página pública y la vista previa. */
-export default function Bloques({ bloques = [] }) {
+import Texto, { Imagen } from "./Texto.jsx";
+
+const DUENO = "/panel/publicaciones";
+
+/* Cuerpo de una publicación. Cada bloque se puede editar en el lugar desde el
+   editor de páginas; los cambios vuelven a la publicación al publicar. */
+export default function Bloques({ pub, bloques = [] }) {
   return bloques.map((bloque) => {
+    const id = `pub:${pub.id}:bloque:${bloque.id}`;
+
     if (bloque.tipo === "titulo") {
       return (
         <h3 className="nota__subtitulo" key={bloque.id}>
-          {bloque.texto}
+          <Texto id={id} dueno={DUENO}>{bloque.texto}</Texto>
         </h3>
       );
     }
@@ -13,7 +19,7 @@ export default function Bloques({ bloques = [] }) {
     if (bloque.tipo === "destacado") {
       return (
         <p className="nota__destacado" key={bloque.id}>
-          {bloque.texto}
+          <Texto id={id} dueno={DUENO}>{bloque.texto}</Texto>
         </p>
       );
     }
@@ -21,7 +27,7 @@ export default function Bloques({ bloques = [] }) {
     if (bloque.tipo === "imagen") {
       return (
         <figure className="nota__figura" key={bloque.id}>
-          <img src={bloque.url} alt={bloque.epigrafe || ""} />
+          <Imagen id={id} dueno={DUENO} src={bloque.url} alt={bloque.epigrafe || ""} />
           {bloque.epigrafe && <figcaption>{bloque.epigrafe}</figcaption>}
         </figure>
       );
@@ -29,7 +35,7 @@ export default function Bloques({ bloques = [] }) {
 
     return (
       <p className="nota__texto" key={bloque.id}>
-        {bloque.texto}
+        <Texto id={id} dueno={DUENO}>{bloque.texto}</Texto>
       </p>
     );
   });

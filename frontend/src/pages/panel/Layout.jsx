@@ -12,20 +12,13 @@ export const menu = [
       ["/panel/calificaciones", "ph:exam", "Notas y boletines"],
     ],
   ],
-  [
-    "Contenido del sitio",
-    [
-      ["/panel/inicio", "ph:layout", "Portada"],
-      ["/panel/publicaciones", "ph:pencil-simple", "Publicaciones"],
-    ],
-  ],
+  ["Contenido del sitio", [["/panel/sitio", "ph:browsers", "Sitio público"]]],
   ["Preceptoría", [["/panel/asistencia", "ph:calendar-check", "Asistencia"]]],
   [
     "Jefatura de Área",
     [
       ["/panel/grilla", "ph:grid-four", "Espacios y horarios"],
       ["/panel/curricular", "ph:tree-structure", "Seguimiento curricular"],
-      ["/panel/proyectos", "ph:folders", "Proyectos publicados"],
     ],
   ],
   ["Server", [["/panel/server", "ph:desktop-tower", "Inventario y reservas"]]],
@@ -34,6 +27,20 @@ export const menu = [
     [["/panel/direccion", "ph:shield-check", "Permisos y publicación"]],
   ],
 ];
+
+/* Editores que se abren desde Sitio público: el menú sigue marcando ese
+   sector y arriba aparece el camino de vuelta. */
+const rutasSitio = [
+  "/panel/publicaciones",
+  "/panel/mesas",
+  "/panel/programas",
+  "/panel/proyectos",
+];
+
+const activo = (destino, ruta) =>
+  destino === ruta ||
+  (destino === "/panel/sitio" &&
+    (ruta.startsWith("/panel/sitio") || rutasSitio.includes(ruta)));
 
 export default function Layout({ ruta, chip, titulo, texto, acciones, children }) {
   const usuario = useSesion();
@@ -55,7 +62,7 @@ export default function Layout({ ruta, chip, titulo, texto, acciones, children }
             {items.map(([destino, icono, etiqueta]) => (
               <button
                 key={destino}
-                className={`panel__link ${ruta === destino ? "panel__link--activo" : ""}`}
+                className={`panel__link ${activo(destino, ruta) ? "panel__link--activo" : ""}`}
                 onClick={() => ir(destino)}
               >
                 <Icon icon={icono} width={18} height={18} aria-hidden="true" />
@@ -67,6 +74,12 @@ export default function Layout({ ruta, chip, titulo, texto, acciones, children }
       </aside>
 
       <main className="panel__main">
+        {rutasSitio.includes(ruta) && (
+          <button className="miga" onClick={() => ir("/panel/sitio")}>
+            <Icon icon="ph:arrow-left" width={15} height={15} aria-hidden="true" />
+            Sitio público
+          </button>
+        )}
         <div className="panel__encabezado">
           <div>
             <p className="chip">{chip}</p>

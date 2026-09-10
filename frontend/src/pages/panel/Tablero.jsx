@@ -20,7 +20,7 @@ const porEstado = alumnos
 const totalMaterias = Object.values(porEstado).reduce((a, b) => a + b, 0);
 
 const kpis = [
-  ["ph:students", "Alumnos activos", alumnos.length],
+  ["ph:student", "Alumnos activos", alumnos.length],
   [
     "ph:warning-circle",
     "Con inasistencias sobre el tope",
