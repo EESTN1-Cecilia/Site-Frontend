@@ -1,7 +1,3 @@
-import imagenCicloBasico from "./assets/images/ciclo-basico-taller.jpg";
-import imagenInformatica from "./assets/images/informatica-robotica.jpg";
-import imagenProgramacion from "./assets/images/programacion-proyectos.jpg";
-
 /* Contenido de las páginas públicas. */
 
 export const valoraciones = [
@@ -59,65 +55,6 @@ export const criterios = [
   ],
 ];
 
-/* Carpeta con los planes de trabajo de cada mesa. Reemplazar por la real. */
-export const driveMesas =
-  "https://drive.google.com/drive/folders/1ekod6AXga5ImRl3ZIbo16AT7GAJTbwfN?usp=sharing";
-
-export const mesas = [
-  ["Matemática", "1° y 2°", "2026-12-01", "09:00", "Aula 8", "Prof. S. Roldán"],
-  [
-    "Prácticas del Lenguaje",
-    "1° a 3°",
-    "2026-12-01",
-    "11:00",
-    "Aula 5",
-    "Prof. C. Nieves",
-  ],
-  [
-    "Fisicoquímica",
-    "2° y 3°",
-    "2026-12-02",
-    "09:00",
-    "Laboratorio 2",
-    "Prof. E. Paz",
-  ],
-  ["Inglés", "1° a 3°", "2026-12-02", "11:00", "Aula 8", "Prof. C. Nieves"],
-  [
-    "Sistemas Digitales",
-    "4°",
-    "2026-12-03",
-    "09:00",
-    "Laboratorio 1",
-    "Prof. M. Vega",
-  ],
-  ["Base de Datos", "5°", "2026-12-03", "11:00", "Aula 12", "Prof. Ramírez"],
-  [
-    "Análisis Matemático",
-    "5°",
-    "2026-12-04",
-    "09:00",
-    "Aula 12",
-    "Prof. S. Roldán",
-  ],
-  ["Redes", "6°", "2026-12-04", "11:00", "Laboratorio 2", "Prof. D. Suárez"],
-  [
-    "Organización y Métodos",
-    "7°",
-    "2026-12-05",
-    "09:00",
-    "Aula 5",
-    "Prof. H. Barreto",
-  ],
-  [
-    "Desarrollo de Software",
-    "7°",
-    "2026-12-05",
-    "11:00",
-    "Laboratorio 1",
-    "Prof. N. Quiroga",
-  ],
-];
-
 export const pasosPrevias = [
   [
     "Consultá tus materias pendientes",
@@ -135,63 +72,6 @@ export const pasosPrevias = [
     "Acreditación",
     "Si acreditás, la materia queda cerrada. Si no, continuás en el siguiente período.",
   ],
-];
-
-export const novedades = [
-  {
-    id: "n1",
-    imagen: imagenCicloBasico,
-    categoria: "Institucional",
-    fecha: "2026-09-08",
-    titulo: "Inscripción 2027: apertura de vacantes para 1° año",
-    resumen:
-      "Del 15 al 30 de septiembre se reciben las solicitudes de ingreso al ciclo básico. Cupos por orden de presentación de la documentación completa.",
-  },
-  {
-    id: "n2",
-    imagen: imagenInformatica,
-    categoria: "Académico",
-    fecha: "2026-09-05",
-    titulo: "Cronograma de mesas de intensificación de diciembre",
-    resumen:
-      "Ya está publicado el cronograma con materia, día, hora y aula para el ciclo básico y el superior.",
-  },
-  {
-    id: "n3",
-    imagen: imagenProgramacion,
-    categoria: "Proyectos",
-    fecha: "2026-08-29",
-    titulo: "Muestra anual de prácticas profesionalizantes",
-    resumen:
-      "Los 7° años de Informática y Programación presentan sus proyectos finales el 14 de noviembre en el SUM.",
-  },
-  {
-    id: "n4",
-    imagen: imagenInformatica,
-    categoria: "Proyectos",
-    fecha: "2026-08-18",
-    titulo: "El taller de robótica sumó equipamiento nuevo",
-    resumen:
-      "Gracias a una donación de material, el laboratorio incorporó kits de sensores y placas para los proyectos de 5° y 6°.",
-  },
-  {
-    id: "n5",
-    imagen: imagenCicloBasico,
-    categoria: "Comunidad",
-    fecha: "2026-08-04",
-    titulo: "Jornada de puertas abiertas para familias",
-    resumen:
-      "Recorrido por talleres y laboratorios, charla sobre las dos orientaciones técnicas y espacio de consultas.",
-  },
-  {
-    id: "n6",
-    imagen: imagenProgramacion,
-    categoria: "Académico",
-    fecha: "2026-07-21",
-    titulo: "Nuevo régimen de evaluación por saberes",
-    resumen:
-      "Explicamos cómo se leen las valoraciones TEA, TEP y TED en el boletín y qué implica cada una.",
-  },
 ];
 
 export const requisitos = [

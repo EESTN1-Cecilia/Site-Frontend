@@ -22,11 +22,11 @@
   color: var(--blanco);
   font-size: clamp(30px, 5.2vw, 58px);
   line-height: 1.12;
-  font-weight: 500;
+  font-weight: 700;
   max-width: 20ch;
 }
 
-.pagina__titulo span {
+.pagina__titulo .pagina__destacado {
   color: var(--rojo-claro);
 }
 
@@ -64,7 +64,7 @@
   padding: clamp(22px, 3vw, 30px);
   border-radius: 20px;
   border: 1px solid var(--gris-claro);
-  background: var(--blanco);
+  background: var(--tarjeta);
 }
 
 .valoracion__sigla {
@@ -93,7 +93,7 @@
   margin-top: 18px;
   color: var(--bordo-oscuro);
   font-size: 20px;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .valoracion__texto {
@@ -118,7 +118,7 @@
   gap: 16px;
   padding: clamp(20px, 2.6vw, 26px);
   border-radius: 18px;
-  background: var(--blanco);
+  background: var(--tarjeta);
   border: 1px solid var(--gris-claro);
 }
 
@@ -158,7 +158,7 @@
 .mini {
   padding: clamp(20px, 2.6vw, 26px);
   border-radius: 18px;
-  background: var(--blanco);
+  background: var(--tarjeta);
   border: 1px solid var(--gris-claro);
 }
 
@@ -202,7 +202,7 @@
 
 .aviso__titulo {
   font-size: clamp(19px, 2.4vw, 24px);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .aviso__texto {
@@ -356,6 +356,11 @@
   font-weight: 600;
 }
 
+.sin-link {
+  color: var(--gris-medio);
+  font-size: 13px;
+}
+
 .capitalizar::first-letter {
   text-transform: uppercase;
 }
@@ -375,7 +380,7 @@
   padding: clamp(22px, 3vw, 28px);
   border-radius: 20px;
   border: 1px solid var(--gris-claro);
-  background: var(--blanco);
+  background: var(--tarjeta);
   transition: border-color 200ms, transform 200ms;
 }
 
@@ -472,7 +477,7 @@
   color: var(--bordo-oscuro);
   font-size: 20px;
   line-height: 1.25;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .nota__titulo--grande {
@@ -547,7 +552,7 @@
   padding: clamp(22px, 3vw, 28px);
   border-radius: 20px;
   border: 1px solid var(--gris-claro);
-  background: var(--blanco);
+  background: var(--tarjeta);
   color: var(--rojo-institucional);
   text-align: left;
   transition: border-color 200ms, transform 200ms;
@@ -626,7 +631,7 @@
 .exito__titulo {
   color: var(--bordo-oscuro);
   font-size: 24px;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .exito__texto {
@@ -724,7 +729,7 @@
   padding: clamp(22px, 3.2vw, 34px);
   border-radius: 22px;
   border: 1px solid var(--gris-claro);
-  background: var(--blanco);
+  background: var(--tarjeta);
 }
 
 /* Resaltado del proyecto que se está previsualizando. */
@@ -755,7 +760,7 @@
   margin-top: 4px;
   color: var(--bordo-oscuro);
   font-size: clamp(24px, 3vw, 32px);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .proyecto__texto {
@@ -862,7 +867,7 @@
   overflow: hidden;
   border-radius: 20px;
   border: 1px solid var(--gris-claro);
-  background: var(--blanco);
+  background: var(--tarjeta);
   transition: border-color 220ms, transform 220ms;
 }
 
@@ -911,7 +916,7 @@
   aspect-ratio: 1 / 1;
   border-radius: 14px;
   overflow: hidden;
-  background: #f2eceb;
+  background: var(--blanco);
   cursor: pointer;
 }
 
@@ -968,7 +973,7 @@
   color: var(--bordo-oscuro);
   font-size: 18px;
   line-height: 1.3;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .cuadernillo__meta {
@@ -1019,7 +1024,8 @@
 }
 
 /* Visor del cuadernillo */
-.visor {
+/* Doble clase para ganarle al ancho de .modal__caja (panel.css). */
+.modal__caja.visor {
   width: min(1080px, 100%);
   height: min(90vh, 900px);
 }
@@ -1057,11 +1063,205 @@
   }
 }
 
-.visor__pdf {
+/* El chip del año nunca se parte en varias líneas. */
+.modal__barra .chip {
+  white-space: nowrap;
+}
+
+/* Visor propio: las páginas del PDF dibujadas como canvas. */
+.visor-pdf {
+  position: relative;
   flex: 1;
-  width: 100%;
-  border: 0;
+  min-height: 0;
+  overflow: auto;
   background: #f2eceb;
+}
+
+.visor-pdf__paginas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.visor-pdf__pagina {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  background: var(--blanco);
+  box-shadow: 0 4px 14px rgba(31, 10, 10, 0.12);
+}
+
+.visor-pdf__estado {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  color: var(--gris-medio);
+  font-size: 15px;
+  text-align: center;
+}
+
+.visor-pdf__estado .acciones-fila {
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.visor-pdf__giro {
+  color: var(--rojo-institucional);
+  animation: visor-giro 900ms linear infinite;
+}
+
+@keyframes visor-giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Programas de la Tec ---------- */
+.programas {
+  display: grid;
+  gap: clamp(16px, 2.2vw, 24px);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin-top: clamp(28px, 4vw, 42px);
+}
+
+.programa {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: clamp(22px, 3vw, 28px);
+  border-radius: 20px;
+  border: 1px solid var(--gris-claro);
+  background: var(--tarjeta);
+  transition: border-color 200ms, transform 200ms;
+}
+
+.programa:hover {
+  border-color: var(--rojo-suave);
+  transform: translateY(-2px);
+}
+
+.programa__logo {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--bordo-oscuro);
+  color: var(--blanco);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* El logo puede ser la inicial o una imagen. */
+.programa__logo {
+  overflow: hidden;
+}
+
+.programa__logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Sin imagen, la inicial ocupa todo el cuadro para que sea fácil de tocar. */
+.programa__logo > .imagen-vacia {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.programa__logo--boton {
+  border: 0;
+  cursor: pointer;
+}
+
+.programa__logo--boton:hover:not(:disabled) {
+  outline: 3px dashed var(--rojo-suave);
+  outline-offset: 2px;
+}
+
+.programa__nombre {
+  margin-top: 6px;
+  color: var(--bordo-oscuro);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.programa__texto {
+  color: var(--gris-oscuro);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.programa__autores {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--gris-medio);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.programa__autores svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.programa__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.programa__dominio {
+  color: var(--gris-medio);
+  font-size: 13px;
+}
+
+/* ---------- Inscripción cerrada ---------- */
+.cerrada {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: clamp(28px, 5vw, 48px);
+  border-radius: 22px;
+  border: 1px dashed var(--rojo-suave);
+  background: var(--tarjeta);
+  color: var(--rojo-institucional);
+  text-align: center;
+}
+
+.cerrada__titulo {
+  color: var(--bordo-oscuro);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.cerrada__texto {
+  max-width: 52ch;
+  color: var(--gris-oscuro);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Avisos publicados arriba del cronograma de Previas. */
+.avisos-publicados {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 /* ---------- Descargas ---------- */
@@ -1136,7 +1336,7 @@
 .faq {
   border-radius: 16px;
   border: 1px solid var(--gris-claro);
-  background: var(--blanco);
+  background: var(--tarjeta);
 }
 
 .faq__pregunta {
@@ -1255,7 +1455,7 @@
   color: var(--blanco);
   font-size: clamp(30px, 4vw, 46px);
   line-height: 1.1;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .login__marca-titulo span {
@@ -1310,7 +1510,7 @@
 .login__titulo {
   color: var(--bordo-oscuro);
   font-size: clamp(26px, 3.2vw, 34px);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .login__bajada {

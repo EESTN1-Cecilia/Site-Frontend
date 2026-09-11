@@ -32,7 +32,10 @@ export const accesos = {
   "/panel/curricular": ["direccion", "jefatura", "docente"],
   "/panel/proyectos": ["direccion", "jefatura"],
   "/panel/publicaciones": ["direccion", "secretaria", "jefatura"],
-  "/panel/inicio": ["direccion", "secretaria"],
+  "/panel/mesas": ["direccion", "jefatura", "server"],
+  "/panel/programas": ["direccion", "jefatura", "secretaria"],
+  "/panel/sitio": ["direccion", "secretaria", "jefatura", "server"],
+  "/panel/sitio/pagina": ["direccion", "secretaria", "jefatura", "server"],
   "/panel/server": ["direccion", "server"],
   "/panel/direccion": ["direccion"],
 };
@@ -49,7 +52,11 @@ export const edicion = {
   "/panel/curricular": ["jefatura", "docente"],
   "/panel/proyectos": ["jefatura"],
   "/panel/publicaciones": ["secretaria", "jefatura"],
-  "/panel/inicio": ["secretaria"],
+  "/panel/mesas": ["jefatura", "server"],
+  "/panel/programas": ["jefatura", "secretaria"],
+  /* El sector y el editor de textos deciden página por página (edicionPaginas). */
+  "/panel/sitio": ["secretaria", "jefatura", "server"],
+  "/panel/sitio/pagina": ["secretaria", "jefatura", "server"],
   "/panel/server": ["server"],
   "/panel/direccion": [],
 };
@@ -64,6 +71,26 @@ export const puedeEditar = (usuario, ruta) =>
 /* Texto para el cartel de modo lectura: "la edita Secretaría". */
 export const quienEdita = (ruta) =>
   (edicion[ruta] || []).map(nombrePerfil).join(" y ") || "Dirección";
+
+/* Quién edita los textos de cada página pública. Dirección edita todas. */
+export const edicionPaginas = {
+  "/": ["secretaria"],
+  "/evaluacion": ["jefatura"],
+  "/previas": ["jefatura"],
+  "/novedades": ["secretaria"],
+  "/inscripcion": ["secretaria"],
+  "/proyectos/ciclo-basico": ["jefatura"],
+  "/proyectos/informatica": ["jefatura"],
+  "/proyectos/programacion": ["jefatura"],
+};
+
+export const puedeEditarPagina = (usuario, pagina) =>
+  !!usuario &&
+  (usuario.rol === "direccion" ||
+    (edicionPaginas[pagina] || []).includes(usuario.rol));
+
+export const quienEditaPagina = (pagina) =>
+  (edicionPaginas[pagina] || []).map(nombrePerfil).join(" y ") || "Dirección";
 
 /* Un rol ve el panel si entra a alguna de sus secciones. */
 export const verPanel = (usuario) =>
