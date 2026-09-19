@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import { ir, separar, useRuta } from "./src/router.js";
-import { logo, navItems, socials } from "./src/data.js";
+import { logo, navItems, redesSociales } from "./src/data.js";
+import { esLinkValido } from "./src/links.js";
 import {
   nombrePerfil,
   puede,
@@ -20,7 +21,6 @@ import Inscripcion from "./src/pages/Inscripcion.jsx";
 import Tablero from "./src/pages/panel/Tablero.jsx";
 import Alumnos from "./src/pages/panel/Alumnos.jsx";
 import Asistencia from "./src/pages/panel/Asistencia.jsx";
-import LibroMatriz from "./src/pages/panel/LibroMatriz.jsx";
 import Calificaciones from "./src/pages/panel/Calificaciones.jsx";
 import Grilla from "./src/pages/panel/Grilla.jsx";
 import Curricular from "./src/pages/panel/Curricular.jsx";
@@ -50,7 +50,6 @@ const paginas = {
   "/panel": Tablero,
   "/panel/alumnos": Alumnos,
   "/panel/asistencia": Asistencia,
-  "/panel/libro-matriz": LibroMatriz,
   "/panel/calificaciones": Calificaciones,
   "/panel/grilla": Grilla,
   "/panel/curricular": Curricular,
@@ -98,7 +97,8 @@ function SinAcceso({ usuario }) {
 function App() {
   const ruta = useRuta();
   const usuario = useSesion();
-  const { inscripcionAbierta } = useAjustes();
+  const { inscripcionAbierta, redes } = useAjustes();
+  const redesConLink = redes.filter((r) => redesSociales[r.red] && esLinkValido(r.url));
   const [showTop, setShowTop] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
 
@@ -241,19 +241,32 @@ function App() {
                 </button>
               ))}
             </nav>
-            <div>
-              <p className="footer__heading">REDES</p>
-              <div className="redes">
-                {socials.map(([name, icon]) => (
-                  <button className="red" key={name} aria-label={name}>
-                    <Icon icon={icon} width={18} height={18} aria-hidden="true" />
-                  </button>
-                ))}
+            {redesConLink.length > 0 && (
+              <div>
+                <p className="footer__heading">REDES</p>
+                <div className="redes">
+                  {redesConLink.map((r) => {
+                    const [nombre, icono] = redesSociales[r.red];
+                    return (
+                      <a
+                        className="red"
+                        key={r.id}
+                        href={r.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={nombre}
+                        title={nombre}
+                      >
+                        <Icon icon={icono} width={18} height={18} aria-hidden="true" />
+                      </a>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </div>
           <p className="copyright">
-            © 2026 Técnica 1 Cecilia Berdichevski. Todos los derechos reservados.
+            © {new Date().getFullYear()} Técnica 1 Cecilia Berdichevski. Todos los derechos reservados.
           </p>
         </div>
       </footer>

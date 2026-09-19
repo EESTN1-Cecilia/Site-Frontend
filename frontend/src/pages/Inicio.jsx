@@ -219,6 +219,12 @@ export default function Inicio({ params }) {
     identidad: (
       <div className="identidad">
         <div>
+          <Imagen
+            id="inicio.identidad.logo"
+            className="identidad__logo"
+            src={logo}
+            alt="Logo Técnica 1"
+          />
           <p className="chip">
             <Texto id="inicio.identidad.chip">IDENTIDAD INSTITUCIONAL</Texto>
           </p>
@@ -236,12 +242,6 @@ export default function Inicio({ params }) {
               resolver problemas, trabajar con otros y animarse a crear.
             </Texto>
           </p>
-          <Imagen
-            id="inicio.identidad.logo"
-            className="identidad__logo"
-            src={logo}
-            alt="Logo Técnica 1"
-          />
         </div>
         <div className="puntos">
           {listaPuntos.map((punto, i) => (
@@ -406,6 +406,12 @@ export default function Inicio({ params }) {
             })}
           </div>
         </div>
+
+        <button
+          className="hero__scroll"
+          aria-label="Bajar para ver más"
+          onClick={() => window.scrollBy({ top: window.innerHeight * 0.8, behavior: "smooth" })}
+        />
       </section>
 
       {listaSecciones.map((seccion) =>

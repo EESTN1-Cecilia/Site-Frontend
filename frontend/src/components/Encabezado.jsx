@@ -1,7 +1,10 @@
-/* Encabezado común a todas las páginas internas del sitio público. */
-export default function Encabezado({ chip, titulo, destacado, texto, children }) {
+import { Bloque } from "./Texto.jsx";
+
+/* Encabezado común a todas las páginas internas del sitio público.
+   Es un bloque: desde el editor se le cambia el fondo o se oculta. */
+export default function Encabezado({ id, chip, titulo, destacado, texto, children }) {
   return (
-    <header className="pagina__hero">
+    <Bloque id={id} como="header" className="pagina__hero">
       <div className="contenedor">
         <p className="chip chip--claro">{chip}</p>
         <h1 className="pagina__titulo">
@@ -11,6 +14,6 @@ export default function Encabezado({ chip, titulo, destacado, texto, children })
         {texto && <p className="pagina__bajada">{texto}</p>}
         {children}
       </div>
-    </header>
+    </Bloque>
   );
 }

@@ -9,8 +9,49 @@ import {
 } from "../../publicaciones.js";
 import { ir } from "../../router.js";
 import VistaPrevia from "../../components/VistaPrevia.jsx";
+import { guardarAjustes, useAjustes } from "../../ajustes.js";
+import { accesos, edicionPaginas, nombrePerfil } from "../../sesion.js";
+import { paginasEditables } from "./SitioPagina.jsx";
+
+/* Los roles que entran al editor de páginas; Dirección ya edita todas. */
+const editores = accesos["/panel/sitio/pagina"].filter((rol) => rol !== "direccion");
+
+/* Tarjeta cerrada con un resumen; al abrirla muestra sus interruptores.
+   opciones: [etiqueta, activo, alternar]. */
+function Opciones({ chip, titulo, opciones }) {
+  const activos = opciones.filter(([, activo]) => activo).length;
+
+  return (
+    <details className="permiso">
+      <summary className="permiso__cabecera">
+        <span className="permiso__chip">{chip}</span>
+        <strong className="permiso__titulo">{titulo}</strong>
+        <span className="permiso__resumen">
+          {activos} de {opciones.length}
+        </span>
+        <Icon className="permiso__flecha" icon="ph:caret-down" width={16} height={16} aria-hidden="true" />
+      </summary>
+      <ul className="permiso__opciones">
+        {opciones.map(([etiqueta, activo, alternar]) => (
+          <li className="permiso__opcion" key={etiqueta}>
+            <span>{etiqueta}</span>
+            <button
+              className={`interruptor ${activo ? "interruptor--on" : ""}`}
+              aria-pressed={activo}
+              aria-label={`${etiqueta} · ${titulo}`}
+              onClick={alternar}
+            >
+              <span />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
 
 export default function Direccion({ ruta }) {
+  const reparto = useAjustes().edicionPaginas || edicionPaginas;
   const [permisos, setPermisos] = useState(rolesPermisos);
   const pendientes = usePublicaciones().filter((p) => p.estado === "pendiente");
   const [vista, setVista] = useState(null);
@@ -24,6 +65,18 @@ export default function Direccion({ ruta }) {
           : fila,
       ),
     );
+
+  const alternarPagina = (pagina, rol) => {
+    const actuales = reparto[pagina] || [];
+    guardarAjustes({
+      edicionPaginas: {
+        ...reparto,
+        [pagina]: actuales.includes(rol)
+          ? actuales.filter((r) => r !== rol)
+          : [...actuales, rol],
+      },
+    });
+  };
 
   const resolver = (id, accion) => {
     const publicacion = pendientes.find((p) => p.id === id);
@@ -52,43 +105,44 @@ export default function Direccion({ ruta }) {
       <section className="tarjeta">
         <h2 className="tarjeta__titulo">Permisos por rol</h2>
         <p className="tarjeta__bajada">
-          Tocá una celda para dar o quitar acceso. El cambio se aplica al
+          Abrí un rol para dar o quitar acceso. El cambio se aplica al
           instante.
         </p>
-        <div className="tabla-scroll">
-          <table className="tabla tabla--panel">
-            <thead>
-              <tr>
-                <th>Rol</th>
-                {etiquetasPermisos.map(([clave, etiqueta]) => (
-                  <th key={clave}>{etiqueta}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {permisos.map((fila) => (
-                <tr key={fila.rol}>
-                  <td data-label="Rol">
-                    <strong>{fila.rol}</strong>
-                  </td>
-                  {etiquetasPermisos.map(([clave, etiqueta]) => (
-                    <td data-label={etiqueta} key={clave}>
-                      <button
-                        className={`interruptor ${
-                          fila.permisos[clave] ? "interruptor--on" : ""
-                        }`}
-                        aria-pressed={fila.permisos[clave]}
-                        aria-label={`${etiqueta} para ${fila.rol}`}
-                        onClick={() => alternar(fila.rol, clave)}
-                      >
-                        <span />
-                      </button>
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="permisos">
+          {permisos.map((fila) => (
+            <Opciones
+              key={fila.rol}
+              chip="Rol"
+              titulo={fila.rol}
+              opciones={etiquetasPermisos.map(([clave, etiqueta]) => [
+                etiqueta,
+                fila.permisos[clave],
+                () => alternar(fila.rol, clave),
+              ])}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="tarjeta">
+        <h2 className="tarjeta__titulo">Páginas del sitio que edita cada rol</h2>
+        <p className="tarjeta__bajada">
+          Abrí una página para elegir qué roles pueden editarla desde Sitio
+          público. Dirección las edita todas.
+        </p>
+        <div className="permisos">
+          {Object.entries(paginasEditables).map(([pagina, [nombre]]) => (
+            <Opciones
+              key={pagina}
+              chip="Página"
+              titulo={nombre}
+              opciones={editores.map((rol) => [
+                nombrePerfil(rol),
+                (reparto[pagina] || []).includes(rol),
+                () => alternarPagina(pagina, rol),
+              ])}
+            />
+          ))}
         </div>
       </section>
 

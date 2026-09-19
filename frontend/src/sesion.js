@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { cerrarSesion, iniciarSesion, obtenerUsuario } from "./services/api.js";
+import { ajustesActuales } from "./ajustes.js";
 
 /* El backend nombra algunos roles distinto. */
 const equivalencias = { jefatura_area: "jefatura", jefe_area: "jefatura" };
@@ -26,7 +27,6 @@ export const accesos = {
   "/panel": ["direccion", "secretaria", "preceptor", "jefatura", "server", "docente"],
   "/panel/alumnos": ["direccion", "secretaria", "preceptor", "jefatura"],
   "/panel/asistencia": ["direccion", "preceptor", "jefatura"],
-  "/panel/libro-matriz": ["direccion", "secretaria"],
   "/panel/calificaciones": ["direccion", "secretaria", "docente"],
   "/panel/grilla": ["direccion", "jefatura", "preceptor"],
   "/panel/curricular": ["direccion", "jefatura", "docente"],
@@ -46,7 +46,6 @@ export const accesos = {
 export const edicion = {
   "/panel/alumnos": ["secretaria"],
   "/panel/asistencia": ["preceptor"],
-  "/panel/libro-matriz": ["secretaria"],
   "/panel/calificaciones": ["secretaria", "docente"],
   "/panel/grilla": ["jefatura"],
   "/panel/curricular": ["jefatura", "docente"],
@@ -72,7 +71,8 @@ export const puedeEditar = (usuario, ruta) =>
 export const quienEdita = (ruta) =>
   (edicion[ruta] || []).map(nombrePerfil).join(" y ") || "Dirección";
 
-/* Quién edita los textos de cada página pública. Dirección edita todas. */
+/* Quién edita los textos de cada página pública por defecto. Dirección edita
+   todas y puede cambiar este reparto desde su página (queda en ajustes). */
 export const edicionPaginas = {
   "/": ["secretaria"],
   "/evaluacion": ["jefatura"],
@@ -84,13 +84,16 @@ export const edicionPaginas = {
   "/proyectos/programacion": ["jefatura"],
 };
 
+export const edicionPaginasActual = () =>
+  ajustesActuales().edicionPaginas || edicionPaginas;
+
 export const puedeEditarPagina = (usuario, pagina) =>
   !!usuario &&
   (usuario.rol === "direccion" ||
-    (edicionPaginas[pagina] || []).includes(usuario.rol));
+    (edicionPaginasActual()[pagina] || []).includes(usuario.rol));
 
 export const quienEditaPagina = (pagina) =>
-  (edicionPaginas[pagina] || []).map(nombrePerfil).join(" y ") || "Dirección";
+  (edicionPaginasActual()[pagina] || []).map(nombrePerfil).join(" y ") || "Dirección";
 
 /* Un rol ve el panel si entra a alguna de sus secciones. */
 export const verPanel = (usuario) =>

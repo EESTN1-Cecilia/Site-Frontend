@@ -12,6 +12,95 @@ import {
 } from "../../sesion.js";
 import { ir } from "../../router.js";
 import { paginasEditables } from "./SitioPagina.jsx";
+import { redesSociales } from "../../data.js";
+import { esLinkValido } from "../../links.js";
+
+/* Redes del pie de página: Dirección elige la red, pega el link, agrega o quita. */
+function Redes({ redes, editable }) {
+  const guardar = (lista) => guardarAjustes({ redes: lista });
+  const cambiar = (id, cambio) => guardar(redes.map((r) => (r.id === id ? { ...r, ...cambio } : r)));
+
+  return (
+    <article className="tarjeta sitio__pagina">
+      <div className="sitio__cabecera">
+        <span className="sitio__icono">
+          <Icon icon="ph:share-network" width={22} height={22} aria-hidden="true" />
+        </span>
+        <div className="sitio__nombre">
+          <h2 className="tarjeta__titulo">Redes sociales</h2>
+          <p className="sitio__ruta">Pie de página · en todas las páginas</p>
+        </div>
+        <span className={`etiqueta ${editable ? "etiqueta--ok" : ""}`}>
+          {editable ? "Editás" : "Solo lectura"}
+        </span>
+      </div>
+
+      <ul className="sitio__partes">
+        {redes.map((r) => {
+          const nombre = redesSociales[r.red]?.[0] || r.red;
+          const invalido = r.url && !esLinkValido(r.url);
+
+          return (
+            <li className="sitio__parte sitio__parte--columna" key={r.id}>
+              <div className="red-edit">
+                <Icon icon={redesSociales[r.red]?.[1] || "ph:link"} width={20} height={20} aria-hidden="true" />
+                <select
+                  aria-label="Red"
+                  value={r.red}
+                  disabled={!editable}
+                  onChange={(e) => cambiar(r.id, { red: e.target.value })}
+                >
+                  {Object.entries(redesSociales).map(([clave, [etiqueta]]) => (
+                    <option key={clave} value={clave}>
+                      {etiqueta}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="url"
+                  aria-label={`Link de ${nombre}`}
+                  placeholder="https://…"
+                  defaultValue={r.url}
+                  disabled={!editable}
+                  aria-invalid={!!invalido}
+                  onBlur={(e) => cambiar(r.id, { url: e.target.value.trim() })}
+                />
+                {editable && (
+                  <button
+                    className="tabla-edit__quitar"
+                    title={`Quitar ${nombre}`}
+                    aria-label={`Quitar ${nombre}`}
+                    onClick={() => guardar(redes.filter((x) => x.id !== r.id))}
+                  >
+                    <Icon icon="ph:trash" width={16} height={16} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+              <p className={`sitio__parte-quien ${invalido ? "red-edit__error" : ""}`}>
+                {invalido
+                  ? "El link tiene que empezar con https://"
+                  : r.url
+                    ? "Se muestra en el pie de página."
+                    : "Sin link: no se muestra en el sitio."}
+              </p>
+            </li>
+          );
+        })}
+      </ul>
+
+      {editable && (
+        <button
+          className="enlace sitio__ver"
+          onClick={() =>
+            guardar([...redes, { id: `r${Date.now().toString(36)}`, red: "instagram", url: "" }])
+          }
+        >
+          + Agregar otra red
+        </button>
+      )}
+    </article>
+  );
+}
 
 const TODA = "Toda la página: textos, imágenes, links y secciones";
 
@@ -189,6 +278,8 @@ export default function Sitio({ ruta, usuario }) {
             </article>
           );
         })}
+
+        <Redes redes={ajustes.redes} editable={esDireccion} />
       </div>
 
       {vista && (

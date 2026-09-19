@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import Encabezado from "../components/Encabezado.jsx";
-import Texto, { Bloque, useLista } from "../components/Texto.jsx";
+import Texto, {
+  Bloque,
+  Campo,
+  Caso,
+  useEdicionTextos,
+  useLista,
+  usePlano,
+} from "../components/Texto.jsx";
 import { pasosInscripcion, requisitos } from "../contenido.js";
 import { useAjustes } from "../ajustes.js";
 
@@ -31,6 +38,36 @@ const Rotulo = ({ id, children }) => (
     <Texto id={`inscripcion.campos.${id}`}>{children}</Texto>
   </span>
 );
+
+/* Desplegable con opciones editables. El valor que se envía es el original;
+   lo que se edita es el texto que se muestra. En el editor, un <option> no
+   admite texto editable, así que las opciones se listan una debajo de otra. */
+function Selector({ id, opciones, ...resto }) {
+  const edicion = useEdicionTextos();
+  const plano = usePlano();
+  const clave = (i) => `inscripcion.opciones.${id}.${i}`;
+
+  if (edicion?.puede())
+    return (
+      <span className="campo__opciones">
+        {opciones.map((opcion, i) => (
+          <Texto key={opcion} id={clave(i)}>
+            {opcion}
+          </Texto>
+        ))}
+      </span>
+    );
+
+  return (
+    <select {...resto}>
+      {opciones.map((opcion, i) => (
+        <option key={opcion} value={opcion}>
+          {plano(clave(i), opcion)}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export default function Inscripcion() {
   const [datos, setDatos] = useState(vacio);
@@ -155,27 +192,34 @@ export default function Inscripcion() {
             </h3>
             <p className="cerrada__texto">{mensajeCierre}</p>
           </div>
-        ) : enviado ? (
-          <div className="exito">
-            <Icon icon="ph:check-circle" width={44} height={44} aria-hidden="true" />
-            <h3 className="exito__titulo">
-              <Texto id="inscripcion.exito.titulo">Solicitud registrada</Texto>
-            </h3>
-            <p className="exito__texto">
-              Gracias, {datos.nombre}. Secretaría se comunica a {datos.email} con el
-              turno para presentar la documentación.
-            </p>
-            <button
-              className="pill"
-              onClick={() => {
-                setDatos(vacio);
-                setEnviado(false);
-              }}
-            >
-              Cargar otra solicitud
-            </button>
-          </div>
         ) : (
+          <>
+          <Caso visible={enviado} cuando="después de enviar la solicitud">
+            <div className="exito">
+              <Icon icon="ph:check-circle" width={44} height={44} aria-hidden="true" />
+              <h3 className="exito__titulo">
+                <Texto id="inscripcion.exito.titulo">Solicitud registrada</Texto>
+              </h3>
+              <p className="exito__texto">
+                <Texto id="inscripcion.exito.saludo">Gracias,</Texto> {datos.nombre || "[nombre]"}.{" "}
+                <Texto id="inscripcion.exito.antesEmail">Secretaría se comunica a</Texto>{" "}
+                {datos.email || "[email]"}{" "}
+                <Texto id="inscripcion.exito.despuesEmail">
+                  con el turno para presentar la documentación.
+                </Texto>
+              </p>
+              <button
+                className="pill"
+                onClick={() => {
+                  setDatos(vacio);
+                  setEnviado(false);
+                }}
+              >
+                <Texto id="inscripcion.exito.otra">Cargar otra solicitud</Texto>
+              </button>
+            </div>
+          </Caso>
+          {!enviado && (
           <form className="formulario" onSubmit={enviar}>
             <p className="formulario__grupo">
               <Texto id="inscripcion.campos.grupoEstudiante">Datos del estudiante</Texto>
@@ -209,11 +253,12 @@ export default function Inscripcion() {
             </label>
             <label className="campo">
               <Rotulo id="orientacion">Ingresa a</Rotulo>
-              <select value={datos.orientacion} onChange={cambiar("orientacion")}>
-                <option>Ciclo Básico</option>
-                <option>Ciclo Superior · Informática</option>
-                <option>Ciclo Superior · Programación</option>
-              </select>
+              <Selector
+                id="orientacion"
+                opciones={["Ciclo Básico", "Ciclo Superior · Informática", "Ciclo Superior · Programación"]}
+                value={datos.orientacion}
+                onChange={cambiar("orientacion")}
+              />
             </label>
 
             <p className="formulario__grupo">
@@ -225,11 +270,12 @@ export default function Inscripcion() {
             </label>
             <label className="campo">
               <Rotulo id="vinculo">Vínculo</Rotulo>
-              <select value={datos.vinculo} onChange={cambiar("vinculo")}>
-                <option>Madre</option>
-                <option>Padre</option>
-                <option>Tutor/a</option>
-              </select>
+              <Selector
+                id="vinculo"
+                opciones={["Madre", "Padre", "Tutor/a"]}
+                value={datos.vinculo}
+                onChange={cambiar("vinculo")}
+              />
             </label>
             <label className="campo">
               <Rotulo id="telefono">Teléfono</Rotulo>
@@ -241,7 +287,9 @@ export default function Inscripcion() {
             </label>
             <label className="campo campo--ancho">
               <Rotulo id="comentario">Comentarios (opcional)</Rotulo>
-              <textarea
+              <Campo
+                como="textarea"
+                id="inscripcion.campos.comentarioAyuda"
                 rows={3}
                 placeholder="Condiciones de salud, accesibilidad, hermanos en la escuela…"
                 value={datos.comentario}
@@ -254,6 +302,8 @@ export default function Inscripcion() {
               <Icon icon="ph:paper-plane-tilt" width={16} height={16} aria-hidden="true" />
             </button>
           </form>
+          )}
+          </>
         )}
       </>
     ),
@@ -261,10 +311,16 @@ export default function Inscripcion() {
 
   return (
     <main>
-      <Encabezado
+      <Encabezado id="inscripcion.hero"
         chip={<Texto id="inscripcion.hero.chip">CICLO LECTIVO 2027</Texto>}
         titulo={<Texto id="inscripcion.hero.titulo">Inscripción</Texto>}
-        destacado={inscripcionAbierta ? "abierta" : "cerrada"}
+        destacado={
+          inscripcionAbierta ? (
+            <Texto id="inscripcion.hero.abierta">abierta</Texto>
+          ) : (
+            <Texto id="inscripcion.hero.cerrada">cerrada</Texto>
+          )
+        }
         texto={
           inscripcionAbierta ? (
             <Texto id="inscripcion.hero.texto">

@@ -519,6 +519,118 @@
   width: 44px;
 }
 
+/* ---------- Redes del pie (Sitio público) ---------- */
+.red-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--bordo-oscuro);
+}
+
+.red-edit select,
+.red-edit input {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--gris-claro);
+  border-radius: 8px;
+  background: var(--blanco);
+  color: var(--gris-oscuro);
+  font: inherit;
+}
+
+.red-edit input {
+  flex: 1;
+}
+
+.red-edit input[aria-invalid="true"] {
+  border-color: var(--rojo-institucional);
+  background: #fdf6f5;
+}
+
+.red-edit__error {
+  color: var(--rojo-institucional);
+}
+
+/* ---------- Permisos desplegables (Dirección) ---------- */
+.permisos {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  /* Abrir una tarjeta no estira a las de su fila. */
+  align-items: start;
+}
+
+.permiso {
+  border: 1px solid var(--gris-claro);
+  border-radius: 16px;
+  background: var(--blanco);
+  overflow: hidden;
+}
+
+.permiso__cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.permiso__cabecera::-webkit-details-marker {
+  display: none;
+}
+
+.permiso__cabecera:hover {
+  background: var(--rojo-claro);
+}
+
+.permiso__chip,
+.permiso__opcion > span {
+  color: var(--gris-medio);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.permiso__titulo {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--bordo-oscuro);
+}
+
+.permiso__resumen {
+  color: var(--gris-medio);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.permiso__flecha {
+  flex-shrink: 0;
+  color: var(--bordo-oscuro);
+  transition: transform 220ms ease-out;
+}
+
+.permiso[open] .permiso__flecha {
+  transform: rotate(180deg);
+}
+
+.permiso__opciones {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.permiso__opcion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--gris-claro);
+}
+
 .tabla__fila--activa {
   background: #fdf6f5;
 }
@@ -1215,6 +1327,7 @@
 
 /* Adentro del panel no hace falta el hueco del header fijo. */
 .lienzo .hero {
+  min-height: 0;
   padding-top: 20px;
 }
 
@@ -1859,6 +1972,63 @@
 }
 
 /* Cada sección o tarjeta muestra su barra sólo cuando es la más interna bajo el mouse. */
+/* Placeholder de un campo, editable en el lugar del input. Anula el estilo
+   de rótulo que `.campo > span` le daría. */
+.campo__marcador {
+  flex: 1;
+  padding: 12px 16px 12px 0;
+  color: var(--gris-medio);
+}
+
+.campo > .campo__marcador,
+.campo > .campo__opciones {
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.campo .campo__marcador {
+  padding: 12px 14px;
+  border: 1px solid var(--gris-claro);
+  border-radius: 12px;
+  background: var(--blanco);
+}
+
+.campo--busca .campo__marcador {
+  padding: 12px 16px 12px 0;
+  border: 0;
+  background: none;
+}
+
+/* Opciones de un desplegable, una debajo de otra. */
+.campo__opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid var(--gris-claro);
+  border-radius: 12px;
+  background: var(--blanco);
+}
+
+/* Partes que en el sitio aparecen sólo en un caso. */
+.caso-edicion {
+  margin: 18px 0;
+  padding: 12px;
+  border: 1px dashed var(--gris-medio);
+  border-radius: 16px;
+}
+
+.caso-edicion__aviso {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  color: var(--gris-medio);
+  font-size: 13px;
+}
+
 .bloque-editable {
   position: relative;
   outline: 2px dashed transparent;

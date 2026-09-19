@@ -289,6 +289,12 @@
   gap: 8px;
 }
 
+.filtros__carpeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .filtros__chips--top {
   margin-bottom: clamp(24px, 3vw, 32px);
 }
@@ -309,7 +315,10 @@
   color: var(--bordo-oscuro);
 }
 
-.filtro--activo {
+/* Incluye :hover para ganarle a .filtro:hover sin depender del orden: si no,
+   el activo con el mouse encima queda con letra bordó sobre fondo bordó. */
+.filtro.filtro--activo,
+.filtro.filtro--activo:hover {
   background: var(--bordo-oscuro);
   border-color: var(--bordo-oscuro);
   color: var(--blanco);
@@ -1123,10 +1132,16 @@
 }
 
 /* ---------- Programas de la Tec ---------- */
+/* Siempre un tercio del ancho (máximo 3 por fila), aunque haya un solo
+   programa; en pantallas angostas baja a 2 y a 1 columna. */
 .programas {
+  --programas-gap: clamp(16px, 2.2vw, 24px);
   display: grid;
-  gap: clamp(16px, 2.2vw, 24px);
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--programas-gap);
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(max(280px, (100% - 2 * var(--programas-gap)) / 3), 1fr)
+  );
   margin-top: clamp(28px, 4vw, 42px);
 }
 

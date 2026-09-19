@@ -169,12 +169,71 @@ img {
 }
 
 /* ---------- Hero ---------- */
+/* El hero llena la pantalla: la franja libre bajo la tarjeta es la fila
+   donde va el aviso de scroll, centrado. */
 .hero {
-  padding: calc(var(--alto-header) + 20px) var(--margen) 20px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 100svh;
+  padding: calc(var(--alto-header) + 20px) var(--margen) 0;
+}
+
+.hero__scroll {
+  place-self: center;
+  position: relative;
+  width: 26px;
+  height: 42px;
+  margin: 16px 0;
+  border: 2px solid var(--bordo-oscuro);
+  border-radius: 14px;
+  background: none;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 200ms;
+}
+
+.hero__scroll:hover {
+  opacity: 1;
+}
+
+/* La ruedita del mouse: baja y se desvanece, en loop. */
+.hero__scroll::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 4px;
+  height: 8px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--bordo-oscuro);
+  animation: hero-rueda 1.6s ease-in-out infinite;
+}
+
+@keyframes hero-rueda {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  25% {
+    opacity: 1;
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__scroll::before {
+    animation: none;
+  }
 }
 
 .hero__card {
   position: relative;
+  width: 100%;
   height: clamp(460px, 72vh, 620px);
   max-width: 1400px;
   margin: 0 auto;
@@ -725,10 +784,11 @@ img {
 }
 
 .identidad__logo {
+  display: block;
   width: 88px;
   height: 88px;
   object-fit: contain;
-  margin-top: 30px;
+  margin-bottom: 20px;
 }
 
 .puntos {
@@ -819,6 +879,7 @@ img {
 
 .redes {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 

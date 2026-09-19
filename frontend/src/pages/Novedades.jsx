@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import Encabezado from "../components/Encabezado.jsx";
-import Texto, { Dato, Imagen } from "../components/Texto.jsx";
+import Texto, { Bloque, Caso, Dato, Imagen } from "../components/Texto.jsx";
 import Bloques from "../components/Bloques.jsx";
 import { usePublicaciones } from "../publicaciones.js";
 
@@ -92,7 +92,7 @@ export default function Novedades({ params }) {
 
   return (
     <main>
-      <Encabezado
+      <Encabezado id="novedades.hero"
         chip={<Texto id="novedades.hero.chip">COMUNIDAD</Texto>}
         titulo={<Texto id="novedades.hero.titulo">Novedades de la</Texto>}
         destacado={<Texto id="novedades.hero.destacado">escuela</Texto>}
@@ -104,18 +104,18 @@ export default function Novedades({ params }) {
         }
       />
 
-      <section className="seccion contenedor">
-        <div className="filtros__chips filtros__chips--top">
+      <Bloque id="novedades.lista" como="section" className="seccion contenedor">
+        <Bloque id="novedades.filtros" className="filtros__chips filtros__chips--top">
           {categorias.map((valor) => (
             <button
               key={valor}
               className={`filtro ${categoria === valor ? "filtro--activo" : ""}`}
               onClick={() => setCategoria(valor)}
             >
-              {valor}
+              {valor === "Todas" ? <Texto id="novedades.filtros.todas">Todas</Texto> : valor}
             </button>
           ))}
-        </div>
+        </Bloque>
 
         {destacada && <Nota novedad={destacada} destacada />}
 
@@ -125,8 +125,12 @@ export default function Novedades({ params }) {
           ))}
         </div>
 
-        {lista.length === 0 && <p className="vacio">Todavía no hay novedades en esta categoría.</p>}
-      </section>
+        <Caso visible={lista.length === 0} cuando="cuando no hay novedades en la categoría elegida">
+          <p className="vacio">
+            <Texto id="novedades.vacio">Todavía no hay novedades en esta categoría.</Texto>
+          </p>
+        </Caso>
+      </Bloque>
     </main>
   );
 }

@@ -8,7 +8,6 @@ export const menu = [
     [
       ["/panel", "ph:chart-donut", "Tablero"],
       ["/panel/alumnos", "ph:student", "Alumnos"],
-      ["/panel/libro-matriz", "ph:book-bookmark", "Libro Matriz"],
       ["/panel/calificaciones", "ph:exam", "Notas y boletines"],
     ],
   ],
