@@ -231,10 +231,13 @@ img {
   }
 }
 
+/* 94px = 20px de aire bajo el header + 74px de la fila del aviso de scroll
+   (42px del ícono y 16px arriba y abajo). Con la pantalla baja la tarjeta
+   se achica para que el aviso no quede afuera. */
 .hero__card {
   position: relative;
   width: 100%;
-  height: clamp(460px, 72vh, 620px);
+  height: clamp(360px, min(72vh, 100svh - var(--alto-header) - 94px), 620px);
   max-width: 1400px;
   margin: 0 auto;
   border-radius: clamp(18px, 2vw, 28px);
@@ -981,9 +984,11 @@ img {
     flex-direction: column;
     align-items: stretch;
   }
+  /* Llena la pantalla dejando lugar para el aviso de scroll; si el contenido
+     no entra, la tarjeta crece igual (height: auto). */
   .hero__card {
     height: auto;
-    min-height: 520px;
+    min-height: clamp(360px, 100svh - var(--alto-header) - 94px, 520px);
   }
 
   .hero__contenido {
