@@ -1,4 +1,10 @@
 import { useEffect, useState } from "react";
+import { enviar } from "./conexion.js";
+import {
+  borrarPublicacionEnServidor,
+  cambiarEstadoPublicacion,
+  guardarPublicacionEnServidor,
+} from "./services/api.js";
 import { publicacionesPendientes } from "./panelData.js";
 import imagenCicloBasico from "./assets/images/ciclo-basico-taller.jpg";
 import imagenInformatica from "./assets/images/informatica-robotica.jpg";
@@ -147,23 +153,46 @@ const persistir = () => {
   oyentes.forEach((fn) => fn(lista));
 };
 
-export const guardarPublicacion = (pub) => {
+/* Lo que llega del servidor al abrir el sitio. null = todavía no se cargó
+   ninguna nota, así que valen las que trae el sitio. */
+export const hidratarPublicaciones = (deServidor) => {
+  if (!deServidor) return;
+  lista = deServidor;
+  persistir();
+};
+
+export const guardarPublicacion = async (pub) => {
   lista = lista.map((item) => (item.id === pub.id ? pub : item));
   persistir();
+
+  const respuesta = await enviar((token) => guardarPublicacionEnServidor(token, pub));
+
+  /* El servidor decide el estado: lo que carga secretaría o jefatura queda
+     esperando el visto de dirección, aunque acá se viera como publicada. */
+  if (respuesta.ok && respuesta.datos?.publicacion) {
+    lista = lista.map((item) => (item.id === pub.id ? respuesta.datos.publicacion : item));
+    persistir();
+  }
+
+  return respuesta;
 };
 
 export const quitarPublicacion = (id) => {
   lista = lista.filter((item) => item.id !== id);
   persistir();
+
+  return enviar((token) => borrarPublicacionEnServidor(token, id));
 };
 
-const cambiarEstado = (id, estado) => {
+const cambiarEstado = (id, estado, accion) => {
   lista = lista.map((pub) => (pub.id === id ? { ...pub, estado } : pub));
   persistir();
+
+  return enviar((token) => cambiarEstadoPublicacion(token, id, accion));
 };
 
-export const aprobarPublicacion = (id) => cambiarEstado(id, "publicada");
-export const devolverPublicacion = (id) => cambiarEstado(id, "devuelta");
+export const aprobarPublicacion = (id) => cambiarEstado(id, "publicada", "aprobar");
+export const devolverPublicacion = (id) => cambiarEstado(id, "devuelta", "devolver");
 
 export const nuevaPublicacion = () => {
   const pub = {

@@ -455,6 +455,13 @@
   font-size: 15px;
 }
 
+/* Algo no se pudo guardar: tiene que distinguirse del aviso de "listo". */
+.flash--error {
+  border-color: var(--rojo-institucional);
+  background: var(--rojo-institucional);
+  color: var(--blanco);
+}
+
 .flash--info {
   border-color: var(--gris-claro);
   background: #f6f6f6;

@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { enviar } from "./conexion.js";
+import { guardarAjustesEnServidor } from "./services/api.js";
 
 /* Ajustes generales del sitio que maneja Dirección.
-   Se guardan en el navegador hasta que exista la API. */
+   Viven en el backend; acá quedan además en el navegador como respaldo. */
 const semilla = () => ({
   inscripcionAbierta: true,
   mensajeCierre:
@@ -28,10 +30,24 @@ const oyentes = new Set();
 /* Para leerlos fuera de un componente (los permisos de sesion.js). */
 export const ajustesActuales = () => ajustes;
 
-export const guardarAjustes = (cambio) => {
-  ajustes = { ...ajustes, ...cambio };
+const persistir = () => {
   localStorage.setItem(CLAVE, JSON.stringify(ajustes));
   oyentes.forEach((fn) => fn(ajustes));
+};
+
+/* Lo que llega del servidor al abrir el sitio. */
+export const hidratarAjustes = (deServidor) => {
+  if (!deServidor) return;
+  ajustes = { ...semilla(), ...deServidor };
+  persistir();
+};
+
+export const guardarAjustes = (cambio) => {
+  ajustes = { ...ajustes, ...cambio };
+  persistir();
+
+  /* Al servidor se le mandan sólo los ajustes que cambiaron. */
+  return enviar((token) => guardarAjustesEnServidor(token, cambio));
 };
 
 export function useAjustes() {
