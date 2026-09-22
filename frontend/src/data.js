@@ -170,11 +170,18 @@ export const points = [
   ["Innovación", "Imaginar nuevas soluciones."],
   ["Comunidad", "Construir juntos."],
 ];
-export const socials = [
-  ["Instagram", "ph:instagram-logo"],
-  ["Facebook", "ph:facebook-logo"],
-  ["YouTube", "ph:youtube-logo"],
-];
+/* Redes que se pueden poner en el pie de página: clave -> [nombre, ícono].
+   Cuáles se muestran y con qué link lo decide Dirección (ajustes.redes). */
+export const redesSociales = {
+  instagram: ["Instagram", "ph:instagram-logo"],
+  facebook: ["Facebook", "ph:facebook-logo"],
+  youtube: ["YouTube", "ph:youtube-logo"],
+  tiktok: ["TikTok", "ph:tiktok-logo"],
+  x: ["X (Twitter)", "ph:x-logo"],
+  linkedin: ["LinkedIn", "ph:linkedin-logo"],
+  whatsapp: ["WhatsApp", "ph:whatsapp-logo"],
+  web: ["Otro sitio", "ph:globe"],
+};
 export const proposals = [
   [
     "Ciclo Básico",

@@ -169,13 +169,75 @@ img {
 }
 
 /* ---------- Hero ---------- */
+/* El hero llena la pantalla: la franja libre bajo la tarjeta es la fila
+   donde va el aviso de scroll, centrado. */
 .hero {
-  padding: calc(var(--alto-header) + 20px) var(--margen) 20px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 100svh;
+  padding: calc(var(--alto-header) + 20px) var(--margen) 0;
 }
 
+.hero__scroll {
+  place-self: center;
+  position: relative;
+  width: 26px;
+  height: 42px;
+  margin: 16px 0;
+  border: 2px solid var(--bordo-oscuro);
+  border-radius: 14px;
+  background: none;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 200ms;
+}
+
+.hero__scroll:hover {
+  opacity: 1;
+}
+
+/* La ruedita del mouse: baja y se desvanece, en loop. */
+.hero__scroll::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  width: 4px;
+  height: 8px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: var(--bordo-oscuro);
+  animation: hero-rueda 1.6s ease-in-out infinite;
+}
+
+@keyframes hero-rueda {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  25% {
+    opacity: 1;
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__scroll::before {
+    animation: none;
+  }
+}
+
+/* 94px = 20px de aire bajo el header + 74px de la fila del aviso de scroll
+   (42px del ícono y 16px arriba y abajo). Con la pantalla baja la tarjeta
+   se achica para que el aviso no quede afuera. */
 .hero__card {
   position: relative;
-  height: clamp(460px, 72vh, 620px);
+  width: 100%;
+  height: clamp(360px, min(72vh, 100svh - var(--alto-header) - 94px), 620px);
   max-width: 1400px;
   margin: 0 auto;
   border-radius: clamp(18px, 2vw, 28px);
@@ -725,10 +787,11 @@ img {
 }
 
 .identidad__logo {
+  display: block;
   width: 88px;
   height: 88px;
   object-fit: contain;
-  margin-top: 30px;
+  margin-bottom: 20px;
 }
 
 .puntos {
@@ -819,6 +882,7 @@ img {
 
 .redes {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -920,9 +984,11 @@ img {
     flex-direction: column;
     align-items: stretch;
   }
+  /* Llena la pantalla dejando lugar para el aviso de scroll; si el contenido
+     no entra, la tarjeta crece igual (height: auto). */
   .hero__card {
     height: auto;
-    min-height: 520px;
+    min-height: clamp(360px, 100svh - var(--alto-header) - 94px, 520px);
   }
 
   .hero__contenido {

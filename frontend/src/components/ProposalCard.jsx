@@ -39,7 +39,7 @@ export default function ProposalCard({ propuesta, course, destino, bloque }) {
       {/* Arranca cerrado en cada carga; mientras se edita queda abierto. */}
       <details className="desplegable" open={edicion ? true : undefined}>
         <summary className="desplegable__boton">
-          Ver divisiones
+          <Texto id="inicio.divisiones.ver">Ver divisiones</Texto>
           <Icon className="desplegable__flecha" icon="ph:caret-down" width={16} height={16} aria-hidden="true" />
         </summary>
         <div className="card__lista">

@@ -322,7 +322,7 @@ export default function Proyectos({ ruta, params }) {
 
   return (
     <main>
-      <Encabezado
+      <Encabezado id={t("hero")}
         chip={<Texto id={t("hero.chip")}>{area.chip}</Texto>}
         titulo={<Texto id="proyectos.hero.titulo">Proyectos de</Texto>}
         destacado={<Texto id={t("hero.destacado")}>{area.titulo}</Texto>}

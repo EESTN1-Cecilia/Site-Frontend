@@ -43,6 +43,52 @@ export default function Texto({ id, children, clase, dueno }) {
   );
 }
 
+/* ---------- Texto plano ----------
+   Para textos que van en atributos (data-label, placeholder) y no se pueden
+   editar en el lugar: devuelve una función (id, original) => valor actual. */
+export function usePlano() {
+  const [fuente] = useFuente();
+  return (id, original) => fuente[id] ?? original;
+}
+
+/* ---------- Campo con placeholder editable ----------
+   En el sitio es un input (o textarea) común; en el editor el placeholder se
+   escribe en el lugar del campo. */
+export function Campo({ id, placeholder, como: Etiqueta = "input", dueno, ...resto }) {
+  const [fuente, edicion] = useFuente();
+  const valor = fuente[id] ?? placeholder;
+
+  if (!edicion?.puede(dueno)) return <Etiqueta placeholder={valor} {...resto} />;
+
+  return (
+    <Editable
+      clase="campo__marcador"
+      valor={valor}
+      detener
+      alCambiar={(nuevo) => edicion.cambiar(id, nuevo, placeholder)}
+    />
+  );
+}
+
+/* ---------- Partes que aparecen sólo en un caso ----------
+   (sin resultados, formulario enviado…). En el editor se muestran siempre,
+   con un aviso de cuándo se ven, para poder editarlas. */
+export function Caso({ visible, cuando, children }) {
+  const edicion = useContext(EdicionTextos);
+
+  if (!edicion) return visible ? children : null;
+
+  return (
+    <div className="caso-edicion">
+      <p className="caso-edicion__aviso">
+        <Icon icon="ph:eye" width={14} height={14} aria-hidden="true" />
+        Se ve {cuando}
+      </p>
+      {children}
+    </div>
+  );
+}
+
 /* ---------- Imagen: clic para cambiarla ----------
    `vacio` es lo que se ve cuando no hay imagen (por ejemplo la inicial de un
    programa); si lo hay, la imagen también se puede quitar. */

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import Encabezado from "../components/Encabezado.jsx";
 import VisorPdf from "../components/VisorPdf.jsx";
-import Texto, { Bloque, Imagen, useLista } from "../components/Texto.jsx";
+import Texto, { Bloque, Campo, Caso, Imagen, useLista } from "../components/Texto.jsx";
 import { criterios, periodos, valoraciones } from "../contenido.js";
 import { cuadernillos } from "../saberes.js";
 import { logo } from "../data.js";
@@ -105,27 +105,29 @@ export default function Evaluacion() {
               </Texto>
             </p>
           </div>
-          <label className="campo campo--busca">
+          <Bloque id="evaluacion.cuadernillos.buscador" como="label" className="campo campo--busca">
             <Icon icon="ph:magnifying-glass" width={18} height={18} aria-hidden="true" />
-            <input
-              type="search"
+            <Campo
+              id="evaluacion.cuadernillos.buscar"
               placeholder="Buscar cuadernillo"
+              type="search"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
-          </label>
+          </Bloque>
         </div>
 
-        {texto && (
+        <Caso visible={!!texto} cuando="mientras alguien busca un cuadernillo">
           <p className="resultado">
-            Resultados para “<strong>{busqueda}</strong>”: {visibles.length} documento(s).
+            <Texto id="evaluacion.resultado.antes">Resultados para</Texto> “<strong>{busqueda}</strong>”:{" "}
+            {visibles.length} <Texto id="evaluacion.resultado.despues">documento(s).</Texto>
             <button className="enlace" onClick={() => setBusqueda("")}>
-              Ver todos
+              <Texto id="evaluacion.resultado.verTodos">Ver todos</Texto>
             </button>
           </p>
-        )}
+        </Caso>
 
-        {visibles.length > 0 ? (
+        {visibles.length > 0 && (
           <div className="cuadernillos">
             {visibles.map((doc) => {
               const base = `evaluacion.cuadernillos.${doc.id}`;
@@ -139,7 +141,7 @@ export default function Evaluacion() {
                     </span>
                     <span className="cuadernillo__pill">
                       <Icon icon="ph:file-pdf" width={13} height={13} aria-hidden="true" />
-                      PDF
+                      <Texto id="evaluacion.cuadernillos.formato">PDF</Texto>
                     </span>
                   </div>
 
@@ -157,7 +159,7 @@ export default function Evaluacion() {
                     <span className="cuadernillo__velo">
                       <span className="cuadernillo__abrir">
                         <Icon icon="ph:eye" width={16} height={16} aria-hidden="true" />
-                        Abrir PDF
+                        <Texto id="evaluacion.cuadernillos.abrir">Abrir PDF</Texto>
                       </span>
                     </span>
                   </button>
@@ -190,16 +192,23 @@ export default function Evaluacion() {
               );
             })}
           </div>
-        ) : (
+        )}
+
+        <Caso visible={visibles.length === 0} cuando="cuando la búsqueda no encuentra ningún cuadernillo">
           <div className="sin-resultados">
             <Icon icon="ph:magnifying-glass" width={44} height={44} aria-hidden="true" />
-            <h3 className="exito__titulo">No se encontraron documentos</h3>
-            <p className="exito__texto">No hay cuadernillos que coincidan con “{busqueda}”.</p>
+            <h3 className="exito__titulo">
+              <Texto id="evaluacion.sinResultados.titulo">No se encontraron documentos</Texto>
+            </h3>
+            <p className="exito__texto">
+              <Texto id="evaluacion.sinResultados.texto">No hay cuadernillos que coincidan con</Texto>{" "}
+              “{busqueda}”.
+            </p>
             <button className="pill" onClick={() => setBusqueda("")}>
-              Borrar la búsqueda
+              <Texto id="evaluacion.sinResultados.boton">Borrar la búsqueda</Texto>
             </button>
           </div>
-        )}
+        </Caso>
       </>
     ),
 
@@ -338,7 +347,7 @@ export default function Evaluacion() {
 
   return (
     <main>
-      <Encabezado
+      <Encabezado id="evaluacion.hero"
         chip={<Texto id="evaluacion.hero.chip">RÉGIMEN ACADÉMICO</Texto>}
         titulo={<Texto id="evaluacion.hero.titulo">Evaluación de</Texto>}
         destacado={<Texto id="evaluacion.hero.destacado">saberes</Texto>}

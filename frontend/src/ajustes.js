@@ -6,6 +6,10 @@ const semilla = () => ({
   inscripcionAbierta: true,
   mensajeCierre:
     "La inscripción está cerrada por ahora. Cuando se abra la próxima convocatoria lo vas a ver acá y en Novedades.",
+  /* Qué rol edita cada página pública. null = el reparto por defecto de sesion.js. */
+  edicionPaginas: null,
+  /* Redes del pie de página ({ id, red, url }); sin link no se muestran. */
+  redes: ["instagram", "facebook", "youtube"].map((red) => ({ id: red, red, url: "" })),
 });
 
 const CLAVE = "tec1-ajustes";
@@ -20,6 +24,9 @@ const leer = () => {
 
 let ajustes = leer();
 const oyentes = new Set();
+
+/* Para leerlos fuera de un componente (los permisos de sesion.js). */
+export const ajustesActuales = () => ajustes;
 
 export const guardarAjustes = (cambio) => {
   ajustes = { ...ajustes, ...cambio };
