@@ -3,6 +3,7 @@ import { Icon } from "@iconify/react";
 import Encabezado from "../components/Encabezado.jsx";
 import Texto, { Bloque, Caso, Dato, Imagen } from "../components/Texto.jsx";
 import Bloques from "../components/Bloques.jsx";
+import EditorDeBloques from "../components/EditorDeBloques.jsx";
 import { usePublicaciones } from "../publicaciones.js";
 
 const PUBLICACIONES = "/panel/publicaciones";
@@ -130,6 +131,8 @@ export default function Novedades({ params }) {
             <Texto id="novedades.vacio">Todavía no hay novedades en esta categoría.</Texto>
           </p>
         </Caso>
+
+        <EditorDeBloques zona="novedades.bloques" />
       </Bloque>
     </main>
   );
