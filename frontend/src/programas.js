@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { enviar } from "./conexion.js";
+import { guardarProgramasEnServidor } from "./services/api.js";
 
 /* Programas hechos por alumnos que cualquiera puede usar.
    Se muestran al final de la portada y se cargan desde gestión. */
@@ -37,10 +39,24 @@ const leer = () => {
 let lista = leer();
 const oyentes = new Set();
 
+const persistir = () => {
+  localStorage.setItem(CLAVE, JSON.stringify(lista));
+  oyentes.forEach((fn) => fn(lista));
+};
+
+/* Lo que llega del servidor al abrir el sitio. null = nadie cargó programas
+   todavía, así que se muestran los que trae el sitio. */
+export const hidratarProgramas = (deServidor) => {
+  if (!deServidor) return;
+  lista = deServidor;
+  persistir();
+};
+
 export const guardarProgramas = (nueva) => {
   lista = nueva;
-  localStorage.setItem(CLAVE, JSON.stringify(nueva));
-  oyentes.forEach((fn) => fn(nueva));
+  persistir();
+
+  return enviar((token) => guardarProgramasEnServidor(token, nueva));
 };
 
 export const restaurarProgramas = () => {

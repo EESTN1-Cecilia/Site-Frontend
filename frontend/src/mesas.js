@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { enviar } from "./conexion.js";
+import { guardarMesasEnServidor } from "./services/api.js";
 
 /* Cronograma de mesas de intensificación. Lo edita gestión (Jefatura de Área,
    Server y Dirección) y lo lee la página de Previas.
-   Se guarda en el navegador hasta que exista la API. */
+   Se guarda en el backend; el navegador queda como respaldo. */
 
 export { esLinkValido } from "./links.js";
 
@@ -56,10 +58,24 @@ const leer = () => {
 let contenido = leer();
 const oyentes = new Set();
 
+const persistir = () => {
+  localStorage.setItem(CLAVE, JSON.stringify(contenido));
+  oyentes.forEach((fn) => fn(contenido));
+};
+
+/* Lo que llega del servidor al abrir el sitio. null = todavía no se cargó
+   ningún cronograma, así que vale el que trae el sitio. */
+export const hidratarMesas = (deServidor) => {
+  if (!deServidor) return;
+  contenido = deServidor;
+  persistir();
+};
+
 export const guardarMesas = (nuevo) => {
   contenido = nuevo;
-  localStorage.setItem(CLAVE, JSON.stringify(nuevo));
-  oyentes.forEach((fn) => fn(nuevo));
+  persistir();
+
+  return enviar((token) => guardarMesasEnServidor(token, nuevo));
 };
 
 export const restaurarMesas = () => {

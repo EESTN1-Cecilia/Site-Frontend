@@ -57,6 +57,7 @@ export default function SitioPagina({ ruta, params, usuario }) {
   const [borrador, setBorrador] = useState(publicados);
   const [vista, setVista] = useState(false);
   const [aviso, setAviso] = useState("");
+  const [fallo, setFallo] = useState("");
 
   const encontrada = paginasEditables[pagina];
   const sucio = JSON.stringify(borrador) !== JSON.stringify(publicados);
@@ -101,7 +102,7 @@ export default function SitioPagina({ ruta, params, usuario }) {
     puede: (dueno) => (dueno ? duenosPropios.includes(dueno) : puedePagina),
   };
 
-  const publicar = () => {
+  const publicar = async () => {
     const estaticos = {};
     const pubs = new Map();
     const proyectos = new Map();
@@ -169,8 +170,24 @@ export default function SitioPagina({ ruta, params, usuario }) {
     proyectos.forEach(([area, proyecto]) => guardarProyecto(area, proyecto));
     if (listaProgramas) guardarProgramas(listaProgramas);
     if (datosMesas) guardarMesas(datosMesas);
-    guardarTextos(estaticos);
+    /* La página se manda al servidor: es la que decide el permiso, y así no se
+       tocan los textos de las demás. */
+    const resultado = await guardarTextos(estaticos, pagina);
     setBorrador(estaticos);
+
+    /* Sólo se avisa "publicado" si el servidor lo recibió: creer que algo salió
+       cuando no salió es peor que no avisar nada. */
+    if (resultado && !resultado.ok) {
+      setAviso("");
+      setFallo(
+        resultado.motivo === "sin-sesion"
+          ? "Los cambios quedaron sólo en esta computadora: no hay sesión iniciada en el servidor."
+          : `No se pudo guardar: ${resultado.motivo}. El cambio quedó sólo en esta computadora.`,
+      );
+      return;
+    }
+
+    setFallo("");
     setAviso(
       pubs.size && usuario?.rol !== "direccion"
         ? "Cambios publicados. Las notas que tocaste vuelven a esperar la aprobación de Dirección."
@@ -236,6 +253,16 @@ export default function SitioPagina({ ruta, params, usuario }) {
           <Icon icon="ph:check-circle" width={18} height={18} aria-hidden="true" />
           {aviso}
           <button className="flash__cerrar" onClick={() => setAviso("")}>
+            <Icon icon="ph:x" width={14} height={14} aria-hidden="true" />
+          </button>
+        </p>
+      )}
+
+      {fallo && (
+        <p className="flash flash--error">
+          <Icon icon="ph:warning" width={18} height={18} aria-hidden="true" />
+          {fallo}
+          <button className="flash__cerrar" onClick={() => setFallo("")}>
             <Icon icon="ph:x" width={14} height={14} aria-hidden="true" />
           </button>
         </p>

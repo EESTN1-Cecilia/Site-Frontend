@@ -31,6 +31,8 @@ import Programas from "./src/pages/panel/Programas.jsx";
 import Sitio from "./src/pages/panel/Sitio.jsx";
 import SitioPagina from "./src/pages/panel/SitioPagina.jsx";
 import { useAjustes } from "./src/ajustes.js";
+import { limpiarError, useConexion } from "./src/conexion.js";
+import { sincronizarContenido } from "./src/sincronizar.js";
 import Server from "./src/pages/panel/Server.jsx";
 import Direccion from "./src/pages/panel/Direccion.jsx";
 import "./src/styles/app.css";
@@ -98,6 +100,7 @@ function App() {
   const ruta = useRuta();
   const usuario = useSesion();
   const { inscripcionAbierta, redes } = useAjustes();
+  const conexion = useConexion();
   const redesConLink = redes.filter((r) => redesSociales[r.red] && esLinkValido(r.url));
   const [showTop, setShowTop] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
@@ -106,6 +109,12 @@ function App() {
   useEffect(() => {
     restaurarSesion();
   }, []);
+
+  /* El contenido del sitio se trae del backend. Se vuelve a pedir al entrar o
+     salir, porque gestión ve además las notas que esperan revisión. */
+  useEffect(() => {
+    sincronizarContenido();
+  }, [usuario?.usuario]);
 
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 420);
@@ -270,6 +279,18 @@ function App() {
           </p>
         </div>
       </footer>
+
+      {/* Aviso de que el servidor no responde: lo que se edite queda sólo en
+          esta computadora, así que nadie debe creer que ya publicó. */}
+      {conexion.error && usuario && (
+        <p className="cinta-error">
+          <Icon icon="ph:warning" width={16} height={16} aria-hidden="true" />
+          {conexion.error}
+          <button className="cinta-error__cerrar" aria-label="Cerrar aviso" onClick={limpiarError}>
+            <Icon icon="ph:x" width={14} height={14} aria-hidden="true" />
+          </button>
+        </p>
+      )}
 
       {/* Cinta de vista previa. Sólo las publicaciones son borradores sin publicar;
           proyectos y programas ya están en el sitio. */}

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { enviar } from "./conexion.js";
+import { guardarProyectosEnServidor } from "./services/api.js";
 import cicloBasicoImage from "./assets/images/ciclo-basico-taller.jpg";
 import informaticaImage from "./assets/images/informatica-robotica.jpg";
 import programacionImage from "./assets/images/programacion-proyectos.jpg";
@@ -277,6 +279,19 @@ const persistir = () => {
 
 export const nuevoId = () => `p-${Date.now().toString(36)}`;
 
+/* Lo que llega del servidor al abrir el sitio. Sólo pisa las orientaciones que
+   gestión ya editó; las demás quedan con los proyectos que trae el sitio. */
+export const hidratarProyectos = (deServidor) => {
+  if (!deServidor) return;
+  porArea = { ...porArea, ...deServidor };
+  persistir();
+};
+
+/* El backend guarda una orientación entera, así que se le manda la lista
+   completa del área que se tocó. */
+const sincronizarArea = (area) =>
+  enviar((token) => guardarProyectosEnServidor(token, area, porArea[area] || []));
+
 export const guardarProyecto = (area, proyecto) => {
   const lista = porArea[area] || [];
   const existe = lista.some((item) => item.id === proyecto.id);
@@ -288,11 +303,15 @@ export const guardarProyecto = (area, proyecto) => {
       : [...lista, proyecto],
   };
   persistir();
+
+  return sincronizarArea(area);
 };
 
 export const borrarProyecto = (area, id) => {
   porArea = { ...porArea, [area]: (porArea[area] || []).filter((p) => p.id !== id) };
   persistir();
+
+  return sincronizarArea(area);
 };
 
 export const restaurarProyectos = () => {

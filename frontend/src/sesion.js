@@ -162,8 +162,11 @@ export const restaurarSesion = async () => {
       usuario: actual.username,
       nombre: actual.nombre || actual.username,
     });
-  } catch {
-    localStorage.removeItem(TOKEN);
+  } catch (error) {
+    /* Si el servidor no respondió, la sesión se mantiene: vuelve a valer
+       cuando el servidor vuelva. Sólo se descarta el token cuando el servidor
+       contestó que ya no sirve. */
+    if (!error.sinConexion) localStorage.removeItem(TOKEN);
   }
 };
 

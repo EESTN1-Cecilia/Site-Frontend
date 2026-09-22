@@ -292,7 +292,7 @@ export default function Publicaciones({ ruta, usuario }) {
         {editable && (
           <p className="bloqueado">
             <Icon icon="ph:info" width={16} height={16} aria-hidden="true" />
-            Los cambios quedan en este navegador hasta que exista la API.
+            Los cambios se guardan en el servidor de la escuela.
             <button className="enlace" onClick={restaurarPublicaciones}>
               Restaurar las publicaciones originales
             </button>
