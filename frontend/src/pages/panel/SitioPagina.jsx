@@ -55,7 +55,17 @@ export default function SitioPagina({ ruta, params, usuario }) {
   const programas = useProgramas();
   const mesas = useMesas();
   const [borrador, setBorrador] = useState(publicados);
+  const [base, setBase] = useState(publicados);
   const [vista, setVista] = useState(false);
+
+  /* Lo publicado puede llegar del servidor con el editor ya abierto (este
+     navegador tenía una versión vieja guardada). Si todavía no se tocó nada,
+     el borrador pasa a la versión del servidor: si no, publicar la pisaría
+     con la vieja. */
+  if (base !== publicados) {
+    setBase(publicados);
+    if (JSON.stringify(borrador) === JSON.stringify(base)) setBorrador(publicados);
+  }
   const [aviso, setAviso] = useState("");
   const [fallo, setFallo] = useState("");
 

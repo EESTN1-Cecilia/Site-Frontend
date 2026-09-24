@@ -293,7 +293,8 @@ const fondos = [
   ["rosa", "Rosa"],
 ];
 
-/* ---------- Contenedor: mover, duplicar, ocultar y cambiar el fondo ---------- */
+/* ---------- Contenedor: mover, duplicar, ocultar y cambiar el fondo ----------
+   `acciones` son botones de más para la barra (los usa EditorDeBloques). */
 export function Bloque({
   id,
   como: Etiqueta = "div",
@@ -305,6 +306,7 @@ export function Bloque({
   copia,
   duplicable,
   dueno,
+  acciones,
   children,
   ...resto
 }) {
@@ -398,6 +400,7 @@ export function Bloque({
             <Icon icon="ph:trash" width={15} height={15} aria-hidden="true" />
           </button>
         )}
+        {acciones}
       </span>
       {children}
     </Etiqueta>

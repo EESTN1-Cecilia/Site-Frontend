@@ -1715,3 +1715,128 @@
     text-align: left;
   }
 }
+
+/* ---------- Logo en el chip del encabezado (igual que .hero__chip) ---------- */
+.chip--logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px 6px 6px;
+}
+
+.chip--logo img {
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  flex-shrink: 0;
+}
+
+/* ---------- Bloques libres (EditorDeBloques) ---------- */
+.bloques-libres {
+  display: grid;
+  /* minmax(0, …): un iframe o una fila ancha no estiran la página. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  margin-top: clamp(32px, 5vw, 48px);
+}
+
+.bloque-libre__texto {
+  max-width: 72ch;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+.bloque-libre__figura {
+  margin: 0;
+}
+
+.bloque-libre__figura img {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: cover;
+  border-radius: 18px;
+}
+
+.bloque-libre__figura figcaption {
+  margin-top: 8px;
+  color: var(--gris-medio);
+  font-size: 13px;
+}
+
+.bloque-libre__boton {
+  display: inline-flex;
+  width: fit-content;
+  text-decoration: none;
+}
+
+.bloque-libre__divisor {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--gris-claro);
+}
+
+.bloque-libre__marco {
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--tarjeta);
+}
+
+.bloque-libre__marco iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.bloque-libre__marco--video {
+  aspect-ratio: 16 / 9;
+}
+
+.bloque-libre__marco--documento {
+  height: min(75vh, 640px);
+}
+
+.bloque-libre__abrir {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--rojo-institucional);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.bloque-libre__archivo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 520px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: var(--tarjeta);
+  color: var(--bordo-oscuro);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 180ms;
+}
+
+.bloque-libre__archivo:hover {
+  background: var(--rojo-claro);
+}
+
+.bloque-libre__archivo small {
+  margin-left: auto;
+  color: var(--gris-medio);
+  font-weight: 400;
+}
+
+/* Redes sobre fondo claro: las del pie van sobre bordó. */
+.redes--claro .red {
+  border-color: var(--gris-claro);
+  color: var(--bordo-oscuro);
+}
+
+.redes--claro .red:hover {
+  color: var(--blanco);
+}
