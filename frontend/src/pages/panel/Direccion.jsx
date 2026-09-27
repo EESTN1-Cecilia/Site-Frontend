@@ -66,16 +66,16 @@ export default function Direccion({ ruta }) {
       ),
     );
 
+  /* Se manda el reparto de las páginas editables y nada más: una página o un
+     rol que no está en esta pantalla no viaja con la autoridad de Dirección.
+     Una página sin reparto guardado toma el de por defecto. */
   const alternarPagina = (pagina, rol) => {
-    const actuales = reparto[pagina] || [];
-    guardarAjustes({
-      edicionPaginas: {
-        ...reparto,
-        [pagina]: actuales.includes(rol)
-          ? actuales.filter((r) => r !== rol)
-          : [...actuales, rol],
-      },
-    });
+    const completo = Object.fromEntries(
+      Object.keys(paginasEditables).map((p) => [p, reparto[p] ?? edicionPaginas[p] ?? []]),
+    );
+    const actuales = completo[pagina];
+    completo[pagina] = actuales.includes(rol) ? actuales.filter((r) => r !== rol) : [...actuales, rol];
+    guardarAjustes({ edicionPaginas: completo });
   };
 
   const resolver = (id, accion) => {
@@ -104,9 +104,12 @@ export default function Direccion({ ruta }) {
 
       <section className="tarjeta">
         <h2 className="tarjeta__titulo">Permisos por rol</h2>
+        {/* Estos interruptores todavía no se guardan en ningún lado: decirlo
+            evita que Dirección crea que sacó un acceso que sigue abierto. */}
         <p className="tarjeta__bajada">
-          Abrí un rol para dar o quitar acceso. El cambio se aplica al
-          instante.
+          Vista de ejemplo: estos permisos todavía no se guardan ni cambian
+          accesos reales. Lo que cada rol puede ver lo define el sistema; quién
+          edita cada página se elige más abajo.
         </p>
         <div className="permisos">
           {permisos.map((fila) => (

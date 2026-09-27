@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { campos, conId, esObjeto, esTexto, guardarLocal, leerLocal } from "./almacen.js";
 import { enviar } from "./conexion.js";
 import { guardarProyectosEnServidor } from "./services/api.js";
 import cicloBasicoImage from "./assets/images/ciclo-basico-taller.jpg";
@@ -261,29 +262,45 @@ const semilla = () =>
     Object.entries(areas).map(([clave, area]) => [clave, area.proyectos]),
   );
 
-const leer = () => {
-  try {
-    return JSON.parse(localStorage.getItem(CLAVE)) || semilla();
-  } catch {
-    return semilla();
-  }
-};
+const textos = (valor) => (Array.isArray(valor) ? valor.filter(esTexto) : []);
 
-let porArea = leer();
+const sanearProyecto = (p) => ({
+  ...p,
+  ...campos(p, ["titulo", "anio", "resumen"]),
+  equipo: Array.isArray(p.equipo) ? textos(p.equipo) : null,
+  stack: textos(p.stack),
+  aprendizajes: textos(p.aprendizajes),
+  repo: esTexto(p.repo) ? p.repo : null,
+  docs: Array.isArray(p.docs)
+    ? p.docs.filter(esObjeto).map((doc) => ({ ...doc, ...campos(doc, ["nombre", "archivo", "peso"]) }))
+    : [],
+});
+
+/* Sólo las orientaciones que existen, con listas de proyectos bien formados. */
+const sanear = (datos) =>
+  esObjeto(datos)
+    ? Object.fromEntries(
+        Object.entries(datos)
+          .filter(([clave, lista]) => Object.hasOwn(areas, clave) && Array.isArray(lista))
+          .map(([clave, lista]) => [clave, conId(lista).map(sanearProyecto)]),
+      )
+    : {};
+
+let porArea = { ...semilla(), ...sanear(leerLocal(CLAVE)) };
 const oyentes = new Set();
 
 const persistir = () => {
-  localStorage.setItem(CLAVE, JSON.stringify(porArea));
+  guardarLocal(CLAVE, porArea);
   oyentes.forEach((fn) => fn(porArea));
 };
 
 export const nuevoId = () => `p-${Date.now().toString(36)}`;
 
 /* Lo que llega del servidor al abrir el sitio. Sólo pisa las orientaciones que
-   gestión ya editó; las demás quedan con los proyectos que trae el sitio. */
+   gestión ya editó; las demás quedan con los proyectos que trae el sitio (no
+   con la copia de este navegador, que pudo dejar otra persona). */
 export const hidratarProyectos = (deServidor) => {
-  if (!deServidor) return;
-  porArea = { ...porArea, ...deServidor };
+  porArea = { ...semilla(), ...sanear(deServidor) };
   persistir();
 };
 
@@ -314,9 +331,14 @@ export const borrarProyecto = (area, id) => {
   return sincronizarArea(area);
 };
 
+/* Vuelve a los proyectos originales en el sitio: se guardan en el servidor
+   las tres orientaciones (antes quedaba sólo en este navegador y el próximo
+   cambio mandaba la lista original entera). */
 export const restaurarProyectos = () => {
   porArea = semilla();
   persistir();
+
+  return Promise.all(Object.keys(areas).map(sincronizarArea));
 };
 
 /* Devuelve las áreas con los proyectos cargados desde el panel. */

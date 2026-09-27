@@ -18,6 +18,7 @@ if (fs.existsSync(rutaDb)) fs.unlinkSync(rutaDb);
 
 const app = require('../../app');
 const db = require('../database/db');
+const { OPCIONES } = require('../utils/tokens');
 
 const CONTRASENA = 'password123';
 const NUEVA_CONTRASENA = 'nuevaPass123';
@@ -27,7 +28,7 @@ let puerto;
 let ids = {};
 
 function generarToken(idUsuario) {
-  return jwt.sign({ idUsuario }, process.env.JWT_SECRET, { expiresIn: '1h', algorithm: 'HS256' });
+  return jwt.sign({ idUsuario }, process.env.JWT_SECRET, { ...OPCIONES, expiresIn: '1h', algorithm: 'HS256' });
 }
 
 async function peticion(metodo, ruta, cuerpo, encabezados = {}) {
@@ -110,6 +111,15 @@ describe('Cambio de contraseña de cuentas de sector', () => {
     assert.strictEqual(res.estado, 200);
     assert.strictEqual(res.cuerpo.password_change_allowed, false);
     assert.strictEqual(res.cuerpo.password_change_count, 1);
+    assert.ok(res.cuerpo.token);
+
+    // Cambiar la contraseña cierra las sesiones anteriores: el token viejo ya no sirve.
+    const conViejo = await peticion('GET', '/api/auth/me', null, { Authorization: `Bearer ${tokenJefe}` });
+    assert.strictEqual(conViejo.estado, 401);
+
+    tokenJefe = res.cuerpo.token;
+    const conNuevo = await peticion('GET', '/api/auth/me', null, { Authorization: `Bearer ${tokenJefe}` });
+    assert.strictEqual(conNuevo.estado, 200);
   });
 
   it('jefatura_area NO puede cambiar su contraseña una segunda vez (búsqueda del cambio de una sola vez)', async () => {
@@ -132,6 +142,7 @@ describe('Cambio de contraseña de cuentas de sector', () => {
     assert.strictEqual(primera.estado, 200);
     assert.strictEqual(primera.cuerpo.password_change_allowed, true);
     assert.strictEqual(primera.cuerpo.password_change_count, 1);
+    tokenDirector = primera.cuerpo.token;
 
     const segunda = await peticion('PUT', '/api/auth/password',
       { password_actual: 'claveAdmin1', nueva_password: 'claveAdmin2' },
@@ -188,6 +199,7 @@ describe('Superadmin permite cambiar contraseña de nuevo', () => {
       { password_actual: CONTRASENA, nueva_password: NUEVA_CONTRASENA },
       { Authorization: `Bearer ${tokenJefe}` });
     assert.strictEqual(res.estado, 200);
+    tokenJefe = res.cuerpo.token;
   });
 
   it('el superadmin NO puede permitir cambio a un usuario inexistente → 404', async () => {
@@ -254,5 +266,28 @@ describe('Listado de usuarios muestra cantidad de cambios', () => {
     assert.strictEqual(res.estado, 200);
     assert.strictEqual(typeof res.cuerpo.usuario.password_change_allowed, 'boolean');
     assert.strictEqual(typeof res.cuerpo.usuario.password_change_count, 'number');
+  });
+});
+
+describe('Cambio único de contraseña con pedidos simultáneos', () => {
+  before(async () => {
+    await configurarBD();
+    servidorHTTP = http.createServer(app);
+    await new Promise((r) => servidorHTTP.listen(0, () => { puerto = servidorHTTP.address().port; r(); }));
+  });
+
+  after(() => new Promise((r) => servidorHTTP.close(r)));
+
+  it('dos cambios a la vez de la misma cuenta de sector: sólo se aplica uno', async () => {
+    const auth = { Authorization: `Bearer ${generarToken(ids.servidor)}` };
+    const respuestas = await Promise.all([
+      peticion('PUT', '/api/auth/password', { password_actual: CONTRASENA, nueva_password: 'primeraNueva1' }, auth),
+      peticion('PUT', '/api/auth/password', { password_actual: CONTRASENA, nueva_password: 'segundaNueva2' }, auth),
+    ]);
+    assert.strictEqual(respuestas.filter((r) => r.estado === 200).length, 1);
+
+    const fila = await db.obtenerFila('SELECT password_change_count, password_change_allowed FROM usuarios WHERE id = ?', ids.servidor);
+    assert.strictEqual(fila.password_change_count, 1);
+    assert.strictEqual(fila.password_change_allowed, 0);
   });
 });

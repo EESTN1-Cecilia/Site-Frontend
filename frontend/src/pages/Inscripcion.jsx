@@ -7,8 +7,11 @@ import Texto, {
   Caso,
   useEdicionTextos,
   useLista,
+  useMarca,
   usePlano,
 } from "../components/Texto.jsx";
+import ZonaLibre from "../components/ZonaLibre.jsx";
+import { Dinamico, PaginaEditable, usePaginaGuardada } from "../components/PaginaEditable.jsx";
 import { pasosInscripcion, requisitos } from "../contenido.js";
 import { useAjustes } from "../ajustes.js";
 
@@ -45,9 +48,11 @@ const Rotulo = ({ id, children }) => (
 function Selector({ id, opciones, ...resto }) {
   const edicion = useEdicionTextos();
   const plano = usePlano();
+  /* En el editor completo, igual que acá: una opción debajo de la otra. */
+  const marca = useMarca();
   const clave = (i) => `inscripcion.opciones.${id}.${i}`;
 
-  if (edicion?.puede())
+  if (edicion?.puede() || marca)
     return (
       <span className="campo__opciones">
         {opciones.map((opcion, i) => (
@@ -74,6 +79,7 @@ export default function Inscripcion() {
   const [enviado, setEnviado] = useState(false);
   const { inscripcionAbierta, mensajeCierre } = useAjustes();
 
+  const guardada = usePaginaGuardada("inscripcion.pagina");
   const [listaSecciones, bloqueSeccion] = useLista("inscripcion.secciones", secciones);
   const [pasos, bloquePaso] = useLista(
     "inscripcion.pasos",
@@ -89,11 +95,138 @@ export default function Inscripcion() {
   const cambiar = (campo) => (e) =>
     setDatos((previo) => ({ ...previo, [campo]: e.target.value }));
 
-  /* Sin backend todavía: la solicitud queda registrada en pantalla. */
+  /* Sin backend todavía: no se manda ni se guarda nada, y el mensaje lo dice. */
   const enviar = (e) => {
     e.preventDefault();
     setEnviado(true);
   };
+
+  /* Parte automática: el formulario, o el aviso de cierre si la inscripción
+     está cerrada. */
+  const formulario = !inscripcionAbierta ? (
+    <div className="cerrada">
+      <Icon icon="ph:lock-simple" width={40} height={40} aria-hidden="true" />
+      <h3 className="cerrada__titulo">
+        <Texto id="inscripcion.cerrada.titulo">La inscripción está cerrada</Texto>
+      </h3>
+      <p className="cerrada__texto">{mensajeCierre}</p>
+    </div>
+  ) : (
+    <>
+    {/* El formulario todavía no manda los datos a ningún lado (no hay
+        backend de inscripción): el mensaje lo dice, para que ninguna
+        familia crea que ya quedó anotada. Los datos no se guardan. */}
+    <Caso visible={enviado} cuando="después de enviar la solicitud">
+      <div className="exito">
+        <Icon icon="ph:info" width={44} height={44} aria-hidden="true" />
+        <h3 className="exito__titulo">
+          <Texto id="inscripcion.pendiente.titulo">Falta un paso en secretaría</Texto>
+        </h3>
+        <p className="exito__texto">
+          <Texto id="inscripcion.exito.saludo">Gracias,</Texto> {datos.nombre || "[nombre]"}.{" "}
+          <Texto id="inscripcion.pendiente.texto">
+            Por ahora la preinscripción no se recibe por la web: para
+            reservar la vacante acercate a secretaría con la documentación.
+            Los datos que cargaste no se guardaron.
+          </Texto>
+        </p>
+        <button
+          className="pill"
+          onClick={() => {
+            setDatos(vacio);
+            setEnviado(false);
+          }}
+        >
+          <Texto id="inscripcion.exito.otra">Cargar otra solicitud</Texto>
+        </button>
+      </div>
+    </Caso>
+    {!enviado && (
+    <form className="formulario" onSubmit={enviar}>
+      <p className="formulario__grupo">
+        <Texto id="inscripcion.campos.grupoEstudiante">Datos del estudiante</Texto>
+      </p>
+      <label className="campo">
+        <Rotulo id="apellido">Apellido</Rotulo>
+        <input required value={datos.apellido} onChange={cambiar("apellido")} />
+      </label>
+      <label className="campo">
+        <Rotulo id="nombre">Nombre</Rotulo>
+        <input required value={datos.nombre} onChange={cambiar("nombre")} />
+      </label>
+      <label className="campo">
+        <Rotulo id="dni">DNI</Rotulo>
+        <input
+          required
+          inputMode="numeric"
+          pattern="[0-9]{7,8}"
+          title="7 u 8 dígitos, sin puntos"
+          value={datos.dni}
+          onChange={cambiar("dni")}
+        />
+      </label>
+      <label className="campo">
+        <Rotulo id="nacimiento">Fecha de nacimiento</Rotulo>
+        <input required type="date" value={datos.nacimiento} onChange={cambiar("nacimiento")} />
+      </label>
+      <label className="campo campo--ancho">
+        <Rotulo id="escuela">Escuela primaria de origen</Rotulo>
+        <input required value={datos.escuela} onChange={cambiar("escuela")} />
+      </label>
+      <label className="campo">
+        <Rotulo id="orientacion">Ingresa a</Rotulo>
+        <Selector
+          id="orientacion"
+          opciones={["Ciclo Básico", "Ciclo Superior · Informática", "Ciclo Superior · Programación"]}
+          value={datos.orientacion}
+          onChange={cambiar("orientacion")}
+        />
+      </label>
+
+      <p className="formulario__grupo">
+        <Texto id="inscripcion.campos.grupoAdulto">Adulto responsable</Texto>
+      </p>
+      <label className="campo">
+        <Rotulo id="tutor">Apellido y nombre</Rotulo>
+        <input required value={datos.tutor} onChange={cambiar("tutor")} />
+      </label>
+      <label className="campo">
+        <Rotulo id="vinculo">Vínculo</Rotulo>
+        <Selector
+          id="vinculo"
+          opciones={["Madre", "Padre", "Tutor/a"]}
+          value={datos.vinculo}
+          onChange={cambiar("vinculo")}
+        />
+      </label>
+      <label className="campo">
+        <Rotulo id="telefono">Teléfono</Rotulo>
+        <input required type="tel" value={datos.telefono} onChange={cambiar("telefono")} />
+      </label>
+      <label className="campo">
+        <Rotulo id="email">Email</Rotulo>
+        <input required type="email" value={datos.email} onChange={cambiar("email")} />
+      </label>
+      <label className="campo campo--ancho">
+        <Rotulo id="comentario">Comentarios (opcional)</Rotulo>
+        <Campo
+          como="textarea"
+          id="inscripcion.campos.comentarioAyuda"
+          rows={3}
+          placeholder="Condiciones de salud, accesibilidad, hermanos en la escuela…"
+          value={datos.comentario}
+          onChange={cambiar("comentario")}
+        />
+      </label>
+
+      <button className="pill formulario__enviar" type="submit">
+        <Texto id="inscripcion.campos.enviar">Enviar solicitud</Texto>
+        <Icon icon="ph:paper-plane-tilt" width={16} height={16} aria-hidden="true" />
+      </button>
+    </form>
+    )}
+    </>
+  );
 
   const contenido = {
     pasos: (
@@ -184,161 +317,55 @@ export default function Inscripcion() {
           </p>
         </div>
 
-        {!inscripcionAbierta ? (
-          <div className="cerrada">
-            <Icon icon="ph:lock-simple" width={40} height={40} aria-hidden="true" />
-            <h3 className="cerrada__titulo">
-              <Texto id="inscripcion.cerrada.titulo">La inscripción está cerrada</Texto>
-            </h3>
-            <p className="cerrada__texto">{mensajeCierre}</p>
-          </div>
-        ) : (
-          <>
-          <Caso visible={enviado} cuando="después de enviar la solicitud">
-            <div className="exito">
-              <Icon icon="ph:check-circle" width={44} height={44} aria-hidden="true" />
-              <h3 className="exito__titulo">
-                <Texto id="inscripcion.exito.titulo">Solicitud registrada</Texto>
-              </h3>
-              <p className="exito__texto">
-                <Texto id="inscripcion.exito.saludo">Gracias,</Texto> {datos.nombre || "[nombre]"}.{" "}
-                <Texto id="inscripcion.exito.antesEmail">Secretaría se comunica a</Texto>{" "}
-                {datos.email || "[email]"}{" "}
-                <Texto id="inscripcion.exito.despuesEmail">
-                  con el turno para presentar la documentación.
-                </Texto>
-              </p>
-              <button
-                className="pill"
-                onClick={() => {
-                  setDatos(vacio);
-                  setEnviado(false);
-                }}
-              >
-                <Texto id="inscripcion.exito.otra">Cargar otra solicitud</Texto>
-              </button>
-            </div>
-          </Caso>
-          {!enviado && (
-          <form className="formulario" onSubmit={enviar}>
-            <p className="formulario__grupo">
-              <Texto id="inscripcion.campos.grupoEstudiante">Datos del estudiante</Texto>
-            </p>
-            <label className="campo">
-              <Rotulo id="apellido">Apellido</Rotulo>
-              <input required value={datos.apellido} onChange={cambiar("apellido")} />
-            </label>
-            <label className="campo">
-              <Rotulo id="nombre">Nombre</Rotulo>
-              <input required value={datos.nombre} onChange={cambiar("nombre")} />
-            </label>
-            <label className="campo">
-              <Rotulo id="dni">DNI</Rotulo>
-              <input
-                required
-                inputMode="numeric"
-                pattern="[0-9]{7,8}"
-                title="7 u 8 dígitos, sin puntos"
-                value={datos.dni}
-                onChange={cambiar("dni")}
-              />
-            </label>
-            <label className="campo">
-              <Rotulo id="nacimiento">Fecha de nacimiento</Rotulo>
-              <input required type="date" value={datos.nacimiento} onChange={cambiar("nacimiento")} />
-            </label>
-            <label className="campo campo--ancho">
-              <Rotulo id="escuela">Escuela primaria de origen</Rotulo>
-              <input required value={datos.escuela} onChange={cambiar("escuela")} />
-            </label>
-            <label className="campo">
-              <Rotulo id="orientacion">Ingresa a</Rotulo>
-              <Selector
-                id="orientacion"
-                opciones={["Ciclo Básico", "Ciclo Superior · Informática", "Ciclo Superior · Programación"]}
-                value={datos.orientacion}
-                onChange={cambiar("orientacion")}
-              />
-            </label>
-
-            <p className="formulario__grupo">
-              <Texto id="inscripcion.campos.grupoAdulto">Adulto responsable</Texto>
-            </p>
-            <label className="campo">
-              <Rotulo id="tutor">Apellido y nombre</Rotulo>
-              <input required value={datos.tutor} onChange={cambiar("tutor")} />
-            </label>
-            <label className="campo">
-              <Rotulo id="vinculo">Vínculo</Rotulo>
-              <Selector
-                id="vinculo"
-                opciones={["Madre", "Padre", "Tutor/a"]}
-                value={datos.vinculo}
-                onChange={cambiar("vinculo")}
-              />
-            </label>
-            <label className="campo">
-              <Rotulo id="telefono">Teléfono</Rotulo>
-              <input required type="tel" value={datos.telefono} onChange={cambiar("telefono")} />
-            </label>
-            <label className="campo">
-              <Rotulo id="email">Email</Rotulo>
-              <input required type="email" value={datos.email} onChange={cambiar("email")} />
-            </label>
-            <label className="campo campo--ancho">
-              <Rotulo id="comentario">Comentarios (opcional)</Rotulo>
-              <Campo
-                como="textarea"
-                id="inscripcion.campos.comentarioAyuda"
-                rows={3}
-                placeholder="Condiciones de salud, accesibilidad, hermanos en la escuela…"
-                value={datos.comentario}
-                onChange={cambiar("comentario")}
-              />
-            </label>
-
-            <button className="pill formulario__enviar" type="submit">
-              <Texto id="inscripcion.campos.enviar">Enviar solicitud</Texto>
-              <Icon icon="ph:paper-plane-tilt" width={16} height={16} aria-hidden="true" />
-            </button>
-          </form>
-          )}
-          </>
-        )}
+        <Dinamico id="formulario">{formulario}</Dinamico>
       </>
     ),
   };
 
+  /* Parte automática: el encabezado dice "abierta" o "cerrada" según el ajuste. */
+  const encabezado = (
+    <Encabezado id="inscripcion.hero"
+      chip={<Texto id="inscripcion.hero.chip">CICLO LECTIVO 2027</Texto>}
+      titulo={<Texto id="inscripcion.hero.titulo">Inscripción</Texto>}
+      destacado={
+        inscripcionAbierta ? (
+          <Texto id="inscripcion.hero.abierta">abierta</Texto>
+        ) : (
+          <Texto id="inscripcion.hero.cerrada">cerrada</Texto>
+        )
+      }
+      texto={
+        inscripcionAbierta ? (
+          <Texto id="inscripcion.hero.texto">
+            Del 15 al 30 de septiembre recibimos las solicitudes de ingreso a
+            1° año. Completá el formulario y secretaría te asigna un turno
+            para presentar la documentación.
+          </Texto>
+        ) : (
+          mensajeCierre
+        )
+      }
+    />
+  );
+
+  if (guardada)
+    return (
+      <main>
+        <PaginaEditable clave="inscripcion.pagina" pagina={guardada} dinamicos={{ encabezado, formulario }} />
+      </main>
+    );
+
   return (
     <main>
-      <Encabezado id="inscripcion.hero"
-        chip={<Texto id="inscripcion.hero.chip">CICLO LECTIVO 2027</Texto>}
-        titulo={<Texto id="inscripcion.hero.titulo">Inscripción</Texto>}
-        destacado={
-          inscripcionAbierta ? (
-            <Texto id="inscripcion.hero.abierta">abierta</Texto>
-          ) : (
-            <Texto id="inscripcion.hero.cerrada">cerrada</Texto>
-          )
-        }
-        texto={
-          inscripcionAbierta ? (
-            <Texto id="inscripcion.hero.texto">
-              Del 15 al 30 de septiembre recibimos las solicitudes de ingreso a
-              1° año. Completá el formulario y secretaría te asigna un turno
-              para presentar la documentación.
-            </Texto>
-          ) : (
-            mensajeCierre
-          )
-        }
-      />
+      <Dinamico id="encabezado">{encabezado}</Dinamico>
 
       {listaSecciones.map((seccion) => (
         <Bloque key={seccion.id} {...bloqueSeccion(seccion)} como="section" className={seccion.clase}>
           {contenido[seccion.id]}
         </Bloque>
       ))}
+
+      <ZonaLibre seccion zona="inscripcion.libre" titulo="Inscripción" />
     </main>
   );
 }

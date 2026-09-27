@@ -10,6 +10,7 @@ const {
   actualizarUsuario,
   eliminarUsuario,
   permitirCambioContrasena,
+  restablecerContrasena,
 } = require('../controllers/usuario.Controller');
 
 // Todas las rutas de usuarios exigen autenticación y rol direccion (superadmin).
@@ -23,6 +24,7 @@ router.post('/', crearUsuario);
 // IMPORTANTE: /permitir-cambio/:id debe ir ANTES de /:id, si no Express capturaría
 // "permitir-cambio" como si fuera un :id y la ruta nunca se alcanzaría.
 router.put('/permitir-cambio/:id', permitirCambioContrasena);
+router.put('/:id/password', restablecerContrasena);
 router.put('/:id', actualizarUsuario);
 router.delete('/:id', eliminarUsuario);
 

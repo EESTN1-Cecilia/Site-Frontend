@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { campos, conId, guardarLocal, leerLocal, texto } from "./almacen.js";
 import { enviar } from "./conexion.js";
 import {
   borrarPublicacionEnServidor,
@@ -136,28 +137,41 @@ const completar = (guardada) => {
   ];
 };
 
+const CAMPOS = ["titulo", "seccion", "ruta", "categoria", "autor", "fecha", "estado"];
+
+/* Cada nota con sus campos de texto y bloques bien formados; sin la forma
+   esperada valen las notas originales. */
+const sanear = (datos) =>
+  Array.isArray(datos)
+    ? conId(datos).map((pub) => ({
+        ...pub,
+        ...campos(pub, CAMPOS),
+        bloques: conId(pub.bloques).map((b) => ({
+          id: b.id,
+          tipo: texto(b.tipo, "parrafo"),
+          ...campos(b, ["texto", "url", "epigrafe"]),
+        })),
+      }))
+    : semilla();
+
 const leer = () => {
-  try {
-    const guardada = JSON.parse(localStorage.getItem(CLAVE));
-    return guardada ? completar(guardada) : semilla();
-  } catch {
-    return semilla();
-  }
+  const guardada = leerLocal(CLAVE);
+  return Array.isArray(guardada) ? sanear(completar(guardada)) : semilla();
 };
 
 let lista = leer();
 const oyentes = new Set();
 
 const persistir = () => {
-  localStorage.setItem(CLAVE, JSON.stringify(lista));
+  guardarLocal(CLAVE, lista);
   oyentes.forEach((fn) => fn(lista));
 };
 
 /* Lo que llega del servidor al abrir el sitio. null = todavía no se cargó
-   ninguna nota, así que valen las que trae el sitio. */
+   ninguna nota, así que valen las que trae el sitio (no la copia de este
+   navegador, que pudo dejar otra persona). */
 export const hidratarPublicaciones = (deServidor) => {
-  if (!deServidor) return;
-  lista = deServidor;
+  lista = sanear(deServidor);
   persistir();
 };
 
@@ -210,11 +224,6 @@ export const nuevaPublicacion = () => {
   lista = [pub, ...lista];
   persistir();
   return pub;
-};
-
-export const restaurarPublicaciones = () => {
-  lista = semilla();
-  persistir();
 };
 
 export function usePublicaciones() {

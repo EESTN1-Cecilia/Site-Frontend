@@ -20,6 +20,8 @@ const db = require('../database/db');
 const googleDriveService = require('../services/googleDriveService');
 const { validarPDF, sanitizarNombreArchivo } = require('../controllers/upload.Controller');
 const { esRolValido, ROLES } = require('../utils/roles');
+const { OPCIONES } = require('../utils/tokens');
+const intentos = require('../utils/intentos');
 
 const CONTRASENA = 'password123';
 const PDF_VALIDO = Buffer.from('%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R>>endobj\nxref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \ntrailer<</Size 4/Root 1 0 R>>\nstartxref\n190\n%%EOF');
@@ -29,15 +31,15 @@ let puerto;
 let ids = {};
 
 function generarToken(idUsuario) {
-  return jwt.sign({ idUsuario }, process.env.JWT_SECRET, { expiresIn: '1h', algorithm: 'HS256' });
+  return jwt.sign({ idUsuario }, process.env.JWT_SECRET, { ...OPCIONES, expiresIn: '1h', algorithm: 'HS256' });
 }
 
 function generarTokenExpirado(idUsuario) {
-  return jwt.sign({ idUsuario }, process.env.JWT_SECRET, { expiresIn: '-1s', algorithm: 'HS256' });
+  return jwt.sign({ idUsuario }, process.env.JWT_SECRET, { ...OPCIONES, expiresIn: '-1s', algorithm: 'HS256' });
 }
 
 function generarTokenInvalido() {
-  return jwt.sign({ idUsuario: 999 }, 'clave-incorrecta', { expiresIn: '1h', algorithm: 'HS256' });
+  return jwt.sign({ idUsuario: 999 }, 'clave-incorrecta', { ...OPCIONES, expiresIn: '1h', algorithm: 'HS256' });
 }
 
 async function peticion(metodo, ruta, cuerpo, encabezados = {}) {
@@ -123,7 +125,9 @@ function mockearDrive() {
 
 async function configurarBD() {
   ids = {};
+  intentos.reiniciar();
   await db.asegurarMigraciones();
+  await db.ejecutar('DELETE FROM tokens_revocados');
   await db.ejecutar('DELETE FROM upload_logs');
   await db.ejecutar('DELETE FROM usuarios');
   await db.ejecutar('DELETE FROM areas');
@@ -327,6 +331,63 @@ describe('Autenticación', () => {
     const res = await peticion('POST', '/api/auth/logout');
     assert.strictEqual(res.estado, 401);
   });
+
+  it('logout revoca el token en el servidor', async () => {
+    const login = await peticion('POST', '/api/auth/login', { username: 'director', password: CONTRASENA });
+    const auth = { Authorization: `Bearer ${login.cuerpo.token}` };
+    assert.strictEqual((await peticion('GET', '/api/auth/me', null, auth)).estado, 200);
+    assert.strictEqual((await peticion('POST', '/api/auth/logout', null, auth)).estado, 200);
+    assert.strictEqual((await peticion('GET', '/api/auth/me', null, auth)).estado, 401);
+  });
+
+  it('logout de una sesión no cierra las otras de la misma cuenta', async () => {
+    const a = await peticion('POST', '/api/auth/login', { username: 'director', password: CONTRASENA });
+    const b = await peticion('POST', '/api/auth/login', { username: 'director', password: CONTRASENA });
+    await peticion('POST', '/api/auth/logout', null, { Authorization: `Bearer ${a.cuerpo.token}` });
+    const res = await peticion('GET', '/api/auth/me', null, { Authorization: `Bearer ${b.cuerpo.token}` });
+    assert.strictEqual(res.estado, 200);
+  });
+
+  it('token firmado con la clave pero sin issuer/audience propios → 401', async () => {
+    const token = jwt.sign({ idUsuario: ids.director }, process.env.JWT_SECRET, { expiresIn: '1h', algorithm: 'HS256' });
+    const res = await peticion('GET', '/api/auth/me', null, { Authorization: `Bearer ${token}` });
+    assert.strictEqual(res.estado, 401);
+  });
+
+  it('login con cuerpo que no es JSON → 400 (no 500)', async () => {
+    const res = await peticion('POST', '/api/auth/login', { username: 'director', password: CONTRASENA }, { 'Content-Type': 'text/plain' });
+    assert.strictEqual(res.estado, 400);
+  });
+
+  it(`después de ${intentos.MAX_POR_USUARIO} intentos fallidos el usuario queda bloqueado (429)`, async () => {
+    for (let i = 0; i < intentos.MAX_POR_USUARIO; i++) {
+      const res = await peticion('POST', '/api/auth/login', { username: 'jefe_lengua', password: 'incorrecta' });
+      assert.strictEqual(res.estado, 401);
+    }
+    // Aun con la contraseña correcta: está bloqueado hasta que venza la ventana.
+    const res = await peticion('POST', '/api/auth/login', { username: 'jefe_lengua', password: CONTRASENA });
+    assert.strictEqual(res.estado, 429);
+    intentos.reiniciar();
+  });
+
+  it('un login correcto limpia los fallos del usuario', async () => {
+    for (let i = 0; i < intentos.MAX_POR_USUARIO - 1; i++) {
+      await peticion('POST', '/api/auth/login', { username: 'jefe_mate', password: 'incorrecta' });
+    }
+    assert.strictEqual((await peticion('POST', '/api/auth/login', { username: 'jefe_mate', password: CONTRASENA })).estado, 200);
+    await peticion('POST', '/api/auth/login', { username: 'jefe_mate', password: 'incorrecta' });
+    assert.strictEqual((await peticion('POST', '/api/auth/login', { username: 'jefe_mate', password: CONTRASENA })).estado, 200);
+    intentos.reiniciar();
+  });
+
+  it('muchos intentos fallidos desde la misma IP con usuarios distintos → 429', async () => {
+    let ultimo;
+    for (let i = 0; i < 21; i++) {
+      ultimo = await peticion('POST', '/api/auth/login', { username: `inexistente_${i}`, password: 'x' });
+    }
+    assert.strictEqual(ultimo.estado, 429);
+    intentos.reiniciar();
+  });
 });
 
 // ======================================================================
@@ -455,6 +516,62 @@ describe('Gestión de Usuarios', () => {
     const res = await peticion('GET', '/api/usuarios/areas', null, { Authorization: `Bearer ${tokenDirector}` });
     assert.strictEqual(res.estado, 200);
     assert.ok(res.cuerpo.areas.length >= 2);
+  });
+
+  it('dirección no puede desactivarse ni quitarse el rol a sí misma → 400', async () => {
+    const auth = { Authorization: `Bearer ${tokenDirector}` };
+    assert.strictEqual((await peticion('DELETE', `/api/usuarios/${ids.director}`, null, auth)).estado, 400);
+    assert.strictEqual((await peticion('PUT', `/api/usuarios/${ids.director}`, { activo: false }, auth)).estado, 400);
+    assert.strictEqual((await peticion('PUT', `/api/usuarios/${ids.director}`, { rol: 'server' }, auth)).estado, 400);
+    const yo = await db.obtenerFila('SELECT rol, activo FROM usuarios WHERE id = ?', ids.director);
+    assert.strictEqual(yo.rol, 'direccion');
+    assert.strictEqual(yo.activo, 1);
+  });
+
+  it('asignar un área inexistente → 400', async () => {
+    const res = await peticion('PUT', `/api/usuarios/${ids.jefe_mate}`, { area_id: 99999 }, { Authorization: `Bearer ${tokenDirector}` });
+    assert.strictEqual(res.estado, 400);
+  });
+
+  it('dar área a un rol que no es jefatura_area → 400', async () => {
+    const area = await db.obtenerFila('SELECT id FROM areas LIMIT 1');
+    const res = await peticion('PUT', `/api/usuarios/${ids.servidor}`, { area_id: area.id }, { Authorization: `Bearer ${tokenDirector}` });
+    assert.strictEqual(res.estado, 400);
+  });
+
+  it('pasar a jefatura_area a un rol sin área → 400', async () => {
+    const res = await peticion('PUT', `/api/usuarios/${ids.servidor}`, { rol: 'jefatura_area' }, { Authorization: `Bearer ${tokenDirector}` });
+    assert.strictEqual(res.estado, 400);
+  });
+
+  it('pasar de jefatura_area a server limpia el área', async () => {
+    const jefe = await db.obtenerFila('SELECT id FROM usuarios WHERE username = ?', 'jefe_nuevo');
+    const res = await peticion('PUT', `/api/usuarios/${jefe.id}`, { rol: 'server' }, { Authorization: `Bearer ${tokenDirector}` });
+    assert.strictEqual(res.estado, 200);
+    const actualizado = await db.obtenerFila('SELECT rol, area_id FROM usuarios WHERE id = ?', jefe.id);
+    assert.strictEqual(actualizado.rol, 'server');
+    assert.strictEqual(actualizado.area_id, null);
+  });
+
+  it('restablecer la contraseña de una cuenta cierra sus sesiones y deja entrar con la nueva', async () => {
+    const tokenViejo = generarToken(ids.servidor);
+    assert.strictEqual((await peticion('GET', '/api/auth/me', null, { Authorization: `Bearer ${tokenViejo}` })).estado, 200);
+
+    const res = await peticion('PUT', `/api/usuarios/${ids.servidor}/password`, { nueva_password: 'Temporal1234' }, { Authorization: `Bearer ${tokenDirector}` });
+    assert.strictEqual(res.estado, 200);
+
+    assert.strictEqual((await peticion('GET', '/api/auth/me', null, { Authorization: `Bearer ${tokenViejo}` })).estado, 401);
+    const login = await peticion('POST', '/api/auth/login', { username: 'servidor', password: 'Temporal1234' });
+    assert.strictEqual(login.estado, 200);
+    const fila = await db.obtenerFila('SELECT password_change_allowed FROM usuarios WHERE id = ?', ids.servidor);
+    assert.strictEqual(fila.password_change_allowed, 1);
+  });
+
+  it('restablecer contraseña: sólo dirección y con contraseña de 8 o más', async () => {
+    const corta = await peticion('PUT', `/api/usuarios/${ids.jefe_mate}/password`, { nueva_password: '123' }, { Authorization: `Bearer ${tokenDirector}` });
+    assert.strictEqual(corta.estado, 400);
+    const sinPermiso = await peticion('PUT', `/api/usuarios/${ids.jefe_mate}/password`, { nueva_password: 'Temporal1234' }, { Authorization: `Bearer ${generarToken(ids.jefe_lengua)}` });
+    assert.strictEqual(sinPermiso.estado, 403);
   });
 });
 
@@ -624,6 +741,16 @@ describe('Seguridad', () => {
 
   it('destination inválido para dirección → 400', async () => {
     const res = await peticionUpload('/api/upload', PDF_VALIDO, 'test.pdf', { destination: 'carpeta_secreta' }, { Authorization: `Bearer ${tokenDirector}` });
+    assert.strictEqual(res.estado, 400);
+  });
+
+  it('multipart con más campos de los que usa el endpoint → 400', async () => {
+    const res = await peticionUpload('/api/upload', PDF_VALIDO, 'test.pdf', { a: '1', b: '2', c: '3' }, { Authorization: `Bearer ${tokenServidor}` });
+    assert.strictEqual(res.estado, 400);
+  });
+
+  it('multipart con un campo de texto demasiado largo → 400', async () => {
+    const res = await peticionUpload('/api/upload', PDF_VALIDO, 'test.pdf', { destination: 'x'.repeat(5000) }, { Authorization: `Bearer ${tokenDirector}` });
     assert.strictEqual(res.estado, 400);
   });
 

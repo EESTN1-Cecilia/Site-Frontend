@@ -11,6 +11,8 @@ import Texto, {
   useLista,
   usePlano,
 } from "../components/Texto.jsx";
+import ZonaLibre from "../components/ZonaLibre.jsx";
+import { Dinamico, PaginaEditable, usePaginaGuardada } from "../components/PaginaEditable.jsx";
 import Bloques from "../components/Bloques.jsx";
 import { pasosPrevias } from "../contenido.js";
 import { useMesas } from "../mesas.js";
@@ -70,8 +72,10 @@ const secciones = [
   { id: "dni", clase: "seccion contenedor" },
 ];
 
-/* Piezas de la barra de filtros: se mueven, ocultan y cambian de fondo. */
+/* Piezas de la barra de filtros: se mueven, ocultan y cambian de fondo. En
+   el editor completo, cada una es un bloque automático aparte. */
 const filtros = [{ id: "busqueda" }, { id: "anios" }, { id: "carpeta" }];
+const DINAMICO_DE_FILTRO = { busqueda: "buscador", anios: "anios", carpeta: "carpeta" };
 
 const columnas = [
   ["materia", "Materia"],
@@ -121,6 +125,172 @@ export default function Previas({ params }) {
     pasosPrevias.map(([titulo, detalle], i) => ({ id: `p${i}`, titulo, detalle })),
     { duplicable: true },
   );
+  const guardada = usePaginaGuardada("previas.pagina");
+
+  /* Partes automáticas: se arman con datos y responden a clics. Si la página
+     está armada con el editor completo, van en sus lugares de ahí. */
+  const avisosPublicados = avisos.length > 0 && (
+    <Bloque id="previas.avisos" como="section" className="seccion contenedor avisos-publicados">
+      {avisos.map((pub) => (
+        <Aviso pub={pub} key={pub.id} />
+      ))}
+    </Bloque>
+  );
+
+  const piezaDeFiltro = (filtro) => {
+    const b = bloqueFiltro(filtro);
+
+    if (filtro.id === "busqueda")
+      return (
+        <Bloque key={filtro.id} {...b} como="label" className="campo campo--busca">
+          <Icon icon="ph:magnifying-glass" width={18} height={18} aria-hidden="true" />
+          <Campo
+            id="previas.cronograma.buscar"
+            placeholder="Buscar materia"
+            type="search"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+        </Bloque>
+      );
+
+    if (filtro.id === "anios")
+      return (
+        <Bloque key={filtro.id} {...b} className="filtros__chips">
+          {anios.map((valor) => (
+            <button
+              key={valor}
+              className={`filtro ${anio === valor ? "filtro--activo" : ""}`}
+              onClick={() => setAnio(valor)}
+            >
+              {valor === "Todos" ? <Texto id="previas.cronograma.todos">Todos</Texto> : valor}
+            </button>
+          ))}
+        </Bloque>
+      );
+
+    return (
+      <Bloque key={filtro.id} {...b} como="span" className="filtros__carpeta">
+        <Enlace
+          id="mesas:carpeta"
+          dueno={MESAS}
+          href={carpeta}
+          className="boton boton--primario"
+          ocultarVacio
+        >
+          <Icon icon="ph:google-drive-logo" width={16} height={16} aria-hidden="true" />
+          <Texto id="previas.cronograma.carpeta">Planes de trabajo en Drive</Texto>
+        </Enlace>
+      </Bloque>
+    );
+  };
+  const filtro = (id) => piezaDeFiltro(listaFiltros.find((f) => f.id === id) ?? { id });
+
+  const barraDeFiltros = (
+    <div className="filtros">
+      {listaFiltros.map((f) => (
+        <Dinamico key={f.id} id={DINAMICO_DE_FILTRO[f.id]}>
+          {piezaDeFiltro(f)}
+        </Dinamico>
+      ))}
+    </div>
+  );
+
+  const tablaDeMesas = (
+    <>
+      <Bloque id="previas.cronograma.tabla" className="tabla-scroll">
+        <table className="tabla">
+          <thead>
+            <tr>
+              {columnas.map(([clave, nombre]) => (
+                <th key={clave}>
+                  <Texto id={`previas.cronograma.columnas.${clave}`}>{nombre}</Texto>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtradas.map((mesa) => {
+              const clave = (campo) => `mesa:${mesa.id}:${campo}`;
+
+              return (
+                <tr key={mesa.id}>
+                  <td data-label={columna("materia")}>
+                    <strong>
+                      <Texto id={clave("materia")} dueno={MESAS}>{mesa.materia}</Texto>
+                    </strong>
+                  </td>
+                  <td data-label={columna("anio")}>
+                    <Texto id={clave("anio")} dueno={MESAS}>{mesa.anio}</Texto>
+                  </td>
+                  <td data-label={columna("fecha")} className="capitalizar">
+                    <Dato id={clave("fecha")} dueno={MESAS} tipo="date" valor={mesa.fecha} formato={fecha} />
+                  </td>
+                  <td data-label={columna("hora")}>
+                    <Dato id={clave("hora")} dueno={MESAS} tipo="time" valor={mesa.hora} />
+                  </td>
+                  <td data-label={columna("aula")}>
+                    <Texto id={clave("aula")} dueno={MESAS}>{mesa.aula}</Texto>
+                  </td>
+                  <td data-label={columna("docente")}>
+                    <Texto id={clave("docente")} dueno={MESAS}>{mesa.docente}</Texto>
+                  </td>
+                  <td data-label={columna("drive")}>
+                    <Enlace
+                      id={clave("drive")}
+                      dueno={MESAS}
+                      href={mesa.drive}
+                      className="boton boton--fino"
+                      aria-label={`Drive de ${mesa.materia}`}
+                      vacio={
+                        <span className="sin-link">
+                          <Texto id="previas.cronograma.sinDrive">Sin cargar</Texto>
+                        </span>
+                      }
+                    >
+                      <Icon icon="ph:google-drive-logo" width={15} height={15} aria-hidden="true" />
+                      <Texto id="previas.cronograma.abrir">Abrir</Texto>
+                    </Enlace>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </Bloque>
+      <Caso visible={filtradas.length === 0} cuando="cuando ninguna mesa coincide con la búsqueda o el año elegido">
+        <p className="vacio">
+          <Texto id="previas.cronograma.vacio">No hay mesas con esos filtros.</Texto>
+        </p>
+      </Caso>
+    </>
+  );
+
+  /* Como estaba antes de separarlo en piezas (páginas armadas antes). */
+  const buscadorYTabla = (
+    <>
+      <div className="filtros">{listaFiltros.map(piezaDeFiltro)}</div>
+      {tablaDeMesas}
+    </>
+  );
+
+  if (guardada)
+    return (
+      <main>
+        <PaginaEditable
+          clave="previas.pagina"
+          pagina={guardada}
+          dinamicos={{
+            avisos: avisosPublicados,
+            buscador: filtro("busqueda"),
+            anios: filtro("anios"),
+            carpeta: filtro("carpeta"),
+            tabla: tablaDeMesas,
+            cronograma: buscadorYTabla,
+          }}
+        />
+      </main>
+    );
 
   const contenido = {
     pasos: (
@@ -177,125 +347,8 @@ export default function Previas({ params }) {
           </p>
         </div>
 
-        <div className="filtros">
-          {listaFiltros.map((filtro) => {
-            const b = bloqueFiltro(filtro);
-
-            if (filtro.id === "busqueda")
-              return (
-                <Bloque key={filtro.id} {...b} como="label" className="campo campo--busca">
-                  <Icon icon="ph:magnifying-glass" width={18} height={18} aria-hidden="true" />
-                  <Campo
-                    id="previas.cronograma.buscar"
-                    placeholder="Buscar materia"
-                    type="search"
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                  />
-                </Bloque>
-              );
-
-            if (filtro.id === "anios")
-              return (
-                <Bloque key={filtro.id} {...b} className="filtros__chips">
-                  {anios.map((valor) => (
-                    <button
-                      key={valor}
-                      className={`filtro ${anio === valor ? "filtro--activo" : ""}`}
-                      onClick={() => setAnio(valor)}
-                    >
-                      {valor === "Todos" ? (
-                        <Texto id="previas.cronograma.todos">Todos</Texto>
-                      ) : (
-                        valor
-                      )}
-                    </button>
-                  ))}
-                </Bloque>
-              );
-
-            return (
-              <Bloque key={filtro.id} {...b} como="span" className="filtros__carpeta">
-                <Enlace
-                  id="mesas:carpeta"
-                  dueno={MESAS}
-                  href={carpeta}
-                  className="boton boton--primario"
-                  ocultarVacio
-                >
-                  <Icon icon="ph:google-drive-logo" width={16} height={16} aria-hidden="true" />
-                  <Texto id="previas.cronograma.carpeta">Planes de trabajo en Drive</Texto>
-                </Enlace>
-              </Bloque>
-            );
-          })}
-        </div>
-
-        <Bloque id="previas.cronograma.tabla" className="tabla-scroll">
-          <table className="tabla">
-            <thead>
-              <tr>
-                {columnas.map(([clave, nombre]) => (
-                  <th key={clave}>
-                    <Texto id={`previas.cronograma.columnas.${clave}`}>{nombre}</Texto>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtradas.map((mesa) => {
-                const clave = (campo) => `mesa:${mesa.id}:${campo}`;
-
-                return (
-                  <tr key={mesa.id}>
-                    <td data-label={columna("materia")}>
-                      <strong>
-                        <Texto id={clave("materia")} dueno={MESAS}>{mesa.materia}</Texto>
-                      </strong>
-                    </td>
-                    <td data-label={columna("anio")}>
-                      <Texto id={clave("anio")} dueno={MESAS}>{mesa.anio}</Texto>
-                    </td>
-                    <td data-label={columna("fecha")} className="capitalizar">
-                      <Dato id={clave("fecha")} dueno={MESAS} tipo="date" valor={mesa.fecha} formato={fecha} />
-                    </td>
-                    <td data-label={columna("hora")}>
-                      <Dato id={clave("hora")} dueno={MESAS} tipo="time" valor={mesa.hora} />
-                    </td>
-                    <td data-label={columna("aula")}>
-                      <Texto id={clave("aula")} dueno={MESAS}>{mesa.aula}</Texto>
-                    </td>
-                    <td data-label={columna("docente")}>
-                      <Texto id={clave("docente")} dueno={MESAS}>{mesa.docente}</Texto>
-                    </td>
-                    <td data-label={columna("drive")}>
-                      <Enlace
-                        id={clave("drive")}
-                        dueno={MESAS}
-                        href={mesa.drive}
-                        className="boton boton--fino"
-                        aria-label={`Drive de ${mesa.materia}`}
-                        vacio={
-                          <span className="sin-link">
-                            <Texto id="previas.cronograma.sinDrive">Sin cargar</Texto>
-                          </span>
-                        }
-                      >
-                        <Icon icon="ph:google-drive-logo" width={15} height={15} aria-hidden="true" />
-                        <Texto id="previas.cronograma.abrir">Abrir</Texto>
-                      </Enlace>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </Bloque>
-        <Caso visible={filtradas.length === 0} cuando="cuando ninguna mesa coincide con la búsqueda o el año elegido">
-          <p className="vacio">
-            <Texto id="previas.cronograma.vacio">No hay mesas con esos filtros.</Texto>
-          </p>
-        </Caso>
+        {barraDeFiltros}
+        <Dinamico id="tabla">{tablaDeMesas}</Dinamico>
       </div>
     ),
 
@@ -331,19 +384,15 @@ export default function Previas({ params }) {
         }
       />
 
-      {avisos.length > 0 && (
-        <Bloque id="previas.avisos" como="section" className="seccion contenedor avisos-publicados">
-          {avisos.map((pub) => (
-            <Aviso pub={pub} key={pub.id} />
-          ))}
-        </Bloque>
-      )}
+      <Dinamico id="avisos">{avisosPublicados}</Dinamico>
 
       {listaSecciones.map((seccion) => (
         <Bloque key={seccion.id} {...bloqueSeccion(seccion)} como="section" className={seccion.clase}>
           {contenido[seccion.id]}
         </Bloque>
       ))}
+
+      <ZonaLibre seccion zona="previas.libre" titulo="Intensificación y previas" />
     </main>
   );
 }

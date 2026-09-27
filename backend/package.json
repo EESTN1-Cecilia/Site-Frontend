@@ -15,6 +15,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node app.js",
+    "restablecer-admin": "node src/scripts/restablecer-admin.js",
     "test": "node --test src/test/*.test.js"
   },
   "keywords": [],

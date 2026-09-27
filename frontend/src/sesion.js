@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { cerrarSesion, iniciarSesion, obtenerUsuario } from "./services/api.js";
 import { ajustesActuales } from "./ajustes.js";
+import { borrarCopias } from "./almacen.js";
+import { borrarToken, guardarToken, sesionRecordada, tokenActual } from "./conexion.js";
 
 /* El backend nombra algunos roles distinto. */
 const equivalencias = { jefatura_area: "jefatura", jefe_area: "jefatura" };
@@ -99,74 +101,128 @@ export const quienEditaPagina = (pagina) =>
 export const verPanel = (usuario) =>
   Object.keys(accesos).some((ruta) => puede(usuario, ruta));
 
+/* Quién está conectado. Se guarda junto al token: en sessionStorage si se
+   pidió no mantener la sesión (se borra al cerrar el navegador), si no en
+   localStorage. */
 const CLAVE = "tec1-sesion";
-const TOKEN = "site_token";
 
 const leer = () => {
-  try {
-    return JSON.parse(localStorage.getItem(CLAVE)) || null;
-  } catch {
-    return null;
+  for (const almacen of ["sessionStorage", "localStorage"]) {
+    try {
+      const guardada = JSON.parse(window[almacen].getItem(CLAVE));
+      if (guardada) return guardada;
+    } catch {
+      /* nada guardado o almacenamiento bloqueado */
+    }
+  }
+  return null;
+};
+
+const olvidarSesion = () => {
+  for (const almacen of ["sessionStorage", "localStorage"]) {
+    try {
+      window[almacen].removeItem(CLAVE);
+    } catch {
+      /* nada que borrar */
+    }
   }
 };
 
-let usuario = leer();
+/* Sin token no hay sesión: lo que haya quedado guardado sin él no vale.
+   Sólo en desarrollo existe la sesión de demostración, que no tiene token. */
+const valeSinToken = import.meta.env.DEV;
+let usuario = tokenActual() || valeSinToken ? leer() : null;
 const oyentes = new Set();
 
 const avisar = () => oyentes.forEach((fn) => fn(usuario));
 
-export const entrar = (datos) => {
+/* Se escribe primero donde va y después se borra del otro almacenamiento:
+   reescribir el mismo valor no avisa a las otras pestañas (App las recarga
+   cuando cambia la sesión), así que restaurar la sesión al abrir no las
+   hace recargar una y otra vez. */
+export const entrar = (datos, recordar = true) => {
   usuario = datos;
-  localStorage.setItem(CLAVE, JSON.stringify(datos));
-  avisar();
-};
-
-export const salir = async () => {
-  const token = localStorage.getItem(TOKEN);
-
-  /* Si el backend no responde igual cerramos la sesión local. */
-  if (token) {
-    await cerrarSesion(token).catch(() => {});
-    localStorage.removeItem(TOKEN);
+  const [destino, otro] = recordar
+    ? ["localStorage", "sessionStorage"]
+    : ["sessionStorage", "localStorage"];
+  try {
+    window[destino].setItem(CLAVE, JSON.stringify(datos));
+    window[otro].removeItem(CLAVE);
+  } catch {
+    /* sin almacenamiento: la sesión dura lo que la pestaña */
   }
-
-  usuario = null;
-  localStorage.removeItem(CLAVE);
   avisar();
 };
 
-/* Login contra el backend. Si no está levantado, tira y el
-   formulario cae al modo demostración. */
-export const entrarConBackend = async (username, password) => {
+/* Sale al instante: se borra todo lo local antes de avisarle al servidor, así
+   la sesión no queda abierta si la red tarda o se cierra la pestaña. También
+   se borran las copias de contenido para la próxima persona. */
+export const salir = async () => {
+  const token = tokenActual();
+
+  borrarToken();
+  olvidarSesion();
+  borrarCopias();
+  usuario = null;
+  avisar();
+
+  /* El servidor revoca el token. Si no responde, igual la sesión local ya se cerró. */
+  if (token) await cerrarSesion(token).catch(() => {});
+};
+
+/* Login contra el backend. `recordar` es la casilla "Mantener sesión
+   iniciada": sin ella, la sesión se borra al cerrar el navegador. */
+export const entrarConBackend = async (username, password, recordar = true) => {
   const respuesta = await iniciarSesion(username, password);
 
-  localStorage.setItem(TOKEN, respuesta.token);
-  entrar({
-    rol: normalizarRol(respuesta.usuario.rol),
-    usuario: respuesta.usuario.username,
-    nombre: respuesta.usuario.nombre || respuesta.usuario.username,
-  });
+  /* Lo que dejó en este navegador la persona anterior no se usa. */
+  borrarCopias();
+  guardarToken(respuesta.token, recordar);
+  entrar(
+    {
+      rol: normalizarRol(respuesta.usuario.rol),
+      usuario: respuesta.usuario.username,
+      nombre: respuesta.usuario.nombre || respuesta.usuario.username,
+    },
+    recordar,
+  );
 
   return usuario;
 };
 
 /* Al abrir el sitio revalida el token guardado. */
 export const restaurarSesion = async () => {
-  const token = localStorage.getItem(TOKEN);
-  if (!token) return;
+  const token = tokenActual();
+  if (!token) {
+    if (usuario && !valeSinToken) {
+      olvidarSesion();
+      usuario = null;
+      avisar();
+    }
+    return;
+  }
 
   try {
     const { usuario: actual } = await obtenerUsuario(token);
-    entrar({
-      rol: normalizarRol(actual.rol),
-      usuario: actual.username,
-      nombre: actual.nombre || actual.username,
-    });
+    entrar(
+      {
+        rol: normalizarRol(actual.rol),
+        usuario: actual.username,
+        nombre: actual.nombre || actual.username,
+      },
+      sesionRecordada(),
+    );
   } catch (error) {
     /* Si el servidor no respondió, la sesión se mantiene: vuelve a valer
-       cuando el servidor vuelva. Sólo se descarta el token cuando el servidor
-       contestó que ya no sirve. */
-    if (!error.sinConexion) localStorage.removeItem(TOKEN);
+       cuando el servidor vuelva. Cuando el servidor contestó que el token ya
+       no sirve, se cierra la sesión entera (no sólo el token): si no, la
+       pantalla seguiría mostrando el panel con el rol anterior. */
+    if (!error.sinConexion) {
+      borrarToken();
+      olvidarSesion();
+      usuario = null;
+      avisar();
+    }
   }
 };
 

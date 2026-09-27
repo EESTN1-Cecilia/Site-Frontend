@@ -1,6 +1,23 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { comoInsertar } from "./links.js";
+import { comoInsertar, esLinkDeDocumento, esLinkValido } from "./links.js";
+
+test("esLinkValido: sólo http(s), y nada que no sea texto", () => {
+  assert.ok(esLinkValido("https://example.org"));
+  assert.ok(esLinkValido("  http://example.org  "));
+  for (const malo of ["javascript:alert(1)", "data:text/html,x", "/docs/a.pdf", "", null, undefined, 42, {}, ["https://a"]]) {
+    assert.equal(esLinkValido(malo), false, String(malo));
+  }
+});
+
+test("esLinkDeDocumento: http(s) o un archivo del propio sitio", () => {
+  for (const bueno of ["https://drive.google.com/file/d/x", "/docs/informe.pdf", "/pdfs/2do-año.pdf".replace("ñ", "n")]) {
+    assert.ok(esLinkDeDocumento(bueno), bueno);
+  }
+  for (const malo of ["//otro-sitio.com/a.pdf", "/\\otro-sitio.com", "/docs/../../etc", "javascript:x", "data:application/pdf;base64,AAA", "docs/a.pdf", 7]) {
+    assert.equal(esLinkDeDocumento(malo), false, String(malo));
+  }
+});
 
 test("YouTube: cualquier forma del link da el mismo iframe", () => {
   for (const url of [

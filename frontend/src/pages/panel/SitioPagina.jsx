@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Icon } from "@iconify/react";
 import Layout from "./Layout.jsx";
 import VistaPrevia from "../../components/VistaPrevia.jsx";
+import { limpiarZona } from "../../libre.js";
 import { EdicionTextos } from "../../components/Texto.jsx";
+import { Menu, Pie } from "../../components/Marco.jsx";
+import { useAjustes } from "../../ajustes.js";
 import { guardarTextos, useTextos } from "../../textos.js";
 import { guardarPublicacion, usePublicaciones } from "../../publicaciones.js";
 import { guardarProyecto, useAreas } from "../../proyectos.js";
@@ -35,6 +38,52 @@ export const paginasEditables = {
   "/proyectos/programacion": ["Proyectos · Técnico en Programación", Proyectos, ["/panel/proyectos"]],
 };
 
+/* El editor completo (GrapesJS) pesa: se baja sólo al abrirlo. */
+const EditorLibre = lazy(() => import("../../components/EditorLibre.jsx"));
+
+/* Páginas que se pueden armar enteras con el editor completo: dónde se
+   guardan, su zona libre (que pasa a ser parte de la página) y sus bloques
+   automáticos (PaginaEditable.jsx). */
+const paginaCompleta = (prefijo, dinamicos) => ({ clave: `${prefijo}.pagina`, zona: `${prefijo}.libre`, dinamicos });
+const deProyectos = (area) =>
+  paginaCompleta(`proyectos.${area}`, [
+    { id: "proyectos", nombre: "Proyectos del área" },
+    { id: "otras", nombre: "Accesos a las otras orientaciones" },
+  ]);
+
+const COMPLETAS = {
+  "/": paginaCompleta("inicio", [
+    { id: "botones", nombre: "Botones de la portada" },
+    { id: "bajar", nombre: "Flecha para bajar" },
+    { id: "tarjetas-giran", nombre: "Tarjetas que giran" },
+    { id: "cursos", nombre: "Tarjetas de cursos" },
+    { id: "accesos", nombre: "Accesos a las secciones" },
+    { id: "programas", nombre: "Programas de la Tec" },
+  ]),
+  "/evaluacion": paginaCompleta("evaluacion", [
+    { id: "buscador", nombre: "Buscador de cuadernillos" },
+    { id: "cuadernillos", nombre: "Cuadernillos (se abren en el visor)" },
+  ]),
+  "/previas": paginaCompleta("previas", [
+    { id: "avisos", nombre: "Avisos publicados" },
+    { id: "buscador", nombre: "Buscador de materias" },
+    { id: "anios", nombre: "Filtro por año" },
+    { id: "carpeta", nombre: "Botón a la carpeta de Drive" },
+    { id: "tabla", nombre: "Tabla de mesas" },
+  ]),
+  "/novedades": paginaCompleta("novedades", [
+    { id: "categorias", nombre: "Filtros por categoría" },
+    { id: "notas", nombre: "Notas publicadas" },
+  ]),
+  "/inscripcion": paginaCompleta("inscripcion", [
+    { id: "encabezado", nombre: "Encabezado (abierta o cerrada)" },
+    { id: "formulario", nombre: "Formulario o aviso de cierre" },
+  ]),
+  "/proyectos/ciclo-basico": deProyectos("ciclo-basico"),
+  "/proyectos/informatica": deProyectos("informatica"),
+  "/proyectos/programacion": deProyectos("programacion"),
+};
+
 const nombresDuenos = {
   "/panel/programas": "los programas",
   "/panel/mesas": "el cronograma de mesas",
@@ -54,9 +103,24 @@ export default function SitioPagina({ ruta, params, usuario }) {
   const areas = useAreas();
   const programas = useProgramas();
   const mesas = useMesas();
+  const { inscripcionAbierta, redes } = useAjustes();
   const [borrador, setBorrador] = useState(publicados);
   const [base, setBase] = useState(publicados);
   const [vista, setVista] = useState(false);
+  /* Editor completo abierto: { html, css, previas }. */
+  const [completo, setCompleto] = useState(null);
+
+  /* Un dato cambiado desde el editor completo (un texto del cronograma, un
+     link…): la vista previa de los bloques automáticos se vuelve a armar con
+     el borrador nuevo. `rehacerPrevias` se define más abajo, con la página. */
+  const pedirPrevias = useRef(false);
+  const rehacerPrevias = useRef(null);
+  useEffect(() => {
+    if (!pedirPrevias.current) return;
+    pedirPrevias.current = false;
+    rehacerPrevias.current?.(borrador);
+  }, [borrador]);
+  const vueltaPrevias = useRef(0);
 
   /* Lo publicado puede llegar del servidor con el editor ya abierto (este
      navegador tenía una versión vieja guardada). Si todavía no se tocó nada,
@@ -69,7 +133,8 @@ export default function SitioPagina({ ruta, params, usuario }) {
   const [aviso, setAviso] = useState("");
   const [fallo, setFallo] = useState("");
 
-  const encontrada = paginasEditables[pagina];
+  /* Object.hasOwn: "?p=constructor" no es una página. */
+  const encontrada = Object.hasOwn(paginasEditables, pagina ?? "") ? paginasEditables[pagina] : null;
   const sucio = JSON.stringify(borrador) !== JSON.stringify(publicados);
 
   const volver = (
@@ -89,6 +154,8 @@ export default function SitioPagina({ ruta, params, usuario }) {
 
   const [nombre, Pagina, duenos] = encontrada;
   const puedePagina = puedeEditarPagina(usuario, pagina);
+  const completa = Object.hasOwn(COMPLETAS, pagina) ? COMPLETAS[pagina] : null;
+  const armada = !!completa && typeof borrador[completa.clave] === "string";
   const duenosPropios = duenos.filter((dueno) => puedeEditar(usuario, dueno));
   const puedeAlgo = puedePagina || duenosPropios.length > 0;
   const tocaNotas = Object.keys(borrador).some((clave) => partir(clave)[0] === "pub");
@@ -110,6 +177,53 @@ export default function SitioPagina({ ruta, params, usuario }) {
     fijar,
     cambiar,
     puede: (dueno) => (dueno ? duenosPropios.includes(dueno) : puedePagina),
+  };
+
+  /* Abre la página entera en el editor completo: lo que ya se armó, o si no
+     una "foto" de la página de siempre. La vista previa de los bloques
+     automáticos sale siempre de la foto (los datos de hoy). */
+  const abrirCompleto = async () => {
+    const { instantanea } = await import("../../instantanea.jsx");
+    const foto = await instantanea(Pagina, pagina, borrador, completa.zona, edicion.puede);
+    const inicio = armada
+      ? limpiarZona(borrador[completa.clave], borrador[`${completa.clave}.css`], "", "pagina")
+      : foto;
+    setCompleto({ html: inicio.html, css: inicio.css, previas: foto.previas });
+  };
+
+  rehacerPrevias.current = async (actual) => {
+    const vuelta = ++vueltaPrevias.current;
+    const { instantanea } = await import("../../instantanea.jsx");
+    const foto = await instantanea(Pagina, pagina, actual, completa.zona, edicion.puede);
+    if (vuelta === vueltaPrevias.current) setCompleto((abierto) => abierto && { ...abierto, previas: foto.previas });
+  };
+
+  /* Lo que el editor completo cambia adentro de los bloques automáticos va al
+     borrador, con las mismas claves que se editan acá. */
+  const datosDelEditor = {
+    cambiar,
+    fijar,
+    leer: (clave) => borrador[clave],
+    refrescar: () => {
+      pedirPrevias.current = true;
+    },
+  };
+
+  /* Desde el primer cambio, la página se muestra desde lo armado. */
+  const guardarCompleto = (html, css) => {
+    fijar(completa.clave, html);
+    fijar(`${completa.clave}.css`, css || undefined);
+  };
+
+  const volverAlOriginal = () => {
+    if (
+      !window.confirm(
+        "¿Volver a la página de siempre? Se deja de usar lo armado con el editor completo. Hasta que publiques, podés deshacerlo con «Descartar cambios».",
+      )
+    )
+      return;
+    fijar(completa.clave, undefined);
+    fijar(`${completa.clave}.css`, undefined);
   };
 
   const publicar = async () => {
@@ -173,26 +287,35 @@ export default function SitioPagina({ ruta, params, usuario }) {
       }
     }
 
-    /* Lo que no toca Dirección vuelve a esperar su aprobación. */
-    pubs.forEach((pub) =>
-      guardarPublicacion({ ...pub, estado: usuario?.rol === "direccion" ? pub.estado : "pendiente" }),
-    );
-    proyectos.forEach(([area, proyecto]) => guardarProyecto(area, proyecto));
-    if (listaProgramas) guardarProgramas(listaProgramas);
-    if (datosMesas) guardarMesas(datosMesas);
-    /* La página se manda al servidor: es la que decide el permiso, y así no se
-       tocan los textos de las demás. */
-    const resultado = await guardarTextos(estaticos, pagina);
+    /* Los textos de la página se mandan sólo si quien publica puede editar la
+       página y si cambiaron: quien sólo es dueño de una sección (las notas, las
+       mesas) no reescribe los textos de todos con su foto de cuando abrió. */
+    const cambiaronTextos = JSON.stringify(estaticos) !== JSON.stringify(publicados);
+
+    /* Se espera cada envío: "publicado" sólo si el servidor recibió todo. */
+    const resultados = await Promise.all([
+      /* Lo que no toca Dirección vuelve a esperar su aprobación. */
+      ...[...pubs.values()].map((pub) =>
+        guardarPublicacion({ ...pub, estado: usuario?.rol === "direccion" ? pub.estado : "pendiente" }),
+      ),
+      ...[...proyectos.values()].map(([area, proyecto]) => guardarProyecto(area, proyecto)),
+      listaProgramas && guardarProgramas(listaProgramas),
+      datosMesas && guardarMesas(datosMesas),
+      /* La página se manda al servidor: es la que decide el permiso, y así no se
+         tocan los textos de las demás. */
+      puedePagina && cambiaronTextos && guardarTextos(estaticos, pagina),
+    ]);
     setBorrador(estaticos);
 
     /* Sólo se avisa "publicado" si el servidor lo recibió: creer que algo salió
        cuando no salió es peor que no avisar nada. */
-    if (resultado && !resultado.ok) {
+    const fallido = resultados.find((resultado) => resultado && !resultado.ok);
+    if (fallido) {
       setAviso("");
       setFallo(
-        resultado.motivo === "sin-sesion"
+        fallido.motivo === "sin-sesion"
           ? "Los cambios quedaron sólo en esta computadora: no hay sesión iniciada en el servidor."
-          : `No se pudo guardar: ${resultado.motivo}. El cambio quedó sólo en esta computadora.`,
+          : `No se pudo guardar: ${fallido.motivo}. El cambio quedó sólo en esta computadora.`,
       );
       return;
     }
@@ -218,9 +341,11 @@ export default function SitioPagina({ ruta, params, usuario }) {
       chip="SITIO PÚBLICO · EDICIÓN"
       titulo={nombre}
       texto={
-        puedeAlgo
-          ? "Hacé clic en cualquier texto o imagen para cambiarlo. Pasá el mouse por una sección o tarjeta para moverla, duplicarla, ocultarla o cambiarle el fondo. Nada se ve en el sitio hasta que publiques."
-          : "Así se ve la página en el sitio."
+        !puedeAlgo
+          ? "Así se ve la página en el sitio."
+          : armada
+            ? "Esta página está armada con el editor completo: abrilo para cambiar textos, imágenes, secciones y estilos. Nada se ve en el sitio hasta que publiques."
+            : "Hacé clic en cualquier texto o imagen para cambiarlo. Pasá el mouse por una sección o tarjeta para moverla, duplicarla, ocultarla o cambiarle el fondo. Nada se ve en el sitio hasta que publiques."
       }
       acciones={
         <>
@@ -229,6 +354,18 @@ export default function SitioPagina({ ruta, params, usuario }) {
             <Icon icon="ph:eye" width={16} height={16} aria-hidden="true" />
             Ver en el sitio
           </button>
+          {completa && puedePagina && (
+            <button className="boton boton--primario" onClick={abrirCompleto}>
+              <Icon icon="ph:layout" width={16} height={16} aria-hidden="true" />
+              Editor completo
+            </button>
+          )}
+          {armada && puedePagina && (
+            <button className="boton" onClick={volverAlOriginal}>
+              <Icon icon="ph:arrow-counter-clockwise" width={16} height={16} aria-hidden="true" />
+              Volver a la página de siempre
+            </button>
+          )}
           {puedeAlgo && (
             <>
               <button className="boton" disabled={!sucio} onClick={() => setBorrador(publicados)}>
@@ -255,6 +392,15 @@ export default function SitioPagina({ ruta, params, usuario }) {
           <Icon icon="ph:info" width={18} height={18} aria-hidden="true" />
           Como {nombrePerfil(usuario.rol)} podés editar {puedeTexto}. El resto de
           la página lo edita {quienEditaPagina(pagina)}.
+        </p>
+      )}
+
+      {armada && (
+        <p className="flash flash--info">
+          <Icon icon="ph:layout" width={18} height={18} aria-hidden="true" />
+          Armada con el editor completo. Los bloques automáticos (
+          {completa.dinamicos.map((d) => d.nombre.toLowerCase()).join(", ")}) se arman solos con sus datos: se
+          editan desde su sección del panel.
         </p>
       )}
 
@@ -290,12 +436,39 @@ export default function SitioPagina({ ruta, params, usuario }) {
 
       <div className="lienzo lienzo--textos">
         <EdicionTextos.Provider value={puedeAlgo ? edicion : null}>
+          {/* El menú y el pie son de todas las páginas: se editan acá, con Inicio. */}
+          {pagina === "/" && (
+            <div className="lienzo__marco" data-nombre="Menú de arriba · se ve en todas las páginas">
+              <Menu ruta="/" inscripcionAbierta={inscripcionAbierta} vista />
+            </div>
+          )}
           <Pagina ruta={pagina} />
+          {pagina === "/" && (
+            <div className="lienzo__marco" data-nombre="Pie de página · se ve en todas las páginas">
+              <Pie inscripcionAbierta={inscripcionAbierta} redes={redes} />
+            </div>
+          )}
         </EdicionTextos.Provider>
       </div>
 
       {vista && (
         <VistaPrevia chip="VISTA PREVIA" titulo={nombre} url={pagina} cerrar={() => setVista(false)} />
+      )}
+
+      {completo && (
+        <Suspense fallback={null}>
+          <EditorLibre
+            modo="pagina"
+            titulo={nombre}
+            html={completo.html}
+            css={completo.css}
+            previas={completo.previas}
+            dinamicos={completa.dinamicos}
+            datos={datosDelEditor}
+            alCambiar={guardarCompleto}
+            cerrar={() => setCompleto(null)}
+          />
+        </Suspense>
       )}
     </Layout>
   );

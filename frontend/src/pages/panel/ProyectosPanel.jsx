@@ -11,6 +11,7 @@ import {
 } from "../../proyectos.js";
 import { ir } from "../../router.js";
 import { puedeEditar } from "../../sesion.js";
+import { esLinkDeDocumento, esLinkValido } from "../../links.js";
 import VistaPrevia from "../../components/VistaPrevia.jsx";
 
 const claves = Object.keys(areas);
@@ -46,6 +47,7 @@ export default function ProyectosPanel({ ruta, usuario }) {
   const [area, setArea] = useState(claves[0]);
   const [editando, setEditando] = useState(null);
   const [aviso, setAviso] = useState("");
+  const [error, setError] = useState("");
   const [vista, setVista] = useState(null);
 
   const lista = conProyectos[area].proyectos;
@@ -82,11 +84,21 @@ export default function ProyectosPanel({ ruta, usuario }) {
 
   const guardar = (e) => {
     e.preventDefault();
-    guardarProyecto(area, {
-      ...editando,
-      docs: editando.docs.filter((doc) => doc.nombre && doc.archivo),
-    });
+    const docs = editando.docs.filter((doc) => doc.nombre && doc.archivo);
+
+    /* Los links se muestran en el sitio: sólo http(s) o archivos del propio sitio. */
+    if (editando.repo?.trim() && !esLinkValido(editando.repo)) {
+      setError("El link del repositorio tiene que empezar con https://");
+      return;
+    }
+    if (docs.some((doc) => !esLinkDeDocumento(doc.archivo))) {
+      setError("Cada documento tiene que ser un link https:// o una ruta del sitio como /docs/informe.pdf");
+      return;
+    }
+
+    guardarProyecto(area, { ...editando, repo: editando.repo?.trim() || null, docs });
     setAviso(`“${editando.titulo}” guardado en ${conProyectos[area].titulo}.`);
+    setError("");
     setEditando(null);
   };
 
@@ -169,7 +181,7 @@ export default function ProyectosPanel({ ruta, usuario }) {
                 <td data-label="Alumnos">{proyecto.equipo?.length || 0}</td>
                 <td data-label="Lenguajes">{proyecto.stack?.length || 0}</td>
                 <td data-label="Repo">
-                  {proyecto.repo ? (
+                  {esLinkValido(proyecto.repo) ? (
                     <a
                       className="enlace"
                       href={proyecto.repo}
@@ -237,7 +249,14 @@ export default function ProyectosPanel({ ruta, usuario }) {
         <p className="bloqueado">
           <Icon icon="ph:info" width={16} height={16} aria-hidden="true" />
           Los cambios se guardan en el servidor de la escuela.
-          <button className="enlace" onClick={restaurarProyectos}>
+          <button
+            className="enlace"
+            onClick={() => {
+              if (!window.confirm("Se reemplazan los proyectos de las tres orientaciones por los originales, en el sitio. ¿Seguir?")) return;
+              restaurarProyectos();
+              setAviso("Proyectos restaurados a los originales.");
+            }}
+          >
             Restaurar los proyectos originales
           </button>
         </p>
@@ -285,13 +304,17 @@ export default function ProyectosPanel({ ruta, usuario }) {
                 type="button"
                 className="cajon__cerrar"
                 aria-label="Cerrar"
-                onClick={() => setEditando(null)}
+                onClick={() => {
+                  setEditando(null);
+                  setError("");
+                }}
               >
                 <Icon icon="ph:x" width={18} height={18} aria-hidden="true" />
               </button>
             </div>
 
             <div className="modal__cuerpo">
+              {error && <p className="selector__error">{error}</p>}
               <div className="formulario formulario--panel">
                 <label className="campo">
                   <span>Nombre del proyecto</span>

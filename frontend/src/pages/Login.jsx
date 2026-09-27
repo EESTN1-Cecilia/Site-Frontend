@@ -4,27 +4,36 @@ import { logo } from "../data.js";
 import { ir } from "../router.js";
 import { entrar, entrarConBackend, perfiles, verPanel } from "../sesion.js";
 
+/* Modo demostración: sólo con el servidor de desarrollo de Vite. */
+const DEMO = import.meta.env.DEV;
+
 export default function Login({ motivo }) {
   const [usuario, setUsuario] = useState("");
   const [clave, setClave] = useState("");
   const [verClave, setVerClave] = useState(false);
   const [rol, setRol] = useState("alumno");
+  const [recordar, setRecordar] = useState(true);
   const [error, setError] = useState("");
+  const [ayuda, setAyuda] = useState(false);
   const [cargando, setCargando] = useState(false);
 
-  /* Primero prueba el login real. Si el backend no está levantado,
-     entra con el perfil elegido para poder recorrer el sitio. */
+  /* Login real contra el backend. Sólo mientras se desarrolla (npm run dev),
+     si el backend no está levantado, entra con el perfil elegido para poder
+     recorrer el sitio. En el sitio publicado eso no existe: sería entrar sin
+     contraseña. */
   const enviar = async (e) => {
     e.preventDefault();
     setError("");
     setCargando(true);
 
     try {
-      const sesion = await entrarConBackend(usuario, clave);
-      ir(verPanel(sesion) ? "/panel" : "/");
+      const sesion = await entrarConBackend(usuario, clave, recordar);
+      /* Si se llegó desde una página del panel (motivo), se queda en esa: con
+         la sesión iniciada, App ya la muestra. */
+      if (!motivo) ir(verPanel(sesion) ? "/panel" : "/");
       return;
     } catch (fallo) {
-      if (!/fetch|network|failed/i.test(fallo.message)) {
+      if (!(DEMO && fallo.sinConexion)) {
         setError(fallo.message);
         setCargando(false);
         return;
@@ -129,32 +138,49 @@ export default function Login({ motivo }) {
           </label>
 
           <div className="login__fila">
+            {/* Destildada, la sesión se borra al cerrar el navegador: para
+                computadoras compartidas. */}
             <label className="login__recordar">
-              <input type="checkbox" defaultChecked />
+              <input
+                type="checkbox"
+                checked={recordar}
+                onChange={(e) => setRecordar(e.target.checked)}
+              />
               Mantener sesión iniciada
             </label>
-            <button type="button" className="login__olvide">
+            <button type="button" className="login__olvide" onClick={() => setAyuda(true)}>
               Olvidé mi contraseña
             </button>
           </div>
 
-          {/* Selector de demostración: se va cuando el backend devuelva el rol. */}
-          <fieldset className="login__perfiles">
-            <legend>Entrar como (demo)</legend>
-            <div className="filtros__chips">
-              {perfiles.map(([clave, etiqueta, icono]) => (
-                <button
-                  type="button"
-                  key={clave}
-                  className={`filtro ${rol === clave ? "filtro--activo" : ""}`}
-                  onClick={() => setRol(clave)}
-                >
-                  <Icon icon={icono} width={15} height={15} aria-hidden="true" />
-                  {etiqueta}
-                </button>
-              ))}
-            </div>
-          </fieldset>
+          {ayuda && (
+            <p className="flash flash--info">
+              <Icon icon="ph:info" width={18} height={18} aria-hidden="true" />
+              Para recuperar el acceso acercate a secretaría con tu DNI. Si sos
+              personal de la escuela, Dirección puede ponerte una contraseña nueva
+              desde gestión.
+            </p>
+          )}
+
+          {/* Selector de demostración: sólo en desarrollo. */}
+          {DEMO && (
+            <fieldset className="login__perfiles">
+              <legend>Entrar como (demo, sin backend)</legend>
+              <div className="filtros__chips">
+                {perfiles.map(([clave, etiqueta, icono]) => (
+                  <button
+                    type="button"
+                    key={clave}
+                    className={`filtro ${rol === clave ? "filtro--activo" : ""}`}
+                    onClick={() => setRol(clave)}
+                  >
+                    <Icon icon={icono} width={15} height={15} aria-hidden="true" />
+                    {etiqueta}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
 
           <button
             className="boton boton--primario boton--ancho"

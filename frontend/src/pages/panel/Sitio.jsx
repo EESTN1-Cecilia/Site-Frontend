@@ -110,7 +110,11 @@ const paginas = [
   {
     ruta: "/",
     icono: "ph:house",
-    partes: [[TODA, { pagina: true }], ["Agregar o quitar programas", { editor: "/panel/programas" }]],
+    partes: [
+      [TODA, { pagina: true }],
+      ["Menú de arriba y pie de página (se ven en todas las páginas)", { pagina: true }],
+      ["Agregar o quitar programas", { editor: "/panel/programas" }],
+    ],
   },
   { ruta: "/evaluacion", icono: "ph:clipboard-text", partes: [[TODA, { pagina: true }]] },
   {

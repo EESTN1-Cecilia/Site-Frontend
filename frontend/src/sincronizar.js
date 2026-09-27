@@ -1,4 +1,4 @@
-import { marcarError, marcarSincronizado, tokenActual } from "./conexion.js";
+import { marcarError, marcarSincronizado, marcarSincronizando, tokenActual } from "./conexion.js";
 import { listarPublicaciones, obtenerContenido } from "./services/api.js";
 import { hidratarTextos } from "./textos.js";
 import { hidratarAjustes } from "./ajustes.js";
@@ -12,9 +12,13 @@ import { hidratarProyectos } from "./proyectos.js";
    Si el servidor no responde, el sitio igual se dibuja: con lo último que vio
    este navegador, o con el contenido original que trae escrito. Al que está
    trabajando en gestión sí se le avisa, para que no crea que lo que ve es lo
-   que hay publicado. */
+   que hay publicado; y hasta que se traiga bien no se guarda nada (conexion.js).
+
+   Cada store revisa la forma de lo que recibe, así que un dato mal guardado
+   no corta la hidratación de los demás. */
 export async function sincronizarContenido() {
   const token = tokenActual();
+  marcarSincronizando();
 
   try {
     const datos = await obtenerContenido();
@@ -38,7 +42,7 @@ export async function sincronizarContenido() {
   } catch (error) {
     if (token) {
       marcarError(
-        `No se pudo traer el contenido: ${error.message}. Lo que edites queda en esta computadora.`,
+        `No se pudo traer el contenido: ${error.message}. Hasta que se pueda, no se guardan cambios: recargá la página en un rato.`,
       );
     }
   }

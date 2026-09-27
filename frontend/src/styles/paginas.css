@@ -1731,112 +1731,74 @@
   flex-shrink: 0;
 }
 
-/* ---------- Bloques libres (EditorDeBloques) ---------- */
-.bloques-libres {
-  display: grid;
-  /* minmax(0, …): un iframe o una fila ancha no estiran la página. */
-  grid-template-columns: minmax(0, 1fr);
-  gap: 24px;
-  margin-top: clamp(32px, 5vw, 48px);
+/* ---------- Zona libre como sección propia (ZonaLibre con `seccion`) ---------- */
+.zona-libre > .libre,
+.zona-libre > .zona-edicion {
+  margin-top: 0;
 }
 
-.bloque-libre__texto {
-  max-width: 72ch;
-  font-size: 16px;
-  line-height: 1.7;
+/* ---------- Página armada con el editor completo (PaginaEditable.jsx) ---------- */
+/* La caja no cuenta para el diseño: sus secciones son las de la página. */
+main > .pagina-libre {
+  display: contents;
 }
 
-.bloque-libre__figura {
-  margin: 0;
+/* Los pasos se numeran solos (en la página de siempre los numera React). */
+.pagina-libre .linea {
+  counter-reset: paso;
 }
 
-.bloque-libre__figura img {
-  display: block;
-  width: 100%;
-  max-height: 520px;
-  object-fit: cover;
-  border-radius: 18px;
+.pagina-libre .linea__item {
+  counter-increment: paso;
 }
 
-.bloque-libre__figura figcaption {
-  margin-top: 8px;
-  color: var(--gris-medio);
-  font-size: 13px;
+.pagina-libre .linea__numero {
+  font-size: 0;
 }
 
-.bloque-libre__boton {
-  display: inline-flex;
-  width: fit-content;
-  text-decoration: none;
+.pagina-libre .linea__numero::before {
+  content: counter(paso, decimal-leading-zero);
+  font-size: 1rem;
 }
 
-.bloque-libre__divisor {
-  margin: 0;
-  border: 0;
-  border-top: 1px solid var(--gris-claro);
+.pagina-libre .puntos {
+  counter-reset: punto;
 }
 
-.bloque-libre__marco {
-  overflow: hidden;
-  border-radius: 18px;
-  background: var(--tarjeta);
+.pagina-libre .punto {
+  counter-increment: punto;
 }
 
-.bloque-libre__marco iframe {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
+.pagina-libre .punto__numero {
+  font-size: 0;
 }
 
-.bloque-libre__marco--video {
-  aspect-ratio: 16 / 9;
+.pagina-libre .punto__numero::before {
+  content: counter(punto, decimal-leading-zero);
+  font-size: 26px;
 }
 
-.bloque-libre__marco--documento {
-  height: min(75vh, 640px);
+/* Las preguntas frecuentes llegan sin el ícono de la flecha (el editor las
+   muestra abiertas, sin desplegable): se dibuja acá. */
+.pagina-libre summary.faq__pregunta:not(:has(svg))::after {
+  content: "";
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 220ms ease-out;
 }
 
-.bloque-libre__abrir {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-  color: var(--rojo-institucional);
-  font-size: 14px;
-  font-weight: 600;
+.pagina-libre .faq[open] summary.faq__pregunta:not(:has(svg))::after {
+  transform: translateY(2px) rotate(225deg);
 }
 
-.bloque-libre__archivo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  max-width: 520px;
-  padding: 16px 18px;
-  border-radius: 16px;
-  background: var(--tarjeta);
-  color: var(--bordo-oscuro);
-  font-weight: 600;
-  text-decoration: none;
-  transition: background-color 180ms;
-}
-
-.bloque-libre__archivo:hover {
-  background: var(--rojo-claro);
-}
-
-.bloque-libre__archivo small {
-  margin-left: auto;
-  color: var(--gris-medio);
-  font-weight: 400;
-}
-
-/* Redes sobre fondo claro: las del pie van sobre bordó. */
-.redes--claro .red {
-  border-color: var(--gris-claro);
-  color: var(--bordo-oscuro);
-}
-
-.redes--claro .red:hover {
-  color: var(--blanco);
+/* El lugar de una parte automática tampoco cuenta: lo que se dibuja adentro
+   queda como en la página de siempre (el buscador en la barra del
+   encabezado, por ejemplo). */
+.pagina-libre [data-dinamico] {
+  display: contents;
 }
