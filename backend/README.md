@@ -62,6 +62,8 @@ Backend Node.js/Express que se encarga de la **autenticación**, la **autorizaci
 |---------|----------|
 | `npm start` | Inicia el servidor (`node app.js`) |
 | `npm test` | Corre la suite de tests (`node --test src/test/*.test.js`) |
+| `npm run restablecer-admin` | Pone a `admin` la contraseña de `ADMIN_PASSWORD` y cierra sus sesiones |
+| `npm run restablecer-cuentas` | Solo en local: vuelve las 4 cuentas del seed a las contraseñas de `ADMIN_PASSWORD` y `SEED_PASSWORD` (para probar con una base que ya existía) |
 
 ---
 

@@ -72,6 +72,14 @@ ADMIN_PASSWORD=Admin-prueba-2026
 SEED_PASSWORD=Sector-prueba-2026
 ```
 
+> **¿La base ya estaba creada?** El seed no cambia la contraseña de las cuentas que ya existen. Si la base se creó antes con otras contraseñas, ninguna de las de abajo va a funcionar hasta correr, en `backend/`:
+>
+> ```bash
+> npm run restablecer-cuentas
+> ```
+>
+> Esto pone la contraseña de `ADMIN_PASSWORD` a `admin` y la de `SEED_PASSWORD` a las cuentas de sector, les devuelve el cambio de contraseña y cierra sus sesiones. Solo corre en local: con `NODE_ENV=production` se niega. Si el login igual dice que hay demasiados intentos, reiniciá el backend.
+
 Con esos valores, las cuentas quedan así:
 
 | Usuario | Contraseña | Rol | Qué puede hacer |
@@ -87,7 +95,7 @@ Para entrar: `http://localhost:5173/#/login`, o el botón **Ingresar** del menú
 
 Cosas para tener en cuenta:
 - Las cuentas de sector pueden **cambiar su contraseña una sola vez**. Dirección puede habilitar otro cambio o ponerles una contraseña nueva.
-- El seed **no pisa cuentas que ya existen**. Si ya sembraste con otra contraseña y querés cambiar la de `admin`, cambiá `ADMIN_PASSWORD` en `.env` y corré `npm run restablecer-admin` en `backend/`.
+- En el servidor real, para cambiar solo la contraseña de `admin` se usa `npm run restablecer-admin` (toma la de `ADMIN_PASSWORD`).
 - Inicio, Novedades e Inscripción las edita **Secretaría** por defecto. Como el seed no crea una cuenta de Secretaría, para probarlas entrá con `admin` (Dirección edita todo) o repartí las páginas desde **Permisos y publicación**.
 - Después de 5 intentos fallidos con el mismo usuario (o 20 desde la misma conexión) el login se bloquea hasta 15 minutos.
 
