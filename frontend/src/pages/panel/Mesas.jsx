@@ -42,7 +42,7 @@ export default function Mesas({ ruta, usuario }) {
       ),
     }));
 
-  const publicar = () => {
+  const publicar = async () => {
     if (
       linkMalo(borrador.carpeta) ||
       borrador.mesas.some((m) => linkMalo(m.drive))
@@ -52,7 +52,13 @@ export default function Mesas({ ruta, usuario }) {
       );
       return;
     }
-    guardarMesas(borrador);
+    const resultado = await guardarMesas(borrador);
+    /* "Publicado" sólo si el servidor lo recibió. */
+    if (!resultado.ok) {
+      setAviso("");
+      setError(`No se pudo publicar: ${resultado.motivo}.`);
+      return;
+    }
     setError("");
     setAviso("Cronograma publicado.");
   };
@@ -218,6 +224,7 @@ export default function Mesas({ ruta, usuario }) {
             <button
               className="enlace"
               onClick={() => {
+                if (!window.confirm("Se reemplaza el cronograma del sitio por el original de ejemplo (fechas y docentes ficticios). ¿Seguir?")) return;
                 setBorrador(restaurarMesas());
                 setError("");
                 setAviso("Cronograma restaurado al original.");

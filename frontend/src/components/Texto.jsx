@@ -26,10 +26,40 @@ function useFuente() {
   return [edicion ? edicion.borrador : publicados, edicion];
 }
 
+/* ---------- Partes automáticas en el editor completo ----------
+   Las partes que se arman con datos (cronograma, notas, proyectos…) no son
+   HTML de la página: en la "foto" para el editor completo (instantanea.jsx)
+   cada pieza de adentro sale marcada con su clave (data-texto, data-enlace…)
+   y el editor la deja cambiar; el cambio va a esa clave, como acá. Sólo las
+   piezas que este usuario puede editar (`puedeDato`). */
+export const EnDinamico = createContext(false);
+
+export function useMarca(dueno) {
+  const edicion = useContext(EdicionTextos);
+  const dentro = useContext(EnDinamico);
+  return !!(edicion?.foto && dentro && edicion.puedeDato?.(dueno));
+}
+
+/* El original, para que volver a él borre el cambio (como en el panel). */
+const original = (valor) => (typeof valor === "string" ? valor : undefined);
+
+/* Un valor guardado sólo se usa si tiene el tipo que espera la pieza: un
+   dato mal guardado muestra el original en vez de romper la página. */
+const siTexto = (valor, original) => (typeof valor === "string" ? valor : original);
+const siLista = (valor) => (Array.isArray(valor) ? valor : []);
+
 /* ---------- Texto ---------- */
 export default function Texto({ id, children, clase, dueno }) {
   const [fuente, edicion] = useFuente();
-  const valor = fuente[id] ?? children;
+  const marca = useMarca(dueno);
+  const valor = siTexto(fuente[id], children);
+
+  if (marca)
+    return (
+      <span className={clase} data-texto={id} data-original={original(children)}>
+        {valor}
+      </span>
+    );
 
   if (!edicion?.puede(dueno)) return clase ? <span className={clase}>{valor}</span> : valor;
 
@@ -56,8 +86,10 @@ export function usePlano() {
    escribe en el lugar del campo. */
 export function Campo({ id, placeholder, como: Etiqueta = "input", dueno, ...resto }) {
   const [fuente, edicion] = useFuente();
-  const valor = fuente[id] ?? placeholder;
+  const marca = useMarca(dueno);
+  const valor = siTexto(fuente[id], placeholder);
 
+  if (marca) return <Etiqueta placeholder={valor} {...resto} data-campo={id} data-original={original(placeholder)} />;
   if (!edicion?.puede(dueno)) return <Etiqueta placeholder={valor} {...resto} />;
 
   return (
@@ -75,8 +107,12 @@ export function Campo({ id, placeholder, como: Etiqueta = "input", dueno, ...res
    con un aviso de cuándo se ven, para poder editarlas. */
 export function Caso({ visible, cuando, children }) {
   const edicion = useContext(EdicionTextos);
+  const dentro = useContext(EnDinamico);
 
-  if (!edicion) return visible ? children : null;
+  /* En la foto para el editor completo (instantanea.jsx), como la ve un
+     alumno; dentro de una parte automática, con todos los casos a la vista
+     para poder editarlos. */
+  if (!edicion || (edicion.foto && !dentro)) return visible ? children : null;
 
   return (
     <div className="caso-edicion">
@@ -95,9 +131,12 @@ export function Caso({ visible, cuando, children }) {
 export function Imagen({ id, src, alt = "", className = "", dueno, vacio }) {
   const [fuente, edicion] = useFuente();
   const [abierto, setAbierto] = useState(false);
+  const marca = useMarca(dueno);
   const clave = `img:${id}`;
-  const actual = fuente[clave] ?? src;
+  const actual = siTexto(fuente[clave], src);
 
+  if (marca)
+    return <img className={className} src={actual || undefined} alt={alt} data-imagen={id} data-original={src ?? ""} />;
   if (!edicion?.puede(dueno))
     return actual ? <img className={className} src={actual} alt={alt} /> : (vacio ?? null);
 
@@ -155,9 +194,27 @@ export function Enlace({
   const [borradorUrl, setBorradorUrl] = useState("");
   const [error, setError] = useState("");
   const clave = `link:${id}`;
-  const url = fuente[clave] ?? href ?? "";
+  const url = siTexto(fuente[clave], href ?? "");
   const valido = esLinkValido(url);
   const editable = !!edicion?.puede(dueno);
+  const marca = useMarca(dueno);
+
+  if (marca) {
+    const marcas = { "data-enlace": id, "data-original": href ?? "" };
+    if (valido)
+      return (
+        <a className={className} href={url} target="_blank" rel="noopener noreferrer" {...resto} {...marcas}>
+          {children}
+        </a>
+      );
+    return vacio ? (
+      <span {...marcas}>{vacio}</span>
+    ) : (
+      <span className={`${className} ${claseVacia}`} {...marcas}>
+        {children}
+      </span>
+    );
+  }
 
   const cuerpo = valido ? (
     <a className={className} href={url} target="_blank" rel="noopener noreferrer" {...resto}>
@@ -234,8 +291,15 @@ export function Enlace({
 /* ---------- Dato con formato (fechas, horas) ---------- */
 export function Dato({ id, valor, tipo = "text", formato = (v) => v, dueno }) {
   const [fuente, edicion] = useFuente();
-  const actual = fuente[id] ?? valor;
+  const marca = useMarca(dueno);
+  const actual = siTexto(fuente[id], valor);
 
+  if (marca)
+    return (
+      <span data-dato={id} data-tipo={tipo} data-valor={actual || ""} data-original={valor || ""}>
+        {formato(actual)}
+      </span>
+    );
   if (!edicion?.puede(dueno)) return formato(actual);
 
   return (
@@ -255,14 +319,14 @@ export function Dato({ id, valor, tipo = "text", formato = (v) => v, dueno }) {
 export function useLista(lista, base, { duplicable = false } = {}) {
   const [fuente] = useFuente();
 
-  const copias = (fuente[`extra:${lista}`] || [])
-    .map(({ id, de }) => {
-      const original = base.find((item) => item.id === de);
-      return original ? { ...original, id, copiaDe: de } : null;
+  const copias = siLista(fuente[`extra:${lista}`])
+    .map((extra) => {
+      const original = base.find((item) => item.id === extra?.de);
+      return original && typeof extra.id === "string" ? { ...original, id: extra.id, copiaDe: extra.de } : null;
     })
     .filter(Boolean);
 
-  const orden = fuente[`orden:${lista}`] || [];
+  const orden = siLista(fuente[`orden:${lista}`]);
   const posicion = (id) => {
     const i = orden.indexOf(id);
     return i < 0 ? Infinity : i;
@@ -293,8 +357,7 @@ const fondos = [
   ["rosa", "Rosa"],
 ];
 
-/* ---------- Contenedor: mover, duplicar, ocultar y cambiar el fondo ----------
-   `acciones` son botones de más para la barra (los usa EditorDeBloques). */
+/* ---------- Contenedor: mover, duplicar, ocultar y cambiar el fondo ---------- */
 export function Bloque({
   id,
   como: Etiqueta = "div",
@@ -306,14 +369,37 @@ export function Bloque({
   copia,
   duplicable,
   dueno,
-  acciones,
   children,
   ...resto
 }) {
   const [fuente, edicion] = useFuente();
   const oculto = !!fuente[`oculto:${id}`];
-  const fondo = fuente[`fondo:${id}`];
+  /* Sólo los fondos de la lista: el valor termina en una clase CSS. */
+  const fondo = fondos.some(([clave]) => clave && clave === fuente[`fondo:${id}`])
+    ? fuente[`fondo:${id}`]
+    : undefined;
   const clases = [className, fondo && `fondo--${fondo}`].filter(Boolean).join(" ");
+  const marca = useMarca(dueno);
+
+  /* Marcado también si está oculto: así se puede volver a mostrar. */
+  if (marca)
+    return (
+      <Etiqueta
+        className={clases}
+        id={ancla}
+        {...resto}
+        data-bloque={id}
+        data-oculto={oculto ? "si" : undefined}
+        data-fondo={fondo || ""}
+        data-lista={lista}
+        data-item={item}
+        data-ids={ids?.join(" ")}
+        data-copia={copia}
+        data-duplicable={duplicable ? "si" : undefined}
+      >
+        {children}
+      </Etiqueta>
+    );
 
   if (!edicion?.puede(dueno)) {
     return oculto ? null : (
@@ -324,7 +410,7 @@ export function Bloque({
   }
 
   const pos = ids ? ids.indexOf(item) : -1;
-  const extras = fuente[`extra:${lista}`] || [];
+  const extras = siLista(fuente[`extra:${lista}`]);
 
   const mover = (paso) => {
     const nuevo = [...ids];
@@ -400,7 +486,6 @@ export function Bloque({
             <Icon icon="ph:trash" width={15} height={15} aria-hidden="true" />
           </button>
         )}
-        {acciones}
       </span>
       {children}
     </Etiqueta>

@@ -37,6 +37,7 @@ db.serialize(() => {
     activo INTEGER DEFAULT 1,
     password_change_allowed INTEGER DEFAULT 1,
     password_change_count INTEGER DEFAULT 0,
+    token_version INTEGER DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   )`);
@@ -52,6 +53,32 @@ db.serialize(() => {
     created_at TEXT DEFAULT (datetime('now'))
   )`);
 
+  // Tokens cerrados con logout antes de vencer (jti). Se borran al vencer.
+  db.run(`CREATE TABLE IF NOT EXISTS tokens_revocados (
+    jti TEXT PRIMARY KEY,
+    expira INTEGER NOT NULL
+  )`);
+
+  // Contenido del sitio público que se edita desde gestión. Una fila por
+  // sección (textos, ajustes, mesas, programas, proyectos) con su JSON.
+  // Mientras una sección no tiene fila, el sitio muestra el contenido original.
+  db.run(`CREATE TABLE IF NOT EXISTS contenido (
+    seccion TEXT PRIMARY KEY,
+    datos TEXT NOT NULL,
+    actualizado_por INTEGER REFERENCES usuarios(id),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`);
+
+  // Notas de Novedades y avisos de Previas. estado: pendiente | publicada | devuelta.
+  db.run(`CREATE TABLE IF NOT EXISTS publicaciones (
+    id TEXT PRIMARY KEY,
+    datos TEXT NOT NULL,
+    estado TEXT NOT NULL CHECK(estado IN ('pendiente', 'publicada', 'devuelta')),
+    autor_id INTEGER REFERENCES usuarios(id),
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`);
+
   db.run('CREATE INDEX IF NOT EXISTS idx_usuarios_username ON usuarios(username)');
   db.run('CREATE INDEX IF NOT EXISTS idx_usuarios_rol ON usuarios(rol)');
   db.run('CREATE INDEX IF NOT EXISTS idx_upload_logs_user_id ON upload_logs(user_id)');
@@ -60,9 +87,10 @@ db.serialize(() => {
 // Helpers async. IMPORTANTE: en sqlite3, llamar .get()/.all()/.run() sin callback
 // devuelve el Statement y NO ejecuta la consulta, por eso se centraliza aquí con Promise.
 db.obtenerFila = function (sql, ...params) {
-  // Devuelve una sola fila (o undefined si no hay)
+  // Devuelve una sola fila (o undefined si no hay). Se usa db.get y no
+  // prepare().get(): el statement preparado quedaba abierto hasta el GC.
   return new Promise((resolve, reject) => {
-    this.prepare(sql).get(...params, (err, row) => {
+    this.get(sql, ...params, (err, row) => {
       if (err) reject(err);
       else resolve(row);
     });
@@ -111,6 +139,7 @@ db.agregarColumnaSiNoExiste = function (tabla, columna, definicion) {
 db.asegurarMigraciones = async function () {
   await db.agregarColumnaSiNoExiste('usuarios', 'password_change_allowed', 'INTEGER DEFAULT 1');
   await db.agregarColumnaSiNoExiste('usuarios', 'password_change_count', 'INTEGER DEFAULT 0');
+  await db.agregarColumnaSiNoExiste('usuarios', 'token_version', 'INTEGER DEFAULT 0');
 };
 
 module.exports = db;

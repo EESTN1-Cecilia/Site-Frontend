@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { campos, conId, esObjeto, guardarLocal, leerLocal, texto } from "./almacen.js";
 import { enviar } from "./conexion.js";
 import { guardarMesasEnServidor } from "./services/api.js";
 
@@ -47,35 +48,38 @@ export const nuevaMesa = () => ({
 
 const CLAVE = "tec1-mesas";
 
-const leer = () => {
-  try {
-    return JSON.parse(localStorage.getItem(CLAVE)) || semilla();
-  } catch {
-    return semilla();
-  }
-};
+const CAMPOS = ["materia", "anio", "fecha", "hora", "aula", "docente", "drive"];
 
-let contenido = leer();
+/* Sin la forma esperada vale el cronograma original. */
+const sanear = (datos) =>
+  esObjeto(datos) && Array.isArray(datos.mesas)
+    ? {
+        carpeta: texto(datos.carpeta),
+        mesas: conId(datos.mesas).map((m) => ({ id: m.id, ...campos(m, CAMPOS) })),
+      }
+    : semilla();
+
+let contenido = sanear(leerLocal(CLAVE));
 const oyentes = new Set();
 
 const persistir = () => {
-  localStorage.setItem(CLAVE, JSON.stringify(contenido));
+  guardarLocal(CLAVE, contenido);
   oyentes.forEach((fn) => fn(contenido));
 };
 
 /* Lo que llega del servidor al abrir el sitio. null = todavía no se cargó
-   ningún cronograma, así que vale el que trae el sitio. */
+   ningún cronograma, así que vale el que trae el sitio (no la copia de este
+   navegador, que pudo dejar otra persona). */
 export const hidratarMesas = (deServidor) => {
-  if (!deServidor) return;
-  contenido = deServidor;
+  contenido = sanear(deServidor);
   persistir();
 };
 
 export const guardarMesas = (nuevo) => {
-  contenido = nuevo;
+  contenido = sanear(nuevo);
   persistir();
 
-  return enviar((token) => guardarMesasEnServidor(token, nuevo));
+  return enviar((token) => guardarMesasEnServidor(token, contenido));
 };
 
 export const restaurarMesas = () => {

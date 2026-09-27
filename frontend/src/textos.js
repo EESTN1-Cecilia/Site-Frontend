@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { esObjeto, guardarLocal, leerLocal } from "./almacen.js";
 import { enviar } from "./conexion.js";
 import { guardarTextosEnServidor } from "./services/api.js";
 
@@ -33,32 +34,29 @@ export const paginaDeClave = (clave) => {
   );
 };
 
-const leer = () => {
-  try {
-    return JSON.parse(localStorage.getItem(CLAVE)) || {};
-  } catch {
-    return {};
-  }
-};
+/* Los valores son textos, listas (orden, bloques) o marcas (oculto); cada
+   pieza de Texto.jsx revisa el tipo del suyo. Acá sólo se asegura que sea
+   un objeto de claves. */
+const sanear = (datos) => (esObjeto(datos) ? datos : {});
 
-let textos = leer();
+let textos = sanear(leerLocal(CLAVE));
 const oyentes = new Set();
 
 const persistir = () => {
-  localStorage.setItem(CLAVE, JSON.stringify(textos));
+  guardarLocal(CLAVE, textos);
   oyentes.forEach((fn) => fn(textos));
 };
 
 /* Lo que llega del servidor al abrir el sitio. */
 export const hidratarTextos = (deServidor) => {
-  textos = deServidor || {};
+  textos = sanear(deServidor);
   persistir();
 };
 
 /* Publica los textos de una página. Al servidor sólo se le mandan las claves
    de esa página: es lo que el backend deja tocar según el permiso del rol. */
 export const guardarTextos = (nuevos, pagina) => {
-  textos = nuevos;
+  textos = sanear(nuevos);
   persistir();
 
   if (!pagina) return;

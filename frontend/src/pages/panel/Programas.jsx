@@ -31,14 +31,20 @@ export default function Programas({ ruta, usuario }) {
       previo.map((p) => (p.id === id ? { ...p, [campo]: valor } : p)),
     );
 
-  const publicar = () => {
+  const publicar = async () => {
     if (borrador.some(incompleto)) {
       setError(
         "Cada programa necesita nombre y un link que empiece con https://. Revisá los marcados en rojo.",
       );
       return;
     }
-    guardarProgramas(borrador);
+    const resultado = await guardarProgramas(borrador);
+    /* "Publicado" sólo si el servidor lo recibió. */
+    if (!resultado.ok) {
+      setAviso("");
+      setError(`No se pudo publicar: ${resultado.motivo}.`);
+      return;
+    }
     setError("");
     setAviso("Programas publicados en la portada.");
   };
@@ -220,6 +226,7 @@ export default function Programas({ ruta, usuario }) {
             <button
               className="enlace"
               onClick={() => {
+                if (!window.confirm("Se reemplazan los programas de la portada por los originales, en el sitio. ¿Seguir?")) return;
                 setBorrador(restaurarProgramas());
                 setError("");
                 setAviso("Programas restaurados.");

@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
 const db = require('../database/db');
+const { verificarToken } = require('../utils/tokens');
 
 // Middleware de autenticación: verifica el JWT y carga al usuario desde la BD.
 // Clave: la identidad y el rol salen de la BD (por el id del token), NUNCA del frontend.
@@ -13,15 +13,13 @@ async function autenticar(req, res, next) {
   const token = encabezado.split(' ')[1];
 
   try {
-    // Se fuerza el algoritmo HS256 (evita ambigüedad de algoritmo).
-    const decodificado = jwt.verify(token, process.env.JWT_SECRET, {
-      algorithms: ['HS256'],
-    });
+    // HS256 fijo, más issuer y audience propios (utils/tokens.js).
+    const decodificado = verificarToken(token);
 
     // Se re-lee el usuario en cada request: si fue deshabilitado o cambió de rol,
     // el token viejo deja de ser válido de inmediato.
     const usuario = await db.obtenerFila(
-      'SELECT id, username, rol, area_id, activo FROM usuarios WHERE id = ?',
+      'SELECT id, username, rol, area_id, activo, token_version FROM usuarios WHERE id = ?',
       decodificado.idUsuario
     );
 
@@ -29,7 +27,27 @@ async function autenticar(req, res, next) {
       return res.status(401).json({ error: 'Cuenta inválida o deshabilitada' });
     }
 
-    req.usuario = usuario;
+    // Cambiar la contraseña sube token_version: los tokens anteriores ya no sirven.
+    if ((decodificado.v || 0) !== (usuario.token_version || 0)) {
+      return res.status(401).json({ error: 'La sesión ya no es válida. Iniciá sesión de nuevo.' });
+    }
+
+    // Token cerrado con logout antes de vencer.
+    if (decodificado.jti) {
+      const revocado = await db.obtenerFila('SELECT jti FROM tokens_revocados WHERE jti = ?', decodificado.jti);
+      if (revocado) {
+        return res.status(401).json({ error: 'La sesión ya no es válida. Iniciá sesión de nuevo.' });
+      }
+    }
+
+    req.usuario = {
+      id: usuario.id,
+      username: usuario.username,
+      rol: usuario.rol,
+      area_id: usuario.area_id,
+      activo: usuario.activo,
+    };
+    req.token = { jti: decodificado.jti, exp: decodificado.exp };
     next();
   } catch (error) {
     // Respuestas distintas para token expirado vs inválido (más fácil de depurar),

@@ -6,21 +6,26 @@ const { ROLES } = require('../utils/roles');
 const RONDAS_BCRYPT = 12;
 
 // Script idempotente (INSERT OR IGNORE): crea las áreas y los 4 usuarios iniciales.
-// Se puede correr varias veces sin duplicar datos. Requiere ADMIN_PASSWORD.
+// Se puede correr varias veces sin duplicar datos. Requiere ADMIN_PASSWORD y
+// SEED_PASSWORD: no hay contraseñas por defecto, porque una contraseña conocida
+// deja entrar a cualquiera a las cuentas de sector.
+function contrasenaDeEntorno(nombre) {
+  const valor = process.env[nombre];
+  if (!valor) {
+    console.error(`La variable de entorno ${nombre} es requerida`);
+    console.error('Ejemplo: ADMIN_PASSWORD=... SEED_PASSWORD=... node src/scripts/seed.js');
+    process.exit(1);
+  }
+  if (valor.length < 8) {
+    console.error(`${nombre} debe tener al menos 8 caracteres`);
+    process.exit(1);
+  }
+  return valor;
+}
+
 async function semilla() {
-  const contrasenaAdmin = process.env.ADMIN_PASSWORD;
-  if (!contrasenaAdmin) {
-    console.error('La variable de entorno ADMIN_PASSWORD es requerida');
-    console.error('Ejemplo: ADMIN_PASSWORD=MiContraseñaSegura123 node src/scripts/seed.js');
-    process.exit(1);
-  }
-
-  if (typeof contrasenaAdmin !== 'string' || contrasenaAdmin.length < 8) {
-    console.error('ADMIN_PASSWORD debe tener al menos 8 caracteres');
-    process.exit(1);
-  }
-
-  const contrasenaPredeterminada = process.env.SEED_PASSWORD || '12345678';
+  const contrasenaAdmin = contrasenaDeEntorno('ADMIN_PASSWORD');
+  const contrasenaPredeterminada = contrasenaDeEntorno('SEED_PASSWORD');
 
   try {
     await db.asegurarMigraciones();
@@ -66,7 +71,7 @@ async function semilla() {
     );
     console.log('Usuario superadmin asegurado (admin)');
 
-    // Cuentas de sector: contraseña predeterminada, un único cambio disponible
+    // Cuentas de sector: contraseña de SEED_PASSWORD, un único cambio disponible
     const sectores = [
       { username: 'jefatura_matematica', rol: ROLES.JEFATURA_AREA, area_id: idsArea['matematica'] },
       { username: 'jefatura_lengua', rol: ROLES.JEFATURA_AREA, area_id: idsArea['lengua'] },
@@ -81,7 +86,8 @@ async function semilla() {
         sector.username, hashSector, sector.rol, sector.area_id
       );
     }
-    console.log(`Cuentas de sector aseguradas (contraseña predeterminada: ${contrasenaPredeterminada})`);
+    // La contraseña no se imprime: queda en el historial de la terminal y en logs.
+    console.log('Cuentas de sector aseguradas (con la contraseña de SEED_PASSWORD)');
 
     db.close();
     console.log('Semilla completada');

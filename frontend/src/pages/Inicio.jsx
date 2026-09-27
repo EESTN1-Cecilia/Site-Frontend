@@ -9,6 +9,8 @@ import Texto, {
   useEdicionTextos,
   useLista,
 } from "../components/Texto.jsx";
+import ZonaLibre from "../components/ZonaLibre.jsx";
+import { Dinamico, PaginaEditable, usePaginaGuardada } from "../components/PaginaEditable.jsx";
 import { courses, facade, logo, proposals } from "../data.js";
 import { useAjustes } from "../ajustes.js";
 import { useProgramas } from "../programas.js";
@@ -110,6 +112,10 @@ const secciones = [
   { id: "programas", clase: "seccion contenedor", ancla: "programas" },
 ];
 
+/* Secciones que responden a clics o se arman con datos: en la página armada
+   con el editor completo son bloques automáticos (PaginaEditable.jsx). */
+const AUTOMATICAS = { propuestas: "cursos", atajos: "accesos", programas: "programas" };
+
 export default function Inicio({ params }) {
   const edicion = useEdicionTextos();
   const { inscripcionAbierta } = useAjustes();
@@ -129,6 +135,15 @@ export default function Inicio({ params }) {
   const [listaPropuestas, bloquePropuesta] = useLista("inicio.propuestas", propuestas);
   const [listaAtajos, bloqueAtajo] = useLista("inicio.atajos", atajos, { duplicable: true });
   const [listaPuntos, bloquePunto] = useLista("inicio.puntos", puntos, { duplicable: true });
+  const guardada = usePaginaGuardada("inicio.pagina");
+
+  const tarjetasQueGiran = (
+    <div className="facts">
+      {listaFacts.map((fact) => (
+        <FactGiratorio key={fact.id} fact={fact} bloque={bloqueFact(fact)} />
+      ))}
+    </div>
+  );
 
   const contenido = {
     escuela: (
@@ -152,11 +167,7 @@ export default function Inicio({ params }) {
             </Texto>
           </p>
         </div>
-        <div className="facts">
-          {listaFacts.map((fact) => (
-            <FactGiratorio key={fact.id} fact={fact} bloque={bloqueFact(fact)} />
-          ))}
-        </div>
+        <Dinamico id="tarjetas-giran">{tarjetasQueGiran}</Dinamico>
       </>
     ),
 
@@ -334,6 +345,75 @@ export default function Inicio({ params }) {
     ),
   };
 
+  const seccionDe = (seccion) =>
+    seccion.id === "programas" && programas.length === 0 ? null : (
+      <Bloque
+        key={seccion.id}
+        {...bloqueSeccion(seccion)}
+        como="section"
+        className={seccion.clase}
+        ancla={seccion.ancla}
+      >
+        {contenido[seccion.id]}
+      </Bloque>
+    );
+
+  const botonesPortada = (bloque) => (
+    <Bloque key="acciones" {...bloque} className="hero__acciones">
+      {botones
+        /* Con la inscripción cerrada el botón no se muestra en el sitio. */
+        .filter((boton) => boton.id !== "inscripcion" || edicion?.puede() || inscripcionAbierta)
+        .map((boton) => (
+          <Bloque key={boton.id} {...bloqueBoton(boton)} como="span" className="hero__boton">
+            {boton.id === "cursos" ? (
+              <button
+                className="pill"
+                onClick={() =>
+                  document.getElementById("cursos")?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+              >
+                <Texto id="inicio.hero.accionPrimaria">Ver cursos</Texto>
+                <Icon icon="ph:arrow-up-right" width={16} height={16} aria-hidden="true" />
+              </button>
+            ) : (
+              <button className="pill pill--ghost" onClick={() => ir("/inscripcion")}>
+                <Texto id="inicio.hero.accionSecundaria">Inscripción 2027</Texto>
+              </button>
+            )}
+          </Bloque>
+        ))}
+    </Bloque>
+  );
+
+  const flechaBajar = (
+    <button
+      className="hero__scroll"
+      aria-label="Bajar para ver más"
+      onClick={() => window.scrollBy({ top: window.innerHeight * 0.8, behavior: "smooth" })}
+    />
+  );
+
+  if (guardada) {
+    const acciones = piezas.find((pieza) => pieza.id === "acciones");
+    const seccion = (id) => seccionDe(listaSecciones.find((s) => s.id === id) ?? secciones.find((s) => s.id === id));
+    return (
+      <main>
+        <PaginaEditable
+          clave="inicio.pagina"
+          pagina={guardada}
+          dinamicos={{
+            botones: acciones && botonesPortada(bloquePieza(acciones)),
+            bajar: flechaBajar,
+            "tarjetas-giran": tarjetasQueGiran,
+            cursos: seccion("propuestas"),
+            accesos: seccion("atajos"),
+            programas: seccion("programas"),
+          }}
+        />
+      </main>
+    );
+  }
+
   return (
     <main>
       <section className="hero">
@@ -376,57 +456,28 @@ export default function Inicio({ params }) {
                 );
 
               return (
-                <Bloque key={pieza.id} {...b} className="hero__acciones">
-                  {botones
-                    /* Con la inscripción cerrada el botón no se muestra en el sitio. */
-                    .filter((boton) => boton.id !== "inscripcion" || edicion || inscripcionAbierta)
-                    .map((boton) => (
-                      <Bloque key={boton.id} {...bloqueBoton(boton)} como="span" className="hero__boton">
-                        {boton.id === "cursos" ? (
-                          <button
-                            className="pill"
-                            onClick={() =>
-                              document
-                                .getElementById("cursos")
-                                ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                            }
-                          >
-                            <Texto id="inicio.hero.accionPrimaria">Ver cursos</Texto>
-                            <Icon icon="ph:arrow-up-right" width={16} height={16} aria-hidden="true" />
-                          </button>
-                        ) : (
-                          <button className="pill pill--ghost" onClick={() => ir("/inscripcion")}>
-                            <Texto id="inicio.hero.accionSecundaria">Inscripción 2027</Texto>
-                          </button>
-                        )}
-                      </Bloque>
-                    ))}
-                </Bloque>
+                <Dinamico key={pieza.id} id="botones">
+                  {botonesPortada(b)}
+                </Dinamico>
               );
             })}
           </div>
         </div>
 
-        <button
-          className="hero__scroll"
-          aria-label="Bajar para ver más"
-          onClick={() => window.scrollBy({ top: window.innerHeight * 0.8, behavior: "smooth" })}
-        />
+        <Dinamico id="bajar">{flechaBajar}</Dinamico>
       </section>
 
       {listaSecciones.map((seccion) =>
-        seccion.id === "programas" && programas.length === 0 ? null : (
-          <Bloque
-            key={seccion.id}
-            {...bloqueSeccion(seccion)}
-            como="section"
-            className={seccion.clase}
-            ancla={seccion.ancla}
-          >
-            {contenido[seccion.id]}
-          </Bloque>
+        Object.hasOwn(AUTOMATICAS, seccion.id) ? (
+          <Dinamico key={seccion.id} id={AUTOMATICAS[seccion.id]}>
+            {seccionDe(seccion)}
+          </Dinamico>
+        ) : (
+          seccionDe(seccion)
         ),
       )}
+
+      <ZonaLibre seccion zona="inicio.libre" titulo="Inicio" />
     </main>
   );
 }

@@ -3,10 +3,11 @@ import { Icon } from "@iconify/react";
 import Encabezado from "../components/Encabezado.jsx";
 import VisorPdf from "../components/VisorPdf.jsx";
 import Texto, { Bloque, Campo, Caso, Imagen, useLista } from "../components/Texto.jsx";
+import ZonaLibre from "../components/ZonaLibre.jsx";
+import { Dinamico, IrA, PaginaEditable, usePaginaGuardada } from "../components/PaginaEditable.jsx";
 import { criterios, periodos, valoraciones } from "../contenido.js";
 import { cuadernillos } from "../saberes.js";
 import { logo } from "../data.js";
-import { ir } from "../router.js";
 
 /* Visor del cuadernillo: se cierra con Esc y bloquea el scroll de atrás. */
 function Visor({ doc, cerrar }) {
@@ -80,8 +81,121 @@ export default function Evaluacion() {
     { duplicable: true },
   );
 
+  const guardada = usePaginaGuardada("evaluacion.pagina");
+
   const visibles = docs.filter((doc) =>
     [doc.titulo, doc.anio, doc.ciclo, doc.descripcion].join(" ").toLowerCase().includes(texto),
+  );
+
+  /* Partes automáticas: el buscador y los cuadernillos que encuentra. */
+  const buscador = (
+    <Bloque id="evaluacion.cuadernillos.buscador" como="label" className="campo campo--busca">
+      <Icon icon="ph:magnifying-glass" width={18} height={18} aria-hidden="true" />
+      <Campo
+        id="evaluacion.cuadernillos.buscar"
+        placeholder="Buscar cuadernillo"
+        type="search"
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
+      />
+    </Bloque>
+  );
+
+  const listaCuadernillos = (
+    <>
+      <Caso visible={!!texto} cuando="mientras alguien busca un cuadernillo">
+        <p className="resultado">
+          <Texto id="evaluacion.resultado.antes">Resultados para</Texto> “<strong>{busqueda}</strong>”:{" "}
+          {visibles.length} <Texto id="evaluacion.resultado.despues">documento(s).</Texto>
+          <button className="enlace" onClick={() => setBusqueda("")}>
+            <Texto id="evaluacion.resultado.verTodos">Ver todos</Texto>
+          </button>
+        </p>
+      </Caso>
+
+      {visibles.length > 0 && (
+        <div className="cuadernillos">
+          {visibles.map((doc) => {
+            const base = `evaluacion.cuadernillos.${doc.id}`;
+
+            return (
+              <Bloque key={doc.id} {...bloqueDoc(doc)} como="article" className="cuadernillo">
+                <span className="cuadernillo__acento" />
+                <div className="cuadernillo__cabecera">
+                  <span className="cuadernillo__anio">
+                    <Texto id={`${base}.anio`}>{doc.anio}</Texto>
+                  </span>
+                  <span className="cuadernillo__pill">
+                    <Icon icon="ph:file-pdf" width={13} height={13} aria-hidden="true" />
+                    <Texto id="evaluacion.cuadernillos.formato">PDF</Texto>
+                  </span>
+                </div>
+
+                <button
+                  className="cuadernillo__portada"
+                  onClick={() => setAbierto(doc)}
+                  aria-label={`Abrir ${doc.titulo}`}
+                >
+                  <Imagen
+                    id={`${base}.portada`}
+                    className={`cuadernillo__img cuadernillo__img--${doc.ajuste}`}
+                    src={doc.portada}
+                    alt={`Portada de ${doc.titulo}`}
+                  />
+                  <span className="cuadernillo__velo">
+                    <span className="cuadernillo__abrir">
+                      <Icon icon="ph:eye" width={16} height={16} aria-hidden="true" />
+                      <Texto id="evaluacion.cuadernillos.abrir">Abrir PDF</Texto>
+                    </span>
+                  </span>
+                </button>
+
+                <div className="cuadernillo__pie">
+                  <h3 className="cuadernillo__titulo">
+                    <Texto id={`${base}.titulo`}>{doc.titulo}</Texto>
+                  </h3>
+                  <p className="cuadernillo__meta">
+                    <Texto id={`${base}.meta`}>
+                      {`${doc.ciclo} · ${doc.paginas} páginas · ${doc.peso}`}
+                    </Texto>
+                  </p>
+                  <div className="cuadernillo__acciones">
+                    <button className="card__link" onClick={() => setAbierto(doc)}>
+                      <Texto id="evaluacion.cuadernillos.leer">Leer</Texto>
+                      <Icon icon="ph:caret-right" width={15} height={15} aria-hidden="true" />
+                    </button>
+                    <a
+                      className="cuadernillo__bajar"
+                      href={doc.pdf}
+                      download={doc.archivo}
+                      aria-label={`Descargar ${doc.titulo}`}
+                    >
+                      <Icon icon="ph:download-simple" width={18} height={18} aria-hidden="true" />
+                    </a>
+                  </div>
+                </div>
+              </Bloque>
+            );
+          })}
+        </div>
+      )}
+
+      <Caso visible={visibles.length === 0} cuando="cuando la búsqueda no encuentra ningún cuadernillo">
+        <div className="sin-resultados">
+          <Icon icon="ph:magnifying-glass" width={44} height={44} aria-hidden="true" />
+          <h3 className="exito__titulo">
+            <Texto id="evaluacion.sinResultados.titulo">No se encontraron documentos</Texto>
+          </h3>
+          <p className="exito__texto">
+            <Texto id="evaluacion.sinResultados.texto">No hay cuadernillos que coincidan con</Texto>{" "}
+            “{busqueda}”.
+          </p>
+          <button className="pill" onClick={() => setBusqueda("")}>
+            <Texto id="evaluacion.sinResultados.boton">Borrar la búsqueda</Texto>
+          </button>
+        </div>
+      </Caso>
+    </>
   );
 
   const contenido = {
@@ -105,110 +219,9 @@ export default function Evaluacion() {
               </Texto>
             </p>
           </div>
-          <Bloque id="evaluacion.cuadernillos.buscador" como="label" className="campo campo--busca">
-            <Icon icon="ph:magnifying-glass" width={18} height={18} aria-hidden="true" />
-            <Campo
-              id="evaluacion.cuadernillos.buscar"
-              placeholder="Buscar cuadernillo"
-              type="search"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-            />
-          </Bloque>
+          <Dinamico id="buscador">{buscador}</Dinamico>
         </div>
-
-        <Caso visible={!!texto} cuando="mientras alguien busca un cuadernillo">
-          <p className="resultado">
-            <Texto id="evaluacion.resultado.antes">Resultados para</Texto> “<strong>{busqueda}</strong>”:{" "}
-            {visibles.length} <Texto id="evaluacion.resultado.despues">documento(s).</Texto>
-            <button className="enlace" onClick={() => setBusqueda("")}>
-              <Texto id="evaluacion.resultado.verTodos">Ver todos</Texto>
-            </button>
-          </p>
-        </Caso>
-
-        {visibles.length > 0 && (
-          <div className="cuadernillos">
-            {visibles.map((doc) => {
-              const base = `evaluacion.cuadernillos.${doc.id}`;
-
-              return (
-                <Bloque key={doc.id} {...bloqueDoc(doc)} como="article" className="cuadernillo">
-                  <span className="cuadernillo__acento" />
-                  <div className="cuadernillo__cabecera">
-                    <span className="cuadernillo__anio">
-                      <Texto id={`${base}.anio`}>{doc.anio}</Texto>
-                    </span>
-                    <span className="cuadernillo__pill">
-                      <Icon icon="ph:file-pdf" width={13} height={13} aria-hidden="true" />
-                      <Texto id="evaluacion.cuadernillos.formato">PDF</Texto>
-                    </span>
-                  </div>
-
-                  <button
-                    className="cuadernillo__portada"
-                    onClick={() => setAbierto(doc)}
-                    aria-label={`Abrir ${doc.titulo}`}
-                  >
-                    <Imagen
-                      id={`${base}.portada`}
-                      className={`cuadernillo__img cuadernillo__img--${doc.ajuste}`}
-                      src={doc.portada}
-                      alt={`Portada de ${doc.titulo}`}
-                    />
-                    <span className="cuadernillo__velo">
-                      <span className="cuadernillo__abrir">
-                        <Icon icon="ph:eye" width={16} height={16} aria-hidden="true" />
-                        <Texto id="evaluacion.cuadernillos.abrir">Abrir PDF</Texto>
-                      </span>
-                    </span>
-                  </button>
-
-                  <div className="cuadernillo__pie">
-                    <h3 className="cuadernillo__titulo">
-                      <Texto id={`${base}.titulo`}>{doc.titulo}</Texto>
-                    </h3>
-                    <p className="cuadernillo__meta">
-                      <Texto id={`${base}.meta`}>
-                        {`${doc.ciclo} · ${doc.paginas} páginas · ${doc.peso}`}
-                      </Texto>
-                    </p>
-                    <div className="cuadernillo__acciones">
-                      <button className="card__link" onClick={() => setAbierto(doc)}>
-                        <Texto id="evaluacion.cuadernillos.leer">Leer</Texto>
-                        <Icon icon="ph:caret-right" width={15} height={15} aria-hidden="true" />
-                      </button>
-                      <a
-                        className="cuadernillo__bajar"
-                        href={doc.pdf}
-                        download={doc.archivo}
-                        aria-label={`Descargar ${doc.titulo}`}
-                      >
-                        <Icon icon="ph:download-simple" width={18} height={18} aria-hidden="true" />
-                      </a>
-                    </div>
-                  </div>
-                </Bloque>
-              );
-            })}
-          </div>
-        )}
-
-        <Caso visible={visibles.length === 0} cuando="cuando la búsqueda no encuentra ningún cuadernillo">
-          <div className="sin-resultados">
-            <Icon icon="ph:magnifying-glass" width={44} height={44} aria-hidden="true" />
-            <h3 className="exito__titulo">
-              <Texto id="evaluacion.sinResultados.titulo">No se encontraron documentos</Texto>
-            </h3>
-            <p className="exito__texto">
-              <Texto id="evaluacion.sinResultados.texto">No hay cuadernillos que coincidan con</Texto>{" "}
-              “{busqueda}”.
-            </p>
-            <button className="pill" onClick={() => setBusqueda("")}>
-              <Texto id="evaluacion.sinResultados.boton">Borrar la búsqueda</Texto>
-            </button>
-          </div>
-        </Caso>
+        <Dinamico id="cuadernillos">{listaCuadernillos}</Dinamico>
       </>
     ),
 
@@ -337,13 +350,27 @@ export default function Evaluacion() {
             </Texto>
           </p>
         </div>
-        <button className="pill" onClick={() => ir("/previas")}>
+        <IrA ruta="/previas" className="pill">
           <Texto id="evaluacion.aviso.boton">Ver intensificación</Texto>
           <Icon icon="ph:arrow-up-right" width={16} height={16} aria-hidden="true" />
-        </button>
+        </IrA>
       </div>
     ),
   };
+
+  const visor = abierto && <Visor doc={abierto} cerrar={() => setAbierto(null)} />;
+
+  if (guardada)
+    return (
+      <main>
+        <PaginaEditable
+          clave="evaluacion.pagina"
+          pagina={guardada}
+          dinamicos={{ buscador, cuadernillos: listaCuadernillos }}
+        />
+        {visor}
+      </main>
+    );
 
   return (
     <main>
@@ -384,7 +411,9 @@ export default function Evaluacion() {
         </Bloque>
       ))}
 
-      {abierto && <Visor doc={abierto} cerrar={() => setAbierto(null)} />}
+      <ZonaLibre seccion zona="evaluacion.libre" titulo="Evaluación de saberes" />
+
+      {visor}
     </main>
   );
 }

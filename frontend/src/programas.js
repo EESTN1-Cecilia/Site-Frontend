@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { campos, conId, guardarLocal, leerLocal } from "./almacen.js";
 import { enviar } from "./conexion.js";
 import { guardarProgramasEnServidor } from "./services/api.js";
 
@@ -28,35 +29,33 @@ export const nuevoPrograma = () => ({
 
 const CLAVE = "tec1-programas";
 
-const leer = () => {
-  try {
-    return JSON.parse(localStorage.getItem(CLAVE)) || semilla();
-  } catch {
-    return semilla();
-  }
-};
+const CAMPOS = ["nombre", "descripcion", "url", "logo", "autores"];
 
-let lista = leer();
+/* Sin la forma esperada valen los programas originales. */
+const sanear = (datos) =>
+  Array.isArray(datos) ? conId(datos).map((p) => ({ id: p.id, ...campos(p, CAMPOS) })) : semilla();
+
+let lista = sanear(leerLocal(CLAVE));
 const oyentes = new Set();
 
 const persistir = () => {
-  localStorage.setItem(CLAVE, JSON.stringify(lista));
+  guardarLocal(CLAVE, lista);
   oyentes.forEach((fn) => fn(lista));
 };
 
 /* Lo que llega del servidor al abrir el sitio. null = nadie cargó programas
-   todavía, así que se muestran los que trae el sitio. */
+   todavía, así que se muestran los que trae el sitio (no la copia de este
+   navegador, que pudo dejar otra persona). */
 export const hidratarProgramas = (deServidor) => {
-  if (!deServidor) return;
-  lista = deServidor;
+  lista = sanear(deServidor);
   persistir();
 };
 
 export const guardarProgramas = (nueva) => {
-  lista = nueva;
+  lista = sanear(nueva);
   persistir();
 
-  return enviar((token) => guardarProgramasEnServidor(token, nueva));
+  return enviar((token) => guardarProgramasEnServidor(token, lista));
 };
 
 export const restaurarProgramas = () => {

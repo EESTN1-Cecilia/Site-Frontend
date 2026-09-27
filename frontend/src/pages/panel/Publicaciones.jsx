@@ -7,10 +7,10 @@ import {
   nuevaPublicacion,
   nuevoBloque,
   quitarPublicacion,
-  restaurarPublicaciones,
   usePublicaciones,
 } from "../../publicaciones.js";
 import { puedeEditar } from "../../sesion.js";
+import { esLinkValido } from "../../links.js";
 
 const TOPE_IMAGEN = 1.5 * 1024 * 1024;
 
@@ -117,9 +117,17 @@ function BloqueImagen({ bloque, alCambiar }) {
                 defaultValue={
                   bloque.url?.startsWith("data:") ? "" : bloque.url
                 }
-                onBlur={(e) =>
-                  e.target.value && alCambiar({ ...bloque, url: e.target.value })
-                }
+                onBlur={(e) => {
+                  const url = e.target.value.trim();
+                  if (!url) return;
+                  /* Sólo direcciones http(s), como en el resto del sitio. */
+                  if (!esLinkValido(url)) {
+                    setError("La dirección tiene que empezar con https://");
+                    return;
+                  }
+                  alCambiar({ ...bloque, url });
+                  setError("");
+                }}
               />
             </label>
           </div>
@@ -293,9 +301,6 @@ export default function Publicaciones({ ruta, usuario }) {
           <p className="bloqueado">
             <Icon icon="ph:info" width={16} height={16} aria-hidden="true" />
             Los cambios se guardan en el servidor de la escuela.
-            <button className="enlace" onClick={restaurarPublicaciones}>
-              Restaurar las publicaciones originales
-            </button>
           </p>
         )}
       </Layout>

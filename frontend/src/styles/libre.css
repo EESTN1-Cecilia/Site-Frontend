@@ -1,0 +1,534 @@
+/* ---------------------------------------------------------------------
+   Zona libre (libre.js): el contenido que se arma con el editor visual.
+   Se usa en el sitio y adentro del lienzo del editor, así que no depende
+   de app.css (el lienzo es un iframe aparte): los colores del sitio se
+   repiten acá como variables propias.
+
+   Todo son clases "u-…": los bloques copian los componentes de las páginas
+   (encabezado de sección, tarjetas, pasos, aviso, preguntas…) y las
+   opciones del editor agregan o sacan clases. Quien edita elige de una
+   lista, no escribe CSS.
+--------------------------------------------------------------------- */
+.libre {
+  --l-rojo: #8b1e1e;
+  --l-bordo: #5c0f0f;
+  --l-rojo2: #a62b2b;
+  --l-texto: #5a5555;
+  --l-gris: #7a7474;
+  --l-linea: #e6e6e6;
+  --l-rosa: #e8c5c5;
+  --l-rosa-suave: #c97a7a;
+  --l-tarjeta: #f0eeee;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  /* Si la zona es más alta que su contenido (el lienzo del editor ocupa toda
+     la pantalla), las filas no se estiran. */
+  align-content: start;
+  gap: 20px;
+  margin-top: clamp(32px, 5vw, 48px);
+  color: var(--l-texto);
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+.libre :where(h2, h3, p, ul, ol, figure) {
+  margin: 0;
+}
+
+.libre > * {
+  min-width: 0;
+}
+
+.libre h2,
+.libre h3 {
+  color: var(--l-bordo);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.libre h2 {
+  font-size: clamp(24px, 3vw, 32px);
+}
+
+.libre h3 {
+  font-size: 19px;
+}
+
+.libre a {
+  color: var(--l-rojo);
+  font-weight: 600;
+}
+
+.libre img {
+  display: block;
+  max-width: 100%;
+  border-radius: 18px;
+}
+
+.libre hr {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--l-linea);
+}
+
+/* ---------- Botón ---------- */
+.libre .u-boton {
+  display: table;
+  justify-self: start;
+  padding: 11px 24px;
+  border: 1px solid var(--l-rojo2);
+  border-radius: 100px;
+  background: var(--l-rojo2);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 200ms;
+}
+
+.libre .u-boton:hover {
+  border-color: var(--l-rojo);
+  background: var(--l-rojo);
+}
+
+.libre .u-boton.u-estilo-borde {
+  background: transparent;
+  color: var(--l-rojo);
+}
+
+.libre .u-boton.u-estilo-borde:hover {
+  background: #fdf6f5;
+}
+
+/* ---------- Video o documento ---------- */
+.libre .u-insertar {
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: 18px;
+  background: var(--l-tarjeta);
+}
+
+.libre .u-insertar iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* ---------- Encabezado de sección (chip + título + bajada) ---------- */
+.libre .u-encabezado {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 14px;
+}
+
+.libre .u-chip {
+  padding: 8px 16px;
+  border-radius: 100px;
+  background: var(--l-rosa);
+  color: var(--l-rojo);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.libre .u-titulo {
+  font-size: clamp(28px, 4.4vw, 46px);
+  line-height: 1.16;
+}
+
+.libre .u-destacado {
+  color: var(--l-rojo2);
+}
+
+.libre .u-bajada {
+  max-width: 60ch;
+  font-size: clamp(15px, 1.7vw, 17px);
+  line-height: 1.6;
+}
+
+/* ---------- Tarjetas y accesos ---------- */
+.libre .u-tarjetas,
+.libre .u-accesos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: clamp(14px, 2vw, 22px);
+}
+
+.libre .u-tarjeta {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: clamp(20px, 2.6vw, 26px);
+  border: 1px solid var(--l-linea);
+  border-radius: 18px;
+  background: var(--l-tarjeta);
+}
+
+.libre .u-tarjeta h3 {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.libre .u-tarjeta p {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.libre .u-acceso {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: clamp(22px, 3vw, 28px);
+  border: 1px solid var(--l-linea);
+  border-radius: 20px;
+  background: var(--l-tarjeta);
+  color: var(--l-texto);
+  font-weight: 300;
+  text-decoration: none;
+  transition: border-color 200ms, transform 200ms;
+}
+
+.libre .u-acceso:hover {
+  border-color: var(--l-rosa-suave);
+  transform: translateY(-2px);
+}
+
+.libre .u-acceso strong {
+  color: var(--l-bordo);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.libre .u-acceso .u-mas {
+  margin-top: 6px;
+  color: var(--l-rojo2);
+  font-weight: 500;
+}
+
+.libre .u-cols-dos {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.libre .u-cols-tres {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* ---------- Pasos numerados ---------- */
+.libre .u-pasos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: clamp(14px, 2vw, 20px);
+  padding: 0;
+  list-style: none;
+  counter-reset: paso;
+}
+
+.libre .u-pasos > li {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: clamp(20px, 2.6vw, 26px);
+  padding-left: calc(clamp(20px, 2.6vw, 26px) + 56px);
+  border: 1px solid var(--l-linea);
+  border-radius: 18px;
+  background: var(--l-tarjeta);
+  counter-increment: paso;
+}
+
+.libre .u-pasos > li::before {
+  content: counter(paso, decimal-leading-zero);
+  position: absolute;
+  top: clamp(20px, 2.6vw, 26px);
+  left: clamp(20px, 2.6vw, 26px);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--l-rosa);
+  color: var(--l-rojo);
+  font-weight: 600;
+}
+
+.libre .u-pasos h3 {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.libre .u-pasos p {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ---------- Aviso destacado ---------- */
+.libre .u-aviso {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: clamp(24px, 3.4vw, 34px);
+  border-radius: 22px;
+  background: var(--l-bordo);
+  color: #fff;
+}
+
+.libre .u-aviso h3 {
+  color: #fff;
+  font-size: clamp(19px, 2.4vw, 24px);
+}
+
+.libre .u-aviso p {
+  max-width: 60ch;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.libre .u-aviso .u-boton {
+  margin-top: 8px;
+  border-color: #fff;
+  background: #fff;
+  color: var(--l-bordo);
+}
+
+.libre .u-aviso.u-tono-claro {
+  background: var(--l-rosa);
+  color: var(--l-bordo);
+}
+
+.libre .u-aviso.u-tono-claro h3 {
+  color: var(--l-bordo);
+}
+
+.libre .u-aviso.u-tono-claro .u-boton {
+  border-color: var(--l-rojo2);
+  background: var(--l-rojo2);
+  color: #fff;
+}
+
+/* ---------- Preguntas frecuentes ----------
+   En el editor son cajas abiertas; en el sitio, libre.js las pasa a
+   <details> para que se abran y cierren. */
+.libre .u-preguntas {
+  display: grid;
+  gap: 10px;
+}
+
+.libre .u-faq {
+  border: 1px solid var(--l-linea);
+  border-radius: 16px;
+  background: var(--l-tarjeta);
+}
+
+.libre .u-faq > :first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 20px;
+  color: var(--l-bordo);
+  font-size: 16px;
+  font-weight: 500;
+  list-style: none;
+  cursor: pointer;
+}
+
+.libre .u-faq > :first-child::-webkit-details-marker {
+  display: none;
+}
+
+.libre summary::after {
+  content: "+";
+  color: var(--l-rojo2);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.libre .u-faq[open] > summary {
+  color: var(--l-rojo2);
+}
+
+.libre .u-faq[open] > summary::after {
+  content: "−";
+}
+
+.libre .u-faq > :not(:first-child) {
+  padding: 0 20px 18px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+/* ---------- Lista con checks ---------- */
+.libre .u-checks {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.libre .u-checks > li {
+  position: relative;
+  padding-left: 26px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.libre .u-checks > li::before {
+  content: "✓";
+  position: absolute;
+  left: 2px;
+  color: var(--l-rojo2);
+  font-weight: 700;
+}
+
+/* ---------- Tabla ---------- */
+.libre .u-tabla {
+  overflow-x: auto;
+  border: 1px solid var(--l-linea);
+  border-radius: 16px;
+}
+
+.libre .u-tabla table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  font-size: 15px;
+}
+
+.libre .u-tabla th {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--l-linea);
+  color: var(--l-gris);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.libre .u-tabla td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--l-linea);
+  vertical-align: middle;
+}
+
+.libre .u-tabla tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* ---------- Dos columnas ---------- */
+.libre .u-columnas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-items: center;
+  gap: clamp(20px, 3vw, 36px);
+}
+
+.libre .u-columnas > div {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* ---------- Fondo de una sección ---------- */
+.libre .u-fondo-gris,
+.libre .u-fondo-rosa {
+  padding: clamp(20px, 3vw, 32px);
+  border-radius: 22px;
+}
+
+.libre .u-fondo-gris {
+  background: var(--l-tarjeta);
+}
+
+.libre .u-fondo-rosa {
+  background: var(--l-rosa);
+}
+
+/* ---------- Alineación ---------- */
+.libre .u-alinear-centro {
+  text-align: center;
+}
+
+.libre .u-alinear-derecha {
+  text-align: right;
+}
+
+.libre .u-encabezado.u-alinear-centro {
+  justify-items: center;
+}
+
+.libre .u-encabezado.u-alinear-derecha {
+  justify-items: end;
+}
+
+/* Imágenes, botones y videos son cajas: se alinean con los márgenes. */
+.libre img.u-alinear-centro,
+.libre .u-boton.u-alinear-centro,
+.libre .u-insertar.u-alinear-centro {
+  margin-inline: auto;
+}
+
+.libre img.u-alinear-derecha,
+.libre .u-boton.u-alinear-derecha,
+.libre .u-insertar.u-alinear-derecha {
+  margin-left: auto;
+}
+
+/* ---------- Tamaño del texto ---------- */
+.libre .u-tamano-chico {
+  font-size: 14px;
+}
+
+.libre .u-tamano-grande {
+  font-size: 20px;
+}
+
+.libre h2.u-tamano-chico {
+  font-size: 22px;
+}
+
+.libre h2.u-tamano-grande {
+  font-size: clamp(30px, 4vw, 42px);
+}
+
+/* ---------- Color del texto ---------- */
+.libre .u-color-rojo {
+  color: var(--l-rojo);
+}
+
+.libre .u-color-gris {
+  color: var(--l-gris);
+}
+
+.libre .u-color-negro {
+  color: #000;
+}
+
+/* ---------- Ancho de imágenes y videos ---------- */
+.libre .u-ancho-chico {
+  width: min(100%, 280px);
+}
+
+.libre .u-ancho-medio {
+  width: min(100%, 560px);
+}
+
+.libre .u-ancho-completo {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .libre .u-cols-dos,
+  .libre .u-cols-tres {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

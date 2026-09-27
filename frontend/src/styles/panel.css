@@ -2283,132 +2283,372 @@
   }
 }
 
-/* ---------- Zona de bloques libres en el editor ---------- */
-.bloques-libres--editando {
-  gap: 8px;
-  padding: 14px;
+/* ---------- Zona libre en el editor de páginas (ZonaLibre.jsx) ---------- */
+.zona-edicion {
+  display: grid;
+  gap: 16px;
+  margin-top: clamp(32px, 5vw, 48px);
+  padding: 16px;
   border: 2px dashed var(--rojo-claro);
   border-radius: 18px;
 }
 
-/* La barra del bloque va en una franja propia: si no, en un bloque bajo
-   (un botón, un divisor) tapa el botón de la cadena o el contenido. */
-.bloques-libres--editando .bloque-libre {
-  padding-top: 40px;
+.lienzo--textos .zona-edicion button {
+  pointer-events: auto;
 }
 
-.bloques-libres--editando .bloque-libre > .barra-bloque {
-  top: 2px;
-  right: 2px;
+.zona-edicion__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.bloque-libre__figura > .imagen-vacia {
-  display: block;
+.zona-edicion__rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--rojo-institucional);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.bloque-libre__vacio {
+.zona-edicion__vacia {
+  margin: 0;
+  color: var(--gris-medio);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.zona-edicion > .libre {
+  margin-top: 0;
+}
+
+/* ---------- Editor completo (EditorLibre.jsx): GrapesJS en pantalla completa ---------- */
+.editor-completo {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  background: var(--blanco);
+
+  /* GrapesJS en claro, con los colores del sitio. */
+  --gjs-main-color: var(--blanco);
+  --gjs-primary-color: var(--blanco);
+  --gjs-secondary-color: var(--gris-oscuro);
+  --gjs-tertiary-color: var(--rojo-institucional);
+  --gjs-quaternary-color: var(--rojo-institucional);
+  --gjs-font-color: var(--gris-oscuro);
+  --gjs-font-color-active: var(--bordo-oscuro);
+  --gjs-main-dark-color: rgba(92, 15, 15, 0.06);
+  --gjs-secondary-dark-color: rgba(92, 15, 15, 0.08);
+  --gjs-main-light-color: rgba(92, 15, 15, 0.04);
+  --gjs-secondary-light-color: var(--gris-oscuro);
+  --gjs-light-border: var(--gris-claro);
+  --gjs-arrow-color: var(--gris-medio);
+  --gjs-dark-text-shadow: none;
+  --gjs-color-blue: var(--rojo-institucional);
+  --gjs-color-highlight: var(--rojo-suave);
+  --gjs-main-font: var(--font);
+  --gjs-font-size: 0.8rem;
+  /* El panel de la derecha (bloques, estilos, propiedades, capas). */
+  --gjs-left-width: clamp(240px, 24vw, 300px);
+}
+
+.editor-completo .gjs-devices-c .gjs-field {
+  min-width: 130px;
+}
+
+.editor-completo__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--gris-claro);
+  background: var(--tarjeta);
+}
+
+.editor-completo__nombre {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 10px;
-  min-height: 110px;
-  padding: 20px;
-  border-radius: 14px;
-  border: 2px dashed var(--rojo-suave);
-  background: #fdf6f5;
   color: var(--bordo-oscuro);
-  font-size: 14px;
+  font-size: 16px;
+}
+
+.editor-completo__chip {
+  padding: 5px 12px;
+  border-radius: 100px;
+  background: var(--rojo-claro);
+  color: var(--rojo-institucional);
+  font-size: 11px;
   font-weight: 600;
-  text-align: center;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
 }
 
-.bloque-libre__sin-link {
-  opacity: 0.6;
-}
-
-.bloque-libre__nota {
-  margin-top: 8px;
+.editor-completo__ayuda {
+  flex: 1;
+  min-width: 220px;
+  margin: 0;
   color: var(--gris-medio);
   font-size: 13px;
 }
 
-.bloque-libre__redes {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
-  max-width: 560px;
-  margin-top: 12px;
-  justify-items: start;
+.editor-completo__aviso {
+  margin: 8px 16px 0;
 }
 
-.bloque-libre__redes .red-edit {
+.editor-completo__gjs {
+  flex: 1;
+  min-height: 0;
+}
+
+.editor-completo__gjs > div {
+  height: 100%;
+}
+
+/* Paneles y botones de GrapesJS con la cara del sitio. */
+.editor-completo .gjs-pn-panel {
+  border-color: var(--gris-claro);
+}
+
+.editor-completo .gjs-pn-views-container,
+.editor-completo .gjs-pn-views {
+  border-left: 1px solid var(--gris-claro);
+  box-shadow: none;
+}
+
+.editor-completo .gjs-pn-btn {
+  border-radius: 8px;
+}
+
+.editor-completo .gjs-pn-btn.gjs-pn-active {
+  background: var(--rojo-claro);
+  color: var(--bordo-oscuro);
+  box-shadow: none;
+}
+
+.editor-completo .gjs-block {
+  border: 1px solid var(--gris-claro);
+  border-radius: 12px;
+  background: var(--blanco);
+  color: var(--bordo-oscuro);
+  box-shadow: none;
+}
+
+.editor-completo .gjs-block:hover {
+  border-color: var(--rojo-suave);
+  color: var(--rojo-institucional);
+  box-shadow: 0 4px 12px rgba(31, 10, 10, 0.08);
+}
+
+.editor-completo .gjs-block-category .gjs-title,
+.editor-completo .gjs-sm-sector .gjs-sm-sector-title,
+.editor-completo .gjs-layer-title,
+.editor-completo .gjs-trt-header {
+  background: var(--tarjeta);
+  color: var(--bordo-oscuro);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.editor-completo .gjs-field,
+.editor-completo .gjs-trt-trait select,
+.editor-completo .gjs-trt-trait input {
+  border: 1px solid var(--gris-claro);
+  border-radius: 8px;
+  background: var(--blanco);
+  color: var(--gris-oscuro);
+}
+
+.editor-completo .gjs-btn-prim {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--bordo-oscuro);
+  color: var(--blanco);
+}
+
+.editor-completo .gjs-btn-prim--full {
   width: 100%;
 }
 
-.agregar-bloque {
-  display: grid;
-  justify-items: center;
+.editor-completo .gjs-toolbar,
+.editor-completo .gjs-badge {
+  background-color: var(--rojo-institucional);
 }
 
-.agregar-bloque__boton {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 100px;
-  border: 1px dashed var(--rojo-suave);
-  background: var(--blanco);
+/* Opciones de las piezas de un bloque automático (EditorLibre.jsx). */
+.editor-completo .pieza-titulo {
+  margin: 12px 0 2px;
   color: var(--bordo-oscuro);
-  font-size: 14px;
-  font-weight: 600;
-  transition: background-color 150ms;
-}
-
-.agregar-bloque__boton:hover {
-  background: var(--rojo-claro);
-}
-
-/* Los de entre bloques quedan discretos hasta que se les pasa el mouse. */
-.agregar-bloque--compacto {
-  opacity: 0.45;
-  transition: opacity 150ms;
-}
-
-.agregar-bloque--compacto:hover,
-.agregar-bloque--compacto:focus-within {
-  opacity: 1;
-}
-
-.agregar-bloque--compacto .agregar-bloque__boton {
-  padding: 3px 12px;
   font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  text-transform: none;
 }
 
-.agregar-bloque__menu {
+.editor-completo .pieza-titulo--aviso {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--tarjeta);
+  color: var(--gris-oscuro);
+  font-weight: 400;
+}
+
+.editor-completo .pieza-campo textarea,
+.editor-completo .pieza-campo input:not([type="checkbox"]),
+.editor-completo .pieza-campo select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  background: none;
+  color: var(--gris-oscuro);
+  font: 13px/1.4 var(--font);
+}
+
+.editor-completo .pieza-campo textarea {
+  resize: vertical;
+}
+
+.editor-completo .pieza-campo input[type="checkbox"] {
+  -webkit-appearance: auto;
+  appearance: auto;
+  width: 18px;
+  height: 18px;
+  margin: 6px;
+  accent-color: var(--rojo-institucional);
+}
+
+.editor-completo .gjs-trt-trait:has(.pieza-titulo) .gjs-field {
+  border: 0;
+  background: none;
+}
+
+.editor-completo .gjs-trt-trait:has(.pieza-titulo) {
+  padding-bottom: 0;
+}
+
+.editor-completo .gjs-trt-trait--button,
+.editor-completo .gjs-trt-trait:has(.gjs-btn-prim) {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+/* Las clases las maneja el editor ("u-…"): no se muestran. */
+.editor-completo .gjs-clm-tags {
+  display: none;
+}
+
+.editor-completo .gjs-mdl-dialog {
+  border: 1px solid var(--gris-claro);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(31, 10, 10, 0.2);
+}
+
+.editor-completo .gjs-am-add-asset {
+  display: flex;
+  gap: 8px;
+}
+
+.editor-completo .gjs-am-add-field {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
+.editor-completo .gjs-am-add-asset button {
+  width: auto;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--bordo-oscuro);
+  color: var(--blanco);
+  white-space: nowrap;
+}
+
+/* Colores de la paleta del sitio (propiedad "paleta" del panel de estilos). */
+.paleta {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 12px;
-  border-radius: 16px;
-  background: var(--blanco);
-  box-shadow: 0 6px 18px rgba(31, 10, 10, 0.14);
+  gap: 6px;
+  padding: 4px 0;
 }
 
-.agregar-bloque__menu button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 14px;
-  border-radius: 10px;
+.paleta__color {
+  width: 24px;
+  height: 24px;
   border: 1px solid var(--gris-claro);
-  color: var(--bordo-oscuro);
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: 50%;
+  cursor: pointer;
 }
 
-.agregar-bloque__menu button:hover {
-  border-color: var(--rojo-suave);
-  background: var(--rojo-claro);
+.paleta__color[data-color=""] {
+  background: linear-gradient(135deg, transparent 45%, var(--rojo-suave) 45% 55%, transparent 55%) !important;
+}
+
+.paleta__color--elegido {
+  outline: 2px solid var(--bordo-oscuro);
+  outline-offset: 2px;
+}
+
+/* ---------- Menú y pie del sitio dentro del editor de Inicio ---------- */
+.header--vista {
+  position: relative;
+  inset: auto;
+  z-index: 1;
+}
+
+/* El lienzo es más angosto que la pantalla: los botones bajan de renglón en
+   vez de pisar el logo, y todos quedan a mano para editarlos. */
+.header--vista .nav {
+  flex-wrap: wrap;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.header--vista .nav__links {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1 1 320px;
+}
+
+.header--vista .menu-boton {
+  display: none;
+}
+
+.lienzo__marco {
+  position: relative;
+  border-bottom: 2px dashed var(--rojo-suave);
+}
+
+.lienzo__marco:last-child {
+  border-top: 2px dashed var(--rojo-suave);
+  border-bottom: 0;
+}
+
+.lienzo__marco::before {
+  content: attr(data-nombre);
+  display: block;
+  padding: 6px var(--margen);
+  background: var(--tarjeta);
+  color: var(--bordo-oscuro);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.lienzo__marco .footer {
+  margin-top: 0;
+}
+
+.lienzo--textos .footer .editable:hover,
+.lienzo--textos .footer .editable:focus {
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
 }

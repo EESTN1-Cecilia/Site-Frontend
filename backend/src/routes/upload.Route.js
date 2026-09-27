@@ -19,11 +19,19 @@ const filtroArchivos = (req, archivo, cb) => {
   }
 };
 
+// Además del tamaño del PDF se acotan los demás campos: el endpoint sólo usa
+// 'file' y, opcionalmente, 'destination'. Sin estos topes multer acumula en
+// memoria cualquier cantidad de campos de texto de hasta 1 MB cada uno.
 const upload = multer({
   storage: almacenamiento,
   fileFilter: filtroArchivos,
   limits: {
     fileSize: TAMANIO_MAXIMO,
+    files: 1,
+    fields: 2,
+    parts: 3,
+    fieldSize: 1024,
+    fieldNameSize: 100,
   },
 });
 

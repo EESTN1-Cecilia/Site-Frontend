@@ -88,11 +88,9 @@ async function crearUsuario(req, res) {
     const hashContrasena = await bcrypt.hash(password, RONDAS_BCRYPT);
 
     // Toda cuenta nueva arranca con password_change_allowed=1 y contador en 0.
-    const esSector = rol !== ROLES.DIRECCION;
-
     const resultado = await db.ejecutar(
-      'INSERT INTO usuarios (username, password_hash, rol, area_id, password_change_allowed, password_change_count) VALUES (?, ?, ?, ?, ?, 0)',
-      username, hashContrasena, rol, area_id || null, esSector ? 1 : 1
+      'INSERT INTO usuarios (username, password_hash, rol, area_id, password_change_allowed, password_change_count) VALUES (?, ?, ?, ?, 1, 0)',
+      username, hashContrasena, rol, area_id || null
     );
 
     return res.status(201).json({
@@ -115,9 +113,9 @@ async function crearUsuario(req, res) {
 async function actualizarUsuario(req, res) {
   try {
     const { id } = req.params;
-    const { username, rol, area_id, activo } = req.body;
+    const { username, rol, area_id, activo } = req.body || {};
 
-    const existente = await db.obtenerFila('SELECT id FROM usuarios WHERE id = ?', id);
+    const existente = await db.obtenerFila('SELECT id, rol, area_id FROM usuarios WHERE id = ?', id);
     if (!existente) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
@@ -132,12 +130,39 @@ async function actualizarUsuario(req, res) {
       }
     }
 
+    if (activo !== undefined && typeof activo !== 'boolean' && activo !== 0 && activo !== 1) {
+      return res.status(400).json({ error: 'El campo activo debe ser verdadero o falso' });
+    }
+
+    // Dirección no puede dejarse afuera a sí misma: si no, la escuela podría
+    // quedar sin nadie que gestione las cuentas.
+    if (existente.id === req.usuario.id && ((activo !== undefined && !activo) || (rol && rol !== ROLES.DIRECCION))) {
+      return res.status(400).json({ error: 'No podés desactivar tu propia cuenta ni quitarte el rol de dirección' });
+    }
+
+    // Mismas reglas que al crear: sólo jefatura_area lleva área, y tiene que ser activa.
+    const rolFinal = rol || existente.rol;
+    let areaFinal = area_id !== undefined ? (area_id || null) : existente.area_id;
+    if (rolFinal === ROLES.JEFATURA_AREA) {
+      const area = areaFinal
+        ? await db.obtenerFila('SELECT id FROM areas WHERE id = ? AND activo = 1', areaFinal)
+        : null;
+      if (!area) {
+        return res.status(400).json({ error: 'El rol jefatura_area requiere un área válida y activa' });
+      }
+    } else {
+      if (area_id) {
+        return res.status(400).json({ error: 'El area_id solo es válido para el rol jefatura_area' });
+      }
+      areaFinal = null;
+    }
+
     const campos = [];
     const valores = [];
 
     if (username) { campos.push('username = ?'); valores.push(username); }
     if (rol) { campos.push('rol = ?'); valores.push(rol); }
-    if (area_id !== undefined) { campos.push('area_id = ?'); valores.push(area_id || null); }
+    if (areaFinal !== existente.area_id) { campos.push('area_id = ?'); valores.push(areaFinal); }
     if (activo !== undefined) { campos.push('activo = ?'); valores.push(activo ? 1 : 0); }
 
     if (campos.length === 0) {
@@ -165,6 +190,10 @@ async function eliminarUsuario(req, res) {
     const existente = await db.obtenerFila('SELECT id FROM usuarios WHERE id = ?', id);
     if (!existente) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    if (existente.id === req.usuario.id) {
+      return res.status(400).json({ error: 'No podés desactivar tu propia cuenta' });
     }
 
     // "Eliminar" es un borrado lógico (activo=0): se conserva el historial de uploads.
@@ -199,6 +228,42 @@ async function permitirCambioContrasena(req, res) {
   }
 }
 
+// El superadmin pone una contraseña nueva a una cuenta (por ejemplo, si un sector
+// perdió el acceso o alguien de afuera se la cambió). Cierra todas las sesiones
+// abiertas de esa cuenta y le deja un cambio habilitado para que el sector
+// elija la suya.
+async function restablecerContrasena(req, res) {
+  try {
+    const { id } = req.params;
+    const { nueva_password } = req.body || {};
+
+    if (typeof nueva_password !== 'string' || nueva_password.length < 8) {
+      return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres' });
+    }
+
+    const existente = await db.obtenerFila('SELECT id FROM usuarios WHERE id = ?', id);
+    if (!existente) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const hashContrasena = await bcrypt.hash(nueva_password, RONDAS_BCRYPT);
+    await db.ejecutar(
+      `UPDATE usuarios SET
+        password_hash = ?,
+        password_change_allowed = 1,
+        token_version = token_version + 1,
+        updated_at = datetime('now')
+       WHERE id = ?`,
+      hashContrasena, id
+    );
+
+    return res.json({ mensaje: 'Contraseña restablecida. Se cerraron las sesiones abiertas de la cuenta.' });
+  } catch (error) {
+    console.error('[Usuarios] Error al restablecer contraseña:', error.message);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+}
+
 module.exports = {
   listarUsuarios,
   obtenerUsuarioPorId,
@@ -207,4 +272,5 @@ module.exports = {
   actualizarUsuario,
   eliminarUsuario,
   permitirCambioContrasena,
+  restablecerContrasena,
 };

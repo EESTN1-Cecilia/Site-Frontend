@@ -3,7 +3,8 @@ import { Icon } from "@iconify/react";
 import Encabezado from "../components/Encabezado.jsx";
 import Texto, { Bloque, Caso, Dato, Imagen } from "../components/Texto.jsx";
 import Bloques from "../components/Bloques.jsx";
-import EditorDeBloques from "../components/EditorDeBloques.jsx";
+import ZonaLibre from "../components/ZonaLibre.jsx";
+import { Dinamico, PaginaEditable, usePaginaGuardada } from "../components/PaginaEditable.jsx";
 import { usePublicaciones } from "../publicaciones.js";
 
 const PUBLICACIONES = "/panel/publicaciones";
@@ -74,6 +75,7 @@ function Nota({ novedad, destacada }) {
 export default function Novedades({ params }) {
   const [categoria, setCategoria] = useState("Todas");
   const publicaciones = usePublicaciones();
+  const guardada = usePaginaGuardada("novedades.pagina");
 
   /* Sólo lo aprobado por Dirección, de la más nueva a la más vieja. */
   const publicadas = publicaciones
@@ -91,6 +93,46 @@ export default function Novedades({ params }) {
   const lista = todas.filter((n) => categoria === "Todas" || n.categoria === categoria);
   const [destacada, ...resto] = lista;
 
+  /* Partes automáticas: los filtros por categoría y las notas publicadas. */
+  const filtrosDeCategoria = (
+    <Bloque id="novedades.filtros" className="filtros__chips filtros__chips--top">
+      {categorias.map((valor) => (
+        <button
+          key={valor}
+          className={`filtro ${categoria === valor ? "filtro--activo" : ""}`}
+          onClick={() => setCategoria(valor)}
+        >
+          {valor === "Todas" ? <Texto id="novedades.filtros.todas">Todas</Texto> : valor}
+        </button>
+      ))}
+    </Bloque>
+  );
+
+  const notas = (
+    <>
+      {destacada && <Nota novedad={destacada} destacada />}
+
+      <div className="notas">
+        {resto.map((novedad) => (
+          <Nota novedad={novedad} key={novedad.id} />
+        ))}
+      </div>
+
+      <Caso visible={lista.length === 0} cuando="cuando no hay novedades en la categoría elegida">
+        <p className="vacio">
+          <Texto id="novedades.vacio">Todavía no hay novedades en esta categoría.</Texto>
+        </p>
+      </Caso>
+    </>
+  );
+
+  if (guardada)
+    return (
+      <main>
+        <PaginaEditable clave="novedades.pagina" pagina={guardada} dinamicos={{ categorias: filtrosDeCategoria, notas }} />
+      </main>
+    );
+
   return (
     <main>
       <Encabezado id="novedades.hero"
@@ -106,33 +148,10 @@ export default function Novedades({ params }) {
       />
 
       <Bloque id="novedades.lista" como="section" className="seccion contenedor">
-        <Bloque id="novedades.filtros" className="filtros__chips filtros__chips--top">
-          {categorias.map((valor) => (
-            <button
-              key={valor}
-              className={`filtro ${categoria === valor ? "filtro--activo" : ""}`}
-              onClick={() => setCategoria(valor)}
-            >
-              {valor === "Todas" ? <Texto id="novedades.filtros.todas">Todas</Texto> : valor}
-            </button>
-          ))}
-        </Bloque>
+        <Dinamico id="categorias">{filtrosDeCategoria}</Dinamico>
+        <Dinamico id="notas">{notas}</Dinamico>
 
-        {destacada && <Nota novedad={destacada} destacada />}
-
-        <div className="notas">
-          {resto.map((novedad) => (
-            <Nota novedad={novedad} key={novedad.id} />
-          ))}
-        </div>
-
-        <Caso visible={lista.length === 0} cuando="cuando no hay novedades en la categoría elegida">
-          <p className="vacio">
-            <Texto id="novedades.vacio">Todavía no hay novedades en esta categoría.</Texto>
-          </p>
-        </Caso>
-
-        <EditorDeBloques zona="novedades.bloques" />
+        <ZonaLibre zona="novedades.libre" anterior="novedades.bloques" titulo="Novedades" />
       </Bloque>
     </main>
   );

@@ -1,5 +1,12 @@
-/* Sólo links http(s): evita que algo como "javascript:" termine en un href. */
-export const esLinkValido = (url) => /^https?:\/\//i.test((url || "").trim());
+/* Sólo links http(s): evita que algo como "javascript:" termine en un href.
+   Cualquier cosa que no sea texto (un dato mal guardado) no es un link. */
+export const esLinkValido = (url) => typeof url === "string" && /^https?:\/\//i.test(url.trim());
+
+/* Link de un documento: http(s) o un archivo del propio sitio ("/docs/informe.pdf").
+   No acepta "//otro-sitio" (va a otro dominio) ni rutas con "..". */
+export const esLinkDeDocumento = (url) =>
+  esLinkValido(url) ||
+  (typeof url === "string" && /^\/(?!\/)[\w./-]+$/.test(url.trim()) && !url.includes(".."));
 
 /* "https://diagramtec.com/app" -> "diagramtec.com", para mostrar adónde lleva. */
 export const dominio = (url) => {

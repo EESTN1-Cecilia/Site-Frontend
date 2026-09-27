@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import { ir, separar, useRuta } from "./src/router.js";
-import { logo, navItems, redesSociales } from "./src/data.js";
-import { esLinkValido } from "./src/links.js";
 import {
   nombrePerfil,
   puede,
   restaurarSesion,
   salir,
   useSesion,
-  verPanel,
 } from "./src/sesion.js";
 import Login from "./src/pages/Login.jsx";
 import Inicio from "./src/pages/Inicio.jsx";
@@ -35,6 +32,8 @@ import { limpiarError, useConexion } from "./src/conexion.js";
 import { sincronizarContenido } from "./src/sincronizar.js";
 import Server from "./src/pages/panel/Server.jsx";
 import Direccion from "./src/pages/panel/Direccion.jsx";
+import LimiteDeError from "./src/components/LimiteDeError.jsx";
+import { Menu, Pie } from "./src/components/Marco.jsx";
 import "./src/styles/app.css";
 import "./src/styles/paginas.css";
 import "./src/styles/panel.css";
@@ -65,15 +64,6 @@ const paginas = {
   "/panel/direccion": Direccion,
 };
 
-const enlacesPie = [
-  ["/", "Inicio"],
-  ["/evaluacion", "Evaluación de saberes"],
-  ["/previas", "Intensificación/Previas"],
-  ["/novedades", "Novedades"],
-  ["/inscripcion", "Inscripción"],
-  ["/panel", "Sistema de gestión"],
-];
-
 function SinAcceso({ usuario }) {
   return (
     <main className="seccion contenedor">
@@ -101,13 +91,23 @@ function App() {
   const usuario = useSesion();
   const { inscripcionAbierta, redes } = useAjustes();
   const conexion = useConexion();
-  const redesConLink = redes.filter((r) => redesSociales[r.red] && esLinkValido(r.url));
   const [showTop, setShowTop] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   /* Si hay token guardado, el backend confirma quién es. */
   useEffect(() => {
     restaurarSesion();
+  }, []);
+
+  /* Si en otra pestaña se entra con otra cuenta o se sale, esta pestaña se
+     recarga: si no, seguiría mostrando el rol anterior mientras escribe con
+     el token nuevo. */
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === null || e.key === "site_token" || e.key === "tec1-sesion") window.location.reload();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   /* El contenido del sitio se trae del backend. Se vuelve a pedir al entrar o
@@ -127,57 +127,10 @@ function App() {
 
   const [camino, params] = separar(ruta);
   const esPanel = camino.startsWith("/panel");
-  const Pagina = paginas[camino] || Inicio;
+  /* Object.hasOwn: un hash como "#constructor" no es una página. */
+  const Pagina = Object.hasOwn(paginas, camino) ? paginas[camino] : Inicio;
   const esLogin = camino === "/login";
   const enVistaPrevia = params.has("preview");
-
-  const enlaces = (
-    <>
-      {navItems
-        .filter(([destino]) => destino !== "/panel" || verPanel(usuario))
-        .map(([destino, label, icon]) => (
-          <button
-            key={destino}
-            className={`nav__link ${ruta === destino ? "nav__link--activo" : ""}`}
-            onClick={() => ir(destino)}
-          >
-            <Icon icon={icon} width={16} height={16} aria-hidden="true" />
-            {label}
-          </button>
-        ))}
-      {usuario ? (
-        <div className="sesion">
-          <span className="sesion__datos">
-            <span className="sesion__nombre">{usuario.nombre}</span>
-            <span className="sesion__rol">{nombrePerfil(usuario.rol)}</span>
-          </span>
-          <button
-            className="sesion__salir"
-            onClick={() => {
-              salir();
-              ir("/");
-            }}
-          >
-            <Icon icon="ph:sign-out" width={16} height={16} aria-hidden="true" />
-            Salir
-          </button>
-        </div>
-      ) : (
-        <>
-          {inscripcionAbierta && (
-            <button className="nav__link" onClick={() => ir("/inscripcion")}>
-              <Icon icon="ph:user-plus" width={16} height={16} aria-hidden="true" />
-              Inscripción
-            </button>
-          )}
-          <button className="cta" onClick={() => ir("/login")}>
-            Ingresar
-            <Icon icon="ph:sign-in" width={15} height={15} aria-hidden="true" />
-          </button>
-        </>
-      )}
-    </>
-  );
 
   /* El panel es sólo para el personal: los alumnos ni lo ven en el menú. */
   const contenido = !esPanel ? (
@@ -190,95 +143,25 @@ function App() {
     <SinAcceso usuario={usuario} />
   );
 
-  if (esLogin) return <Login />;
+  if (esLogin) return <LimiteDeError key={ruta}><Login /></LimiteDeError>;
 
   return (
     <>
-      <header className="header">
-        <nav className="nav contenedor">
-          <button className="marca" onClick={() => ir("/")}>
-            <img className="marca__logo" src={logo} alt="Logo Técnica 1" />
-            <span>
-              <span className="marca__titulo">Técnica 1</span>
-              <span className="marca__bajada">CECILIA BERDICHEVSKI</span>
-            </span>
-          </button>
-          <div className="nav__links">{enlaces}</div>
-          <button
-            className="menu-boton"
-            aria-label="Abrir menú"
-            aria-expanded={menuAbierto}
-            onClick={() => setMenuAbierto((abierto) => !abierto)}
-          >
-            <Icon
-              icon={menuAbierto ? "ph:x" : "ph:list"}
-              width={22}
-              height={22}
-              aria-hidden="true"
-            />
-          </button>
-        </nav>
-        {menuAbierto && <div className="menu-panel">{enlaces}</div>}
-      </header>
+      <Menu
+        ruta={ruta}
+        usuario={usuario}
+        inscripcionAbierta={inscripcionAbierta}
+        menuAbierto={menuAbierto}
+        setMenuAbierto={setMenuAbierto}
+        alSalir={() => {
+          salir();
+          ir("/");
+        }}
+      />
 
-      {contenido}
+      <LimiteDeError key={ruta}>{contenido}</LimiteDeError>
 
-      <footer className="footer">
-        <div className="contenedor">
-          <div className="footer__grid">
-            <div className="footer__marca">
-              <p className="footer__titulo">Técnica 1 Cecilia Berdichevski</p>
-              <p className="footer__bajada">
-                Güemes 2051 · Esteban Echeverría · Provincia de Buenos Aires.
-              </p>
-            </div>
-            <nav>
-              <p className="footer__heading">NAVEGACIÓN</p>
-              {enlacesPie
-                .filter(
-                  ([destino]) =>
-                    (destino !== "/panel" || verPanel(usuario)) &&
-                    (destino !== "/inscripcion" || inscripcionAbierta),
-                )
-                .map(([destino, label]) => (
-                <button
-                  className="footer__link"
-                  key={destino}
-                  onClick={() => ir(destino)}
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
-            {redesConLink.length > 0 && (
-              <div>
-                <p className="footer__heading">REDES</p>
-                <div className="redes">
-                  {redesConLink.map((r) => {
-                    const [nombre, icono] = redesSociales[r.red];
-                    return (
-                      <a
-                        className="red"
-                        key={r.id}
-                        href={r.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={nombre}
-                        title={nombre}
-                      >
-                        <Icon icon={icono} width={18} height={18} aria-hidden="true" />
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-          <p className="copyright">
-            © {new Date().getFullYear()} Técnica 1 Cecilia Berdichevski. Todos los derechos reservados.
-          </p>
-        </div>
-      </footer>
+      <Pie usuario={usuario} inscripcionAbierta={inscripcionAbierta} redes={redes} />
 
       {/* Aviso de que el servidor no responde: lo que se edite queda sólo en
           esta computadora, así que nadie debe creer que ya publicó. */}
