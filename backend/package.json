@@ -16,6 +16,7 @@
   "scripts": {
     "start": "node app.js",
     "restablecer-admin": "node src/scripts/restablecer-admin.js",
+    "restablecer-cuentas": "node src/scripts/restablecer-cuentas.js",
     "test": "node --test src/test/*.test.js"
   },
   "keywords": [],
