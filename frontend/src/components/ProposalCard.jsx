@@ -23,7 +23,7 @@ export default function ProposalCard({ propuesta, course, destino, bloque }) {
           <Texto id={`${base}.meta`}>{course.eyebrow}</Texto>
         </span>
         <span>·</span>
-        <span>{course.items.length} divisiones</span>
+        <span>{course.items.length} planes de trabajo</span>
       </p>
       <button className="card__titulo card__titulo--enlace" onClick={abrir}>
         <Texto id={`${base}.titulo`}>{propuesta.title}</Texto>
@@ -39,7 +39,7 @@ export default function ProposalCard({ propuesta, course, destino, bloque }) {
       {/* Arranca cerrado en cada carga; mientras se edita queda abierto. */}
       <details className="desplegable" open={edicion ? true : undefined}>
         <summary className="desplegable__boton">
-          <Texto id="inicio.divisiones.ver">Ver divisiones</Texto>
+          <Texto id="inicio.divisiones.ver">Ver planes de trabajo</Texto>
           <Icon className="desplegable__flecha" icon="ph:caret-down" width={16} height={16} aria-hidden="true" />
         </summary>
         <div className="card__lista">
