@@ -230,13 +230,8 @@ export default function Inicio({ params }) {
     identidad: (
       <div className="identidad">
         <div>
-          <Imagen
-            id="inicio.identidad.logo"
-            className="identidad__logo"
-            src={logo}
-            alt="Logo Técnica 1"
-          />
-          <p className="chip">
+          <p className="chip chip--logo">
+            <Imagen id="inicio.identidad.logo" src={logo} alt="" />
             <Texto id="inicio.identidad.chip">IDENTIDAD INSTITUCIONAL</Texto>
           </p>
           <h2 className="titulo">
