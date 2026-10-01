@@ -280,6 +280,14 @@ const guardarMesas = responder('guardarMesas', async (req, res) => {
 
   const mesas = {
     carpeta: linkOpcional(cuerpo.carpeta, 'carpeta'),
+    subcarpetas: lista(cuerpo.subcarpetas ?? [], 'subcarpetas', 10).map((sub, i) => {
+      if (!esObjeto(sub)) falla(`subcarpetas[${i}] inválida`);
+      return {
+        id: identificador(sub.id, `subcarpetas[${i}].id`),
+        nombre: textoOpcional(sub.nombre, `subcarpetas[${i}].nombre`, 100),
+        link: linkOpcional(sub.link, `subcarpetas[${i}].link`),
+      };
+    }),
     mesas: lista(cuerpo.mesas, 'mesas', 300).map((mesa, i) => {
       if (!esObjeto(mesa)) falla(`mesas[${i}] inválida`);
       return {

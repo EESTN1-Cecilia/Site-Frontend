@@ -6,6 +6,7 @@ import {
   esLinkValido,
   guardarMesas,
   nuevaMesa,
+  nuevaSubcarpeta,
   restaurarMesas,
   useMesas,
 } from "../../mesas.js";
@@ -42,9 +43,18 @@ export default function Mesas({ ruta, usuario }) {
       ),
     }));
 
+  const cambiarSubcarpeta = (id, campo, valor) =>
+    setBorrador((previo) => ({
+      ...previo,
+      subcarpetas: previo.subcarpetas.map((s) =>
+        s.id === id ? { ...s, [campo]: valor } : s,
+      ),
+    }));
+
   const publicar = async () => {
     if (
       linkMalo(borrador.carpeta) ||
+      borrador.subcarpetas.some((s) => linkMalo(s.link)) ||
       borrador.mesas.some((m) => linkMalo(m.drive))
     ) {
       setError(
@@ -147,6 +157,86 @@ export default function Mesas({ ruta, usuario }) {
             }
           />
         </label>
+      </section>
+
+      <section className="tarjeta">
+        <h2 className="tarjeta__titulo">Carpetas por subdivisión</h2>
+        <p className="tarjeta__bajada">
+          Los accesos que aparecen al lado del botón "Todos los trabajos".
+        </p>
+        <div className="tabla-scroll">
+          <table className="tabla tabla--panel tabla-edit">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Link de Drive</th>
+                {editable && <th />}
+              </tr>
+            </thead>
+            <tbody>
+              {borrador.subcarpetas.map((sub) => (
+                <tr
+                  key={sub.id}
+                  className={linkMalo(sub.link) ? "tabla-edit__error" : ""}
+                >
+                  <td data-label="Nombre">
+                    <input
+                      disabled={!editable}
+                      aria-label="Nombre de la subdivisión"
+                      value={sub.nombre}
+                      onChange={(e) => cambiarSubcarpeta(sub.id, "nombre", e.target.value)}
+                    />
+                  </td>
+                  <td data-label="Link de Drive">
+                    <input
+                      type="url"
+                      disabled={!editable}
+                      aria-label={`Link de ${sub.nombre || "la subdivisión"}`}
+                      placeholder="https://drive.google.com/…"
+                      value={sub.link}
+                      onChange={(e) => cambiarSubcarpeta(sub.id, "link", e.target.value)}
+                    />
+                  </td>
+                  {editable && (
+                    <td>
+                      <button
+                        className="tabla-edit__quitar"
+                        aria-label={`Quitar ${sub.nombre || "subdivisión"}`}
+                        onClick={() =>
+                          setBorrador((previo) => ({
+                            ...previo,
+                            subcarpetas: previo.subcarpetas.filter((s) => s.id !== sub.id),
+                          }))
+                        }
+                      >
+                        <Icon icon="ph:trash" width={16} height={16} aria-hidden="true" />
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {borrador.subcarpetas.length === 0 && (
+          <p className="vacio">No hay subdivisiones cargadas.</p>
+        )}
+
+        {editable && (
+          <button
+            className="boton agregar-mesa"
+            onClick={() =>
+              setBorrador((previo) => ({
+                ...previo,
+                subcarpetas: [...previo.subcarpetas, nuevaSubcarpeta()],
+              }))
+            }
+          >
+            <Icon icon="ph:plus" width={16} height={16} aria-hidden="true" />
+            Agregar subdivisión
+          </button>
+        )}
       </section>
 
       <div className="tabla-scroll">

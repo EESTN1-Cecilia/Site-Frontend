@@ -292,6 +292,24 @@ describe('Mesas, programas y proyectos', () => {
     assert.strictEqual((await peticion('PUT', '/api/mesas', malo, tokens.server)).estado, 400);
   });
 
+  it('mesas: subcarpetas se guardan con su nombre y link; un link inválido → 400', async () => {
+    const conSubcarpetas = {
+      carpeta: 'https://drive.google.com/x',
+      subcarpetas: [
+        { id: 'sc1', nombre: '1° a 4° año', link: 'https://drive.google.com/sc1' },
+        { id: 'sc2', nombre: 'Informática (5° a 7°)', link: '' },
+      ],
+      mesas: [{ id: 'm1', materia: 'Matemática', drive: '' }],
+    };
+    const res = await peticion('PUT', '/api/mesas', conSubcarpetas, tokens.server);
+    assert.strictEqual(res.estado, 200);
+    assert.strictEqual(res.cuerpo.mesas.subcarpetas[0].nombre, '1° a 4° año');
+    assert.strictEqual(res.cuerpo.mesas.subcarpetas[1].link, '');
+
+    const malo = { ...conSubcarpetas, subcarpetas: [{ id: 'sc1', nombre: 'X', link: 'ftp://x' }] };
+    assert.strictEqual((await peticion('PUT', '/api/mesas', malo, tokens.server)).estado, 400);
+  });
+
   it('programas: server no puede; sin link https → 400', async () => {
     const programas = [{ id: 'p1', nombre: 'DiagramTec', url: 'https://diagramtec.com' }];
     assert.strictEqual((await peticion('PUT', '/api/programas', { programas }, tokens.server)).estado, 403);
