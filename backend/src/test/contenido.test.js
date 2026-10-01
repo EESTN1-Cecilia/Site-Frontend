@@ -299,6 +299,20 @@ describe('Mesas, programas y proyectos', () => {
     assert.strictEqual((await peticion('PUT', '/api/programas', { programas }, tokens.jefatura_area)).estado, 200);
   });
 
+  it('programas: en desarrollo no necesita link; sin marcar sigue exigiéndolo', async () => {
+    const programas = [
+      { id: 'p1', nombre: 'DiagramTec', url: 'https://diagramtec.com' },
+      { id: 'p2', nombre: 'Volta', url: '', enDesarrollo: true },
+    ];
+    const res = await peticion('PUT', '/api/programas', { programas }, tokens.jefatura_area);
+    assert.strictEqual(res.estado, 200);
+    assert.strictEqual(res.cuerpo.programas[1].enDesarrollo, true);
+    assert.strictEqual(res.cuerpo.programas[1].url, '');
+
+    const sinMarcar = [...programas, { id: 'p3', nombre: 'X', url: '' }];
+    assert.strictEqual((await peticion('PUT', '/api/programas', { programas: sinMarcar }, tokens.jefatura_area)).estado, 400);
+  });
+
   it('proyectos: área inválida o documento a otro dominio → 400; válido → se guarda por área', async () => {
     const proyecto = { id: 'robot', titulo: 'Robot', docs: [{ nombre: 'Informe', archivo: '/docs/informe.pdf' }] };
     assert.strictEqual((await peticion('PUT', '/api/proyectos/constructor', { proyectos: [proyecto] }, tokens.jefatura_area)).estado, 400);

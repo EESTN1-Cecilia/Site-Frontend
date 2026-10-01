@@ -260,6 +260,30 @@
   resize: vertical;
 }
 
+/* Casilla con su propio texto al lado, en vez de rótulo arriba. */
+.campo--casilla {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.campo--casilla input {
+  accent-color: var(--bordo-oscuro);
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.campo--casilla > span {
+  color: var(--gris-oscuro);
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 .campo--busca {
   flex: 1 1 240px;
   flex-direction: row;

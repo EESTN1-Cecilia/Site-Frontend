@@ -303,8 +303,9 @@ const guardarMesas = responder('guardarMesas', async (req, res) => {
 const guardarProgramas = responder('guardarProgramas', async (req, res) => {
   const programas = lista((req.body || {}).programas, 'programas', 100).map((prog, i) => {
     if (!esObjeto(prog)) falla(`programas[${i}] inválido`);
+    const enDesarrollo = prog.enDesarrollo === true;
     const url = linkOpcional(prog.url, `programas[${i}].url`);
-    if (!url) falla(`programas[${i}] necesita un link https://`);
+    if (!enDesarrollo && !url) falla(`programas[${i}] necesita un link https://`);
     const nombre = texto(prog.nombre, `programas[${i}].nombre`, 200);
     if (!nombre.trim()) falla(`programas[${i}] necesita nombre`);
     return {
@@ -314,6 +315,7 @@ const guardarProgramas = responder('guardarProgramas', async (req, res) => {
       url,
       logo: imagenOpcional(prog.logo, `programas[${i}].logo`),
       autores: textoOpcional(prog.autores, 'autores', 1000),
+      enDesarrollo,
     };
   });
 
