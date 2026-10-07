@@ -25,6 +25,7 @@ const tipos = [
   ["parrafo", "ph:text-align-left", "Texto"],
   ["imagen", "ph:image", "Imagen"],
   ["destacado", "ph:quotes", "Destacado"],
+  ["link", "ph:link", "Link"],
 ];
 
 /* Texto editable en el lugar: se escribe encima y se guarda al salir. */
@@ -141,6 +142,42 @@ function BloqueImagen({ bloque, alCambiar }) {
         valor={bloque.epigrafe || "Epígrafe (opcional)"}
         alCambiar={(texto) => alCambiar({ ...bloque, epigrafe: texto })}
       />
+    </div>
+  );
+}
+
+/* Botón con link: el texto se escribe encima y la dirección va al lado. */
+function BloqueLink({ bloque, alCambiar }) {
+  const [error, setError] = useState("");
+
+  return (
+    <div className="bloque-link">
+      <Editable
+        etiqueta="span"
+        clase="bloque-link__boton"
+        valor={bloque.texto}
+        alCambiar={(texto) => alCambiar({ ...bloque, texto })}
+      />
+      <label className="campo">
+        <span>Lleva a</span>
+        <input
+          placeholder="https://…"
+          defaultValue={bloque.url}
+          onBlur={(e) => {
+            const url = e.target.value.trim();
+            if (url && !esLinkValido(url)) {
+              setError("La dirección tiene que empezar con https://");
+              return;
+            }
+            alCambiar({ ...bloque, url });
+            setError("");
+          }}
+        />
+      </label>
+      {error && <p className="selector__error">{error}</p>}
+      {!error && !bloque.url && (
+        <p className="selector__error">Sin dirección, el botón no se muestra en el sitio.</p>
+      )}
     </div>
   );
 }
@@ -414,6 +451,11 @@ export default function Publicaciones({ ruta, usuario }) {
               <div className="bloque-edit__cuerpo">
                 {bloque.tipo === "imagen" ? (
                   <BloqueImagen
+                    bloque={bloque}
+                    alCambiar={(nuevo) => cambiarBloque(indice, nuevo)}
+                  />
+                ) : bloque.tipo === "link" ? (
+                  <BloqueLink
                     bloque={bloque}
                     alCambiar={(nuevo) => cambiarBloque(indice, nuevo)}
                   />

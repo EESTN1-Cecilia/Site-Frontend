@@ -275,12 +275,20 @@ describe('Publicaciones', () => {
   it('una imagen con esquema peligroso o una ruta rara → 400', async () => {
     for (const cambio of [
       { bloques: [{ id: 'b1', tipo: 'imagen', url: 'javascript:alert(1)' }] },
+      { bloques: [{ id: 'b1', tipo: 'link', texto: 'Formulario', url: 'javascript:alert(1)' }] },
       { ruta: '/panel' },
       { id: '../x' },
     ]) {
       const res = await peticion('POST', '/api/publicaciones', { ...nota, ...cambio }, tokens.direccion);
       assert.strictEqual(res.estado, 400, JSON.stringify(cambio));
     }
+  });
+
+  it('una nota puede llevar un bloque con un link https', async () => {
+    const link = { id: 'b2', tipo: 'link', texto: 'Ir al formulario', url: 'https://forms.gle/abc' };
+    const res = await peticion('POST', '/api/publicaciones', { ...nota, id: 'pub-borrador', bloques: [link] }, tokens.jefatura_area);
+    assert.strictEqual(res.estado, 200);
+    assert.deepStrictEqual(res.cuerpo.publicacion.bloques, [link]);
   });
 });
 
