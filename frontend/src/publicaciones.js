@@ -26,8 +26,10 @@ export const nuevoBloque = (tipo) => ({
       ? "Título de la sección"
       : tipo === "destacado"
         ? "Dato importante que conviene resaltar."
-        : "Escribí acá el texto.",
-  url: tipo === "imagen" ? imagenCicloBasico : undefined,
+        : tipo === "link"
+          ? "Ir al formulario"
+          : "Escribí acá el texto.",
+  url: tipo === "imagen" ? imagenCicloBasico : tipo === "link" ? "" : undefined,
   epigrafe: tipo === "imagen" ? "" : undefined,
 });
 

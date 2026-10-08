@@ -68,7 +68,7 @@ const puedeEditar = (usuario, seccion) => EDITORES[seccion].includes(usuario.rol
 
 // ---------- Publicaciones ----------
 const ESTADOS = ['pendiente', 'publicada', 'devuelta'];
-const TIPOS_BLOQUE = ['titulo', 'destacado', 'imagen', 'parrafo'];
+const TIPOS_BLOQUE = ['titulo', 'destacado', 'imagen', 'parrafo', 'link'];
 const RUTAS_PUBLICACION = ['/novedades', '/previas'];
 
 const conEstado = (fila) => ({ ...JSON.parse(fila.datos), estado: fila.estado });
@@ -95,6 +95,14 @@ function validarPublicacion(pub) {
       if (!esObjeto(bloque)) falla(`bloques[${i}] inválido`);
       const tipo = texto(bloque.tipo, `bloques[${i}].tipo`, 20);
       if (!TIPOS_BLOQUE.includes(tipo)) falla(`bloques[${i}].tipo inválido`);
+      if (tipo === 'link') {
+        return {
+          id: identificador(bloque.id, `bloques[${i}].id`),
+          tipo,
+          texto: textoOpcional(bloque.texto, `bloques[${i}].texto`, 300),
+          url: linkOpcional(bloque.url, `bloques[${i}].url`),
+        };
+      }
       return tipo === 'imagen'
         ? {
             id: identificador(bloque.id, `bloques[${i}].id`),

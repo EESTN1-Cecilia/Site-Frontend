@@ -568,6 +568,27 @@
   font-size: 14px;
 }
 
+/* Botón de una nota que lleva a otro sitio (formulario, documento). */
+.nota__boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  margin-top: 18px;
+  border-radius: 100px;
+  background: var(--rojo-institucional);
+  color: var(--blanco);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 200ms, transform 200ms;
+}
+
+.nota__boton:hover {
+  background: var(--bordo-oscuro);
+  transform: translateY(-1px);
+}
+
 .nota__link {
   display: inline-flex;
   align-items: center;

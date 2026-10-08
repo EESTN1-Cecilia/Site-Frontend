@@ -1606,6 +1606,38 @@
   box-shadow: inset 0 0 0 2px var(--rojo-suave);
 }
 
+/* Bloque de link: el botón como se va a ver y, al lado, adónde lleva. */
+.bloque-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 6px 8px;
+}
+
+.bloque-link__boton {
+  padding: 11px 20px;
+  border-radius: 100px;
+  background: var(--rojo-institucional);
+  color: var(--blanco);
+  font-size: 15px;
+  font-weight: 600;
+  outline: none;
+}
+
+.bloque-link__boton:focus {
+  box-shadow: 0 0 0 3px var(--rojo-suave);
+}
+
+.bloque-link .campo {
+  flex: 1 1 260px;
+}
+
+.bloque-link .selector__error {
+  flex-basis: 100%;
+  margin-top: 0;
+}
+
 /* Selector de imagen */
 .selector {
   margin-top: 12px;

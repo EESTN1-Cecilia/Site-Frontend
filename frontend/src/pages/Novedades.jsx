@@ -23,6 +23,7 @@ function Nota({ novedad, destacada }) {
   const portada = portadaIndice >= 0 ? bloques[portadaIndice] : null;
   const cuerpo = bloques.filter((_, i) => i !== portadaIndice);
   const resumen = cuerpo.find((b) => b.tipo === "parrafo");
+  const links = cuerpo.filter((b) => b.tipo === "link");
   const clave = (resto) => `pub:${novedad.id}:${resto}`;
 
   return (
@@ -56,13 +57,16 @@ function Nota({ novedad, destacada }) {
       {destacada ? (
         <Bloques pub={novedad} bloques={cuerpo} />
       ) : (
-        resumen && (
-          <p className="nota__texto">
-            <Texto id={clave(`bloque:${resumen.id}`)} dueno={PUBLICACIONES}>
-              {resumen.texto}
-            </Texto>
-          </p>
-        )
+        <>
+          {resumen && (
+            <p className="nota__texto">
+              <Texto id={clave(`bloque:${resumen.id}`)} dueno={PUBLICACIONES}>
+                {resumen.texto}
+              </Texto>
+            </p>
+          )}
+          <Bloques pub={novedad} bloques={links} />
+        </>
       )}
       <span className="nota__link">
         <Texto id="novedades.leer">Leer más</Texto>
