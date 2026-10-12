@@ -53,6 +53,7 @@ export const borrarCopias = () =>
 export const esObjeto = (valor) => !!valor && typeof valor === "object" && !Array.isArray(valor);
 export const esTexto = (valor) => typeof valor === "string";
 export const texto = (valor, porDefecto = "") => (esTexto(valor) ? valor : porDefecto);
+export const booleano = (valor, porDefecto = false) => (typeof valor === "boolean" ? valor : porDefecto);
 
 /* Lista de objetos con id de texto; lo demás se descarta. */
 export const conId = (valor) =>

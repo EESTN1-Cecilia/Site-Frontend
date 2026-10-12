@@ -12,8 +12,8 @@ import {
 } from "../../programas.js";
 import { puedeEditar } from "../../sesion.js";
 
-/* Cada programa necesita nombre y un link https para poder publicarse. */
-const incompleto = (p) => !p.nombre.trim() || !esLinkValido(p.url);
+/* Cada programa necesita nombre y, si no está en desarrollo, un link https. */
+const incompleto = (p) => !p.nombre.trim() || (!p.enDesarrollo && !esLinkValido(p.url));
 
 export default function Programas({ ruta, usuario }) {
   const editable = puedeEditar(usuario, ruta);
@@ -34,7 +34,7 @@ export default function Programas({ ruta, usuario }) {
   const publicar = async () => {
     if (borrador.some(incompleto)) {
       setError(
-        "Cada programa necesita nombre y un link que empiece con https://. Revisá los marcados en rojo.",
+        "Cada programa necesita nombre, y un link que empiece con https:// salvo que esté marcado como \"en desarrollo\". Revisá los marcados en rojo.",
       );
       return;
     }
@@ -171,7 +171,7 @@ export default function Programas({ ruta, usuario }) {
               />
             </label>
             <label className="campo">
-              <span>Link de la página</span>
+              <span>Link de la página{programa.enDesarrollo ? " (opcional)" : ""}</span>
               <input
                 type="url"
                 disabled={!editable}
@@ -179,6 +179,15 @@ export default function Programas({ ruta, usuario }) {
                 value={programa.url}
                 onChange={(e) => cambiar(programa.id, "url", e.target.value)}
               />
+            </label>
+            <label className="campo campo--casilla">
+              <input
+                type="checkbox"
+                disabled={!editable}
+                checked={programa.enDesarrollo}
+                onChange={(e) => cambiar(programa.id, "enDesarrollo", e.target.checked)}
+              />
+              <span>Todavía en desarrollo</span>
             </label>
             <label className="campo">
               <span>Qué es y para qué sirve</span>

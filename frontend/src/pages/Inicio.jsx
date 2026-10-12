@@ -307,6 +307,9 @@ export default function Inicio({ params }) {
                   {programa.nombre}
                 </Texto>
               </h3>
+              {programa.enDesarrollo && (
+                <span className="etiqueta etiqueta--aviso">En desarrollo</span>
+              )}
               <p className="programa__texto">
                 <Texto id={`prog:${programa.id}:descripcion`} dueno={PROGRAMAS}>
                   {programa.descripcion}
