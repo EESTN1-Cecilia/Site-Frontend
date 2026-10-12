@@ -100,7 +100,7 @@ export default function Previas({ params }) {
     ...publicaciones.filter((pub) => pub.estado === "publicada" && pub.ruta === "/previas"),
   ];
 
-  const { carpeta, mesas } = useMesas();
+  const { carpeta, subcarpetas, mesas } = useMesas();
   const anios = ["Todos", ...new Set(mesas.map((m) => m.anio).filter(Boolean))];
 
   /* Por fecha y hora; las que no tienen fecha van al final. */
@@ -170,7 +170,7 @@ export default function Previas({ params }) {
       );
 
     return (
-      <Bloque key={filtro.id} {...b} como="span" className="filtros__carpeta">
+      <Bloque key={filtro.id} {...b} className="filtros__carpeta">
         <Enlace
           id="mesas:carpeta"
           dueno={MESAS}
@@ -179,8 +179,23 @@ export default function Previas({ params }) {
           ocultarVacio
         >
           <Icon icon="ph:google-drive-logo" width={16} height={16} aria-hidden="true" />
-          <Texto id="previas.cronograma.carpeta">Planes de trabajo en Drive</Texto>
+          <Texto id="previas.cronograma.carpeta">Todos los trabajos</Texto>
         </Enlace>
+        {subcarpetas.map((sub) => (
+          <Enlace
+            key={sub.id}
+            id={`mesas:subcarpeta:${sub.id}:link`}
+            dueno={MESAS}
+            href={sub.link}
+            className="boton boton--fino"
+            ocultarVacio
+          >
+            <Icon icon="ph:google-drive-logo" width={15} height={15} aria-hidden="true" />
+            <Texto id={`mesas:subcarpeta:${sub.id}:nombre`} dueno={MESAS}>
+              {sub.nombre}
+            </Texto>
+          </Enlace>
+        ))}
       </Bloque>
     );
   };

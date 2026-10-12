@@ -12,6 +12,15 @@ export { esLinkValido } from "./links.js";
 const semilla = () => ({
   carpeta:
     "https://drive.google.com/drive/folders/1ekod6AXga5ImRl3ZIbo16AT7GAJTbwfN?usp=sharing",
+  /* Carpetas internas de "Todos los trabajos": una por subdivisión. Los
+     nombres y links definitivos los tiene que confirmar Pablo o la Jefatura
+     de Área; mientras tanto quedan en null, como ya se hace con otras
+     divisiones sin materiales. */
+  subcarpetas: [
+    { id: "sc1", nombre: "1° a 4° año", link: "" },
+    { id: "sc2", nombre: "Informática (5° a 7°)", link: "" },
+    { id: "sc3", nombre: "Programación (5° a 7°)", link: "" },
+  ],
   mesas: [
     ["m1", "Matemática", "1° y 2°", "2026-12-01", "09:00", "Aula 8", "Prof. S. Roldán"],
     ["m2", "Prácticas del Lenguaje", "1° a 3°", "2026-12-01", "11:00", "Aula 5", "Prof. C. Nieves"],
@@ -46,15 +55,25 @@ export const nuevaMesa = () => ({
   drive: "",
 });
 
+export const nuevaSubcarpeta = () => ({
+  id: `sc-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`,
+  nombre: "",
+  link: "",
+});
+
 const CLAVE = "tec1-mesas";
 
 const CAMPOS = ["materia", "anio", "fecha", "hora", "aula", "docente", "drive"];
+const CAMPOS_SUBCARPETA = ["nombre", "link"];
 
 /* Sin la forma esperada vale el cronograma original. */
 const sanear = (datos) =>
   esObjeto(datos) && Array.isArray(datos.mesas)
     ? {
         carpeta: texto(datos.carpeta),
+        subcarpetas: Array.isArray(datos.subcarpetas)
+          ? conId(datos.subcarpetas).map((s) => ({ id: s.id, ...campos(s, CAMPOS_SUBCARPETA) }))
+          : semilla().subcarpetas,
         mesas: conId(datos.mesas).map((m) => ({ id: m.id, ...campos(m, CAMPOS) })),
       }
     : semilla();

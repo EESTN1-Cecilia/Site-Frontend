@@ -279,7 +279,11 @@ export default function SitioPagina({ ruta, params, usuario }) {
 
       if (tipo === "mesa" || tipo === "mesas") {
         datosMesas = datosMesas ?? structuredClone(mesas);
-        if (tipo === "mesas") datosMesas[resto[0]] = valor;
+        if (tipo === "mesas" && resto[0] === "subcarpeta") {
+          /* "mesas:subcarpeta:sc1:nombre": un dato de una de las subcarpetas. */
+          const [, id, campo] = resto;
+          datosMesas.subcarpetas = datosMesas.subcarpetas.map((s) => (s.id === id ? { ...s, [campo]: valor } : s));
+        } else if (tipo === "mesas") datosMesas[resto[0]] = valor;
         else {
           const [id, campo] = resto;
           datosMesas.mesas = datosMesas.mesas.map((m) => (m.id === id ? { ...m, [campo]: valor } : m));
