@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { guardarLocal, leerLocal } from "./almacen.js";
+import { esObjeto, guardarLocal, leerLocal } from "./almacen.js";
+import { enviar } from "./conexion.js";
+import { guardarPlanoEnServidor } from "./services/api.js";
 import planoPb from "./assets/images/plano-pb.png";
 import plano1p from "./assets/images/plano-1p.png";
 
@@ -62,35 +64,41 @@ const pisos = [
   },
 ];
 
-/* Los nombres cambiados quedan en este navegador, como las grillas. */
+/* Nombres cambiados ({ "pb-21": "Aula 8" }) y salones cancelados (en obra,
+   clausurados…). Se guardan en el servidor (sección "plano") y este
+   navegador se queda una copia por si el servidor no responde. */
 const CLAVE = "tec1-plano";
-const leer = () => {
-  const guardados = leerLocal(CLAVE);
-  return guardados && typeof guardados === "object" ? guardados : {};
-};
+const sanear = (datos) => ({
+  nombres: Object.fromEntries(
+    Object.entries(esObjeto(datos?.nombres) ? datos.nombres : {}).filter(([, v]) => typeof v === "string"),
+  ),
+  cancelados: Array.isArray(datos?.cancelados) ? datos.cancelados.filter((id) => typeof id === "string") : [],
+});
 
-/* Salones cancelados (en obra, clausurados…): ids, también en este navegador. */
-const CLAVE_CANCELADOS = "tec1-plano-cancelados";
-const leerCancelados = () => {
-  const guardados = leerLocal(CLAVE_CANCELADOS);
-  return Array.isArray(guardados) ? guardados.filter((id) => typeof id === "string") : [];
-};
-
-let nombres = leer();
-let cancelados = leerCancelados();
+let { nombres, cancelados } = sanear(leerLocal(CLAVE));
 const oyentes = new Set();
-const avisar = () => oyentes.forEach((fn) => fn({ nombres, cancelados }));
+
+const guardar = () => {
+  guardarLocal(CLAVE, { nombres, cancelados });
+  oyentes.forEach((fn) => fn({ nombres, cancelados }));
+  return enviar((token) => guardarPlanoEnServidor(token, { nombres, cancelados }));
+};
+
+/* null = nadie cambió el plano todavía: valen los nombres de los PDF. */
+export const hidratarPlano = (deServidor) => {
+  ({ nombres, cancelados } = sanear(deServidor));
+  guardarLocal(CLAVE, { nombres, cancelados });
+  oyentes.forEach((fn) => fn({ nombres, cancelados }));
+};
 
 export const renombrarSalon = (id, nombre) => {
   nombres = { ...nombres, [id]: nombre };
-  guardarLocal(CLAVE, nombres);
-  avisar();
+  return guardar();
 };
 
 export const alternarCancelado = (id) => {
   cancelados = cancelados.includes(id) ? cancelados.filter((x) => x !== id) : [...cancelados, id];
-  guardarLocal(CLAVE_CANCELADOS, cancelados);
-  avisar();
+  return guardar();
 };
 
 const armar = ({ nombres: cambios, cancelados: fuera }) =>

@@ -9,7 +9,7 @@ import {
   notificaciones,
   planillas,
 } from "../../panelData.js";
-import { leerGrillas } from "../../grillas.js";
+import { useGrillas } from "../../grillas.js";
 import { alternarCancelado, mismoSalon, renombrarSalon, usePlano } from "../../plano.js";
 import Editable from "../../components/Editable.jsx";
 
@@ -99,7 +99,7 @@ function TableroServer() {
 /* ---------- Plano: qué profesor está en cada salón, según la grilla ---------- */
 function Plano() {
   const pisos = usePlano();
-  const [grillas] = useState(leerGrillas);
+  const grillas = useGrillas();
   const hoy = dias[new Date().getDay() - 1] ?? dias[0];
   const [pisoId, setPisoId] = useState(pisos[0].id);
   const [grillaId, setGrillaId] = useState(grillas[0].id);

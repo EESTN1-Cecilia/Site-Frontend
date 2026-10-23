@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Icon } from "@iconify/react";
 import Layout from "./Layout.jsx";
 import Editable from "../../components/Editable.jsx";
 import { dias } from "../../panelData.js";
 import { nombresSalones, salonCancelado } from "../../plano.js";
 import { puedeEditar } from "../../sesion.js";
-import { guardarGrillas, horasBase, leerGrillas } from "../../grillas.js";
+import { cambiarGrillas, horasBase, useGrillas } from "../../grillas.js";
 
 const nuevoId = (prefijo) => `${prefijo}-${Date.now().toString(36)}`;
 
@@ -20,7 +20,8 @@ const exportarPdf = () => {
 
 export default function Grilla({ ruta, usuario }) {
   const editable = puedeEditar(usuario, ruta);
-  const [grillas, setGrillas] = useState(leerGrillas);
+  const grillas = useGrillas();
+  const setGrillas = cambiarGrillas;
   const [actualId, setActualId] = useState(null);
   const [activa, setActiva] = useState(null);
   const [registro, setRegistro] = useState([]);
@@ -29,7 +30,6 @@ export default function Grilla({ ruta, usuario }) {
   const [encima, setEncima] = useState(null);
   const [tomado, setTomado] = useState(false);
 
-  useEffect(() => guardarGrillas(grillas), [grillas]);
 
   const actual = grillas.find((g) => g.id === actualId) ?? grillas[0];
   const grilla = actual.clases;

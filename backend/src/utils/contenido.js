@@ -46,6 +46,9 @@ const EDITORES = {
   programas: [ROLES.DIRECCION, ROLES.JEFATURA_AREA],
   proyectos: [ROLES.DIRECCION, ROLES.JEFATURA_AREA],
   ajustes: [ROLES.DIRECCION],
+  // Del panel (no del sitio público): Espacios y horarios y el plano del colegio.
+  grillas: [ROLES.DIRECCION, ROLES.JEFATURA_AREA],
+  plano: [ROLES.DIRECCION, ROLES.JEFATURA_AREA],
 };
 
 // A qué página pertenece una clave de texto: "inicio.hero.titulo" -> "/",

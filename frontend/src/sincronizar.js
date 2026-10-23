@@ -1,5 +1,7 @@
 import { marcarError, marcarSincronizado, marcarSincronizando, tokenActual } from "./conexion.js";
-import { listarPublicaciones, obtenerContenido } from "./services/api.js";
+import { listarPublicaciones, obtenerContenido, obtenerPanel } from "./services/api.js";
+import { hidratarGrillas } from "./grillas.js";
+import { hidratarPlano } from "./plano.js";
 import { hidratarTextos } from "./textos.js";
 import { hidratarAjustes } from "./ajustes.js";
 import { hidratarPublicaciones } from "./publicaciones.js";
@@ -34,6 +36,11 @@ export async function sincronizarContenido() {
     if (token) {
       const { publicaciones } = await listarPublicaciones(token);
       hidratarPublicaciones(publicaciones);
+
+      /* Lo que es sólo del panel: grillas de Espacios y horarios y plano. */
+      const { grillas, plano } = await obtenerPanel(token);
+      hidratarGrillas(grillas);
+      hidratarPlano(plano);
     } else {
       hidratarPublicaciones(datos.publicaciones);
     }
