@@ -1,17 +1,13 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import Layout from "./Layout.jsx";
-import {
-  TOPE_INASISTENCIAS,
-  alumnos as alumnosIniciales,
-  cursos,
-  tutores,
-} from "../../panelData.js";
+import { alumnos as alumnosIniciales, cursos, tutores } from "../../panelData.js";
 import { logo } from "../../data.js";
 import { puedeEditar } from "../../sesion.js";
 import Editable from "../../components/Editable.jsx";
 
-const condiciones = ["Todas", "Cursa", "Recursa"];
+/* Acá van los datos de la persona, no su trayectoria: faltas, condición y
+   materias deudoras quedan fuera de este sector. */
 
 /* 1° 1 pasa a 2° 1; 7° egresa. */
 const promover = (curso) => {
@@ -20,16 +16,11 @@ const promover = (curso) => {
   return numero >= 7 ? "Egresado" : `${numero + 1}° ${division}`;
 };
 
-function Etiqueta({ tono, children }) {
-  return <span className={`etiqueta etiqueta--${tono}`}>{children}</span>;
-}
-
 export default function Alumnos({ ruta, usuario }) {
   const editable = puedeEditar(usuario, ruta);
   const [lista, setLista] = useState(alumnosIniciales);
   const [busqueda, setBusqueda] = useState("");
   const [curso, setCurso] = useState("Todos");
-  const [condicion, setCondicion] = useState("Todas");
   const [seleccion, setSeleccion] = useState([]);
   const [rapido, setRapido] = useState(null);
   const [completo, setCompleto] = useState(null);
@@ -42,8 +33,7 @@ export default function Alumnos({ ruta, usuario }) {
       (`${alumno.apellido} ${alumno.nombre}`.toLowerCase().includes(texto) ||
         alumno.dni.includes(texto) ||
         alumno.curso.toLowerCase().includes(texto)) &&
-      (curso === "Todos" || alumno.curso === curso) &&
-      (condicion === "Todas" || alumno.condicion === condicion),
+      (curso === "Todos" || alumno.curso === curso),
   );
 
   const alumnoRapido = lista.find((a) => a.id === rapido);
@@ -131,17 +121,6 @@ export default function Alumnos({ ruta, usuario }) {
             ))}
           </select>
         </label>
-        <label className="campo campo--select">
-          <span>Condición</span>
-          <select
-            value={condicion}
-            onChange={(e) => setCondicion(e.target.value)}
-          >
-            {condiciones.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </label>
       </div>
 
       <div className="tabla-scroll">
@@ -164,8 +143,6 @@ export default function Alumnos({ ruta, usuario }) {
               <th>Curso</th>
               <th>Apellido y nombre</th>
               <th>DNI</th>
-              <th>Condición</th>
-              <th>Inasistencias</th>
               <th />
             </tr>
           </thead>
@@ -192,20 +169,6 @@ export default function Alumnos({ ruta, usuario }) {
                   </button>
                 </td>
                 <td data-label="DNI">{alumno.dni}</td>
-                <td data-label="Condición">
-                  <Etiqueta tono={alumno.condicion === "Cursa" ? "ok" : "aviso"}>
-                    {alumno.condicion}
-                  </Etiqueta>
-                </td>
-                <td data-label="Inasistencias">
-                  <Etiqueta
-                    tono={
-                      alumno.inasistencias > TOPE_INASISTENCIAS ? "alerta" : "ok"
-                    }
-                  >
-                    {alumno.inasistencias}
-                  </Etiqueta>
-                </td>
                 <td>
                   <button
                     className="boton boton--fino"
@@ -247,18 +210,6 @@ export default function Alumnos({ ruta, usuario }) {
               <div>
                 <dt>DNI</dt>
                 <dd>{alumnoRapido.dni}</dd>
-              </div>
-              <div>
-                <dt>Condición</dt>
-                <dd>{alumnoRapido.condicion}</dd>
-              </div>
-              <div>
-                <dt>Inasistencias</dt>
-                <dd>{alumnoRapido.inasistencias}</dd>
-              </div>
-              <div>
-                <dt>Materias pendientes</dt>
-                <dd>{alumnoRapido.pendientes.length || "Ninguna"}</dd>
               </div>
               <div>
                 <dt>Contacto</dt>
@@ -305,7 +256,6 @@ export default function Alumnos({ ruta, usuario }) {
                   {[
                     ["DNI", "dni"],
                     ["Curso", "curso"],
-                    ["Condición", "condicion"],
                     ["Email", "email"],
                     ["Teléfono", "telefono"],
                     ["Libro", "libro"],
@@ -328,54 +278,7 @@ export default function Alumnos({ ruta, usuario }) {
                     <dt>Mayor de edad</dt>
                     <dd>{alumnoCompleto.mayorEdad ? "Sí" : "No"}</dd>
                   </div>
-                  <div>
-                    <dt>Inasistencias</dt>
-                    <dd>{alumnoCompleto.inasistencias}</dd>
-                  </div>
                 </dl>
-              </section>
-
-              <section>
-                <h3 className="bloque__titulo">Condición particular</h3>
-                <Editable
-                  etiqueta="p"
-                  clase="nota-interna"
-                  activo={editable}
-                  valor={alumnoCompleto.particular}
-                  vacio="Sin condición particular registrada."
-                  alCambiar={(v) =>
-                    editarAlumno(alumnoCompleto.id, "particular", v)
-                  }
-                />
-              </section>
-
-              <section>
-                <h3 className="bloque__titulo">Horario de cursada</h3>
-                <div className="etiquetas">
-                  {alumnoCompleto.materias.map(([materia, estado]) => (
-                    <span
-                      className={`etiqueta etiqueta--${estado.toLowerCase()}`}
-                      key={materia}
-                    >
-                      {materia} · {estado}
-                    </span>
-                  ))}
-                </div>
-              </section>
-
-              <section>
-                <h3 className="bloque__titulo">Materias pendientes</h3>
-                {alumnoCompleto.pendientes.length ? (
-                  <div className="etiquetas">
-                    {alumnoCompleto.pendientes.map((materia) => (
-                      <span className="etiqueta etiqueta--alerta" key={materia}>
-                        {materia}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="nota-interna">Sin materias pendientes.</p>
-                )}
               </section>
 
               <section>
@@ -404,24 +307,6 @@ export default function Alumnos({ ruta, usuario }) {
                 </div>
               </section>
 
-              <section>
-                <h3 className="bloque__titulo">Observaciones</h3>
-                {alumnoCompleto.observaciones.length ? (
-                  <ul className="observaciones">
-                    {alumnoCompleto.observaciones.map((obs) => (
-                      <li key={obs.fecha}>
-                        <p className="observaciones__fecha">{obs.fecha}</p>
-                        <p className="observaciones__motivo">
-                          Motivo: {obs.motivo}
-                        </p>
-                        <p className="observaciones__medida">{obs.medida}</p>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="nota-interna">Sin observaciones registradas.</p>
-                )}
-              </section>
             </div>
 
             <div className="modal__pie">
@@ -430,7 +315,7 @@ export default function Alumnos({ ruta, usuario }) {
                   <Icon icon="ph:eye" width={16} height={16} aria-hidden="true" />
                   Sólo consulta: la constancia y el pase los emite Secretaría.
                 </p>
-              ) : alumnoCompleto.inasistencias <= TOPE_INASISTENCIAS ? (
+              ) : (
                 <button
                   className="boton boton--primario"
                   onClick={() => setConstancia(alumnoCompleto)}
@@ -438,12 +323,6 @@ export default function Alumnos({ ruta, usuario }) {
                   <Icon icon="ph:printer" width={16} height={16} aria-hidden="true" />
                   Imprimir constancia de alumno regular
                 </button>
-              ) : (
-                <p className="bloqueado">
-                  <Icon icon="ph:lock" width={16} height={16} aria-hidden="true" />
-                  Constancia no disponible: supera las {TOPE_INASISTENCIAS}{" "}
-                  inasistencias.
-                </p>
               )}
 
               {!editable ? null : alumnoCompleto.libro && alumnoCompleto.folio ? (
@@ -487,8 +366,7 @@ export default function Alumnos({ ruta, usuario }) {
                 Se deja constancia de que <strong>{constancia.apellido},{" "}
                 {constancia.nombre}</strong>, DNI {constancia.dni}, es alumno/a
                 regular de la E.E.S. Técnica N°1 “Cecilia Berdichevski”, cursando{" "}
-                {constancia.curso} durante el ciclo lectivo 2026, con{" "}
-                {constancia.inasistencias} inasistencias registradas a la fecha.
+                {constancia.curso} durante el ciclo lectivo 2026.
               </p>
               <p className="constancia__texto">
                 Libro {constancia.libro} · Folio {constancia.folio}.

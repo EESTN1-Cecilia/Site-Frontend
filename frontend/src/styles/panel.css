@@ -967,6 +967,37 @@
     width: 100%;
     max-height: none;
   }
+
+  /* Exportar PDF de Espacios y horarios: sólo el nombre y la grilla. */
+  body.imprimir-grilla .tarjeta,
+  body.imprimir-grilla .grilla__barra .acciones-fila,
+  body.imprimir-grilla .grilla__agregar,
+  body.imprimir-grilla .grilla__quitar,
+  body.imprimir-grilla .bloque__manijero,
+  body.imprimir-grilla .bloque--agregar svg,
+  body.imprimir-grilla .miga {
+    display: none !important;
+  }
+
+  /* Sin el menú lateral, la grilla usa todo el ancho de la hoja. */
+  body.imprimir-grilla .panel {
+    display: block;
+  }
+
+  body.imprimir-grilla .grilla__scroll {
+    display: block !important;
+    overflow: visible;
+  }
+
+  body.imprimir-grilla .grilla {
+    min-width: 0;
+    grid-template-columns: 70px repeat(5, 1fr);
+    font-size: 11px;
+  }
+
+  body.imprimir-grilla .grilla__barra .tarjeta__titulo {
+    display: block !important;
+  }
 }
 
 /* ---------- Grilla de espacios ---------- */
@@ -1001,6 +1032,49 @@
 
 .grilla__celda--esquina {
   background: none;
+}
+
+/* Nombre de la grilla que se está viendo y botón para eliminarla. */
+.grilla__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.grilla__agregar {
+  margin-top: 12px;
+}
+
+/* Cruz para eliminar un horario: aparece al pasar por la fila. */
+.grilla__celda--hora {
+  position: relative;
+}
+
+.grilla__quitar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  color: var(--gris-medio);
+  opacity: 0;
+  transition: opacity 180ms, background-color 180ms;
+}
+
+.grilla__celda--hora:hover .grilla__quitar,
+.grilla__quitar:focus-visible {
+  opacity: 1;
+}
+
+.grilla__quitar:hover {
+  background: var(--blanco);
+  color: var(--rojo-institucional);
 }
 
 .bloque {
@@ -1038,6 +1112,15 @@
   color: var(--gris-medio);
   cursor: default;
   background: transparent;
+}
+
+.bloque--agregar {
+  cursor: pointer;
+}
+
+.bloque--agregar:hover {
+  color: var(--rojo-institucional);
+  background: var(--tarjeta);
 }
 
 .bloque--moviendo {
@@ -2683,4 +2766,150 @@
 .lienzo--textos .footer .editable:focus {
   background: rgba(255, 255, 255, 0.18);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+/* Desplegable de "Sitio público" en el menú del panel: una entrada por página. */
+.panel__desplegable > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.panel__desplegable > summary::-webkit-details-marker {
+  display: none;
+}
+
+.panel__flecha {
+  margin-left: auto;
+  transition: transform 180ms;
+}
+
+.panel__desplegable[open] .panel__flecha {
+  transform: rotate(180deg);
+}
+
+.panel__sublink {
+  display: block;
+  width: 100%;
+  padding: 7px 12px 7px 40px;
+  border-radius: 10px;
+  color: var(--gris-oscuro);
+  font-size: 14px;
+  text-align: left;
+}
+
+.panel__sublink:hover {
+  background: var(--gris-claro);
+}
+
+.panel__sublink--activo {
+  color: var(--bordo-oscuro);
+  font-weight: 600;
+}
+
+
+/* Plano del Tablero: el dibujo de cada piso con un texto por salón encima.
+   El salón que tiene clase en ese horario se marca con quién está. */
+.plano {
+  position: relative;
+  width: min(100%, 720px);
+  margin: 18px auto 0;
+}
+
+.plano__dibujo {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.plano__salon {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 22%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.plano__nombre {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--bordo-oscuro);
+  font-size: clamp(10px, 1.6vw, 13px);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.plano__salon--chico .plano__nombre {
+  font-size: clamp(8px, 1.1vw, 10px);
+}
+
+.plano__salon--ocupado .plano__nombre {
+  background: var(--bordo-oscuro);
+  color: var(--blanco);
+}
+
+.plano__profe {
+  margin-top: 2px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: var(--rojo-claro);
+  color: var(--bordo-oscuro);
+  font-size: clamp(9px, 1.2vw, 11px);
+  white-space: nowrap;
+}
+
+.plano__fila {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Cancelar o habilitar un salón: aparece al pasar por el nombre. */
+.plano__cancelar {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: var(--blanco);
+  color: var(--rojo-institucional);
+  opacity: 0;
+  transition: opacity 180ms;
+}
+
+.plano__salon:hover .plano__cancelar,
+.plano__cancelar:focus-visible,
+.plano__salon--cancelado .plano__cancelar {
+  opacity: 1;
+}
+
+.plano__salon--cancelado .plano__nombre {
+  background: var(--gris-claro);
+  color: var(--gris-medio);
+  text-decoration: line-through;
+}
+
+.plano__profe--aviso {
+  background: var(--rojo-institucional);
+  color: var(--blanco);
+}
+
+/* Clase en un salón cancelado: hay que reubicarla. */
+.bloque--cancelada {
+  border: 1px dashed var(--rojo-institucional);
+}
+
+.bloque__aviso {
+  color: var(--rojo-institucional);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* El aviso de salón cancelado va en dos renglones para no pisar al vecino. */
+.plano__salon .plano__profe--aviso {
+  max-width: 7em;
+  white-space: normal;
 }
