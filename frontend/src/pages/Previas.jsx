@@ -15,7 +15,7 @@ import ZonaLibre from "../components/ZonaLibre.jsx";
 import { Dinamico, PaginaEditable, usePaginaGuardada } from "../components/PaginaEditable.jsx";
 import Bloques from "../components/Bloques.jsx";
 import { pasosPrevias } from "../contenido.js";
-import { useMesas } from "../mesas.js";
+import { ORIENTACIONES, useMesas } from "../mesas.js";
 import { usePublicaciones } from "../publicaciones.js";
 
 const MESAS = "/panel/mesas";
@@ -90,6 +90,7 @@ const columnas = [
 export default function Previas({ params }) {
   const [busqueda, setBusqueda] = useState("");
   const [anio, setAnio] = useState("Todos");
+  const [orientacion, setOrientacion] = useState("Todas");
   const publicaciones = usePublicaciones();
 
   const enVistaPrevia = publicaciones.find(
@@ -111,7 +112,9 @@ export default function Previas({ params }) {
     .filter(
       (m) =>
         m.materia.toLowerCase().includes(busqueda.trim().toLowerCase()) &&
-        (anio === "Todos" || m.anio === anio),
+        (anio === "Todos" || m.anio === anio) &&
+        /* Sin orientación es de 1° a 4° (o de las dos): se ve siempre. */
+        (orientacion === "Todas" || !m.orientacion || m.orientacion === orientacion),
     );
 
   const plano = usePlano();
@@ -166,6 +169,24 @@ export default function Previas({ params }) {
               {valor === "Todos" ? <Texto id="previas.cronograma.todos">Todos</Texto> : valor}
             </button>
           ))}
+          {/* De 5° a 7° las materias cambian según la orientación. */}
+          {mesas.some((m) => m.orientacion) && (
+            <span className="filtros__orientacion">
+              {["Todas", ...ORIENTACIONES].map((valor) => (
+                <button
+                  key={valor}
+                  className={`filtro ${orientacion === valor ? "filtro--activo" : ""}`}
+                  onClick={() => setOrientacion(valor)}
+                >
+                  {valor === "Todas" ? (
+                    <Texto id="previas.cronograma.orientaciones">Las dos orientaciones</Texto>
+                  ) : (
+                    valor
+                  )}
+                </button>
+              ))}
+            </span>
+          )}
         </Bloque>
       );
 
@@ -237,6 +258,7 @@ export default function Previas({ params }) {
                   </td>
                   <td data-label={columna("anio")}>
                     <Texto id={clave("anio")} dueno={MESAS}>{mesa.anio}</Texto>
+                    {mesa.orientacion && <span className="orientacion">{mesa.orientacion}</span>}
                   </td>
                   <td data-label={columna("fecha")} className="capitalizar">
                     <Dato id={clave("fecha")} dueno={MESAS} tipo="date" valor={mesa.fecha} formato={fecha} />

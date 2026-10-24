@@ -1806,7 +1806,8 @@
   padding: 6px 8px;
 }
 
-.tabla-edit input {
+.tabla-edit input,
+.tabla-edit select {
   width: 100%;
   min-width: 110px;
   padding: 8px 10px;
@@ -1817,12 +1818,14 @@
   font: inherit;
 }
 
-.tabla-edit input:hover:not(:disabled) {
+.tabla-edit input:hover:not(:disabled),
+.tabla-edit select:hover:not(:disabled) {
   border-color: var(--gris-claro);
   background: var(--blanco);
 }
 
-.tabla-edit input:focus {
+.tabla-edit input:focus,
+.tabla-edit select:focus {
   outline: 2px solid var(--rojo-suave);
   outline-offset: 0;
   background: var(--blanco);
@@ -2878,4 +2881,9 @@
 .plano__salon .plano__profe--aviso {
   max-width: 7em;
   white-space: normal;
+}
+
+/* La orientación de cada mesa: entra "Programación" sin cortarse. */
+.tabla-edit select {
+  min-width: 140px;
 }
