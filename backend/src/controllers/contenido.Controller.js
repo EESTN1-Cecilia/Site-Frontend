@@ -281,6 +281,13 @@ const borrarPublicacion = responder('borrarPublicacion', async (req, res) => {
   return res.json({ mensaje: 'Publicación borrada' });
 });
 
+const ORIENTACIONES = ['', 'Informática', 'Programación'];
+const orientacionDeMesa = (valor, i) => {
+  const orientacion = textoOpcional(valor, `mesas[${i}].orientacion`, 50);
+  if (!ORIENTACIONES.includes(orientacion)) falla(`mesas[${i}].orientacion tiene que ser Informática o Programación`);
+  return orientacion;
+};
+
 // PUT /api/mesas { carpeta, mesas }: cronograma completo de intensificación.
 const guardarMesas = responder('guardarMesas', async (req, res) => {
   const cuerpo = req.body;
@@ -302,6 +309,8 @@ const guardarMesas = responder('guardarMesas', async (req, res) => {
         id: identificador(mesa.id, `mesas[${i}].id`),
         materia: textoOpcional(mesa.materia, 'materia', 200),
         anio: textoOpcional(mesa.anio, 'anio', 50),
+        // De 5° a 7° las materias cambian según la orientación; vacío = para todos.
+        orientacion: orientacionDeMesa(mesa.orientacion, i),
         fecha: textoOpcional(mesa.fecha, 'fecha', 30),
         hora: textoOpcional(mesa.hora, 'hora', 30),
         aula: textoOpcional(mesa.aula, 'aula', 100),

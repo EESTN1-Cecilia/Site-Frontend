@@ -300,6 +300,15 @@ describe('Mesas, programas y proyectos', () => {
     assert.strictEqual((await peticion('PUT', '/api/mesas', malo, tokens.server)).estado, 400);
   });
 
+  it('una mesa de 5° a 7° lleva su orientación; otra que no existe → 400', async () => {
+    const mesa = { id: 'm1', materia: 'Base de Datos', anio: '5°', orientacion: 'Programación', drive: '' };
+    const res = await peticion('PUT', '/api/mesas', { carpeta: '', mesas: [mesa] }, tokens.server);
+    assert.strictEqual(res.estado, 200);
+    assert.strictEqual(res.cuerpo.mesas.mesas[0].orientacion, 'Programación');
+    const mala = { carpeta: '', mesas: [{ ...mesa, orientacion: 'Electrónica' }] };
+    assert.strictEqual((await peticion('PUT', '/api/mesas', mala, tokens.server)).estado, 400);
+  });
+
   it('mesas: subcarpetas se guardan con su nombre y link; un link inválido → 400', async () => {
     const conSubcarpetas = {
       carpeta: 'https://drive.google.com/x',

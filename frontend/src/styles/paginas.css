@@ -1848,3 +1848,20 @@ main > .pagina-libre {
 .pagina-libre [data-dinamico] {
   display: contents;
 }
+
+/* Previas: de 5° a 7° las materias cambian según la orientación. */
+.filtros__orientacion {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--gris-claro);
+}
+
+.orientacion {
+  display: block;
+  margin-top: 2px;
+  color: var(--rojo-secundario);
+  font-size: 12px;
+  font-weight: 600;
+}

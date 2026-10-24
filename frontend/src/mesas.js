@@ -27,15 +27,16 @@ const semilla = () => ({
     ["m3", "Fisicoquímica", "2° y 3°", "2026-12-02", "09:00", "Laboratorio 2", "Prof. E. Paz"],
     ["m4", "Inglés", "1° a 3°", "2026-12-02", "11:00", "Aula 8", "Prof. C. Nieves"],
     ["m5", "Sistemas Digitales", "4°", "2026-12-03", "09:00", "Laboratorio 1", "Prof. M. Vega"],
-    ["m6", "Base de Datos", "5°", "2026-12-03", "11:00", "Aula 12", "Prof. Ramírez"],
+    ["m6", "Base de Datos", "5°", "2026-12-03", "11:00", "Aula 12", "Prof. Ramírez", "Programación"],
     ["m7", "Análisis Matemático", "5°", "2026-12-04", "09:00", "Aula 12", "Prof. S. Roldán"],
-    ["m8", "Redes", "6°", "2026-12-04", "11:00", "Laboratorio 2", "Prof. D. Suárez"],
+    ["m8", "Redes", "6°", "2026-12-04", "11:00", "Laboratorio 2", "Prof. D. Suárez", "Informática"],
     ["m9", "Organización y Métodos", "7°", "2026-12-05", "09:00", "Aula 5", "Prof. H. Barreto"],
-    ["m10", "Desarrollo de Software", "7°", "2026-12-05", "11:00", "Laboratorio 1", "Prof. N. Quiroga"],
-  ].map(([id, materia, anio, fecha, hora, aula, docente]) => ({
+    ["m10", "Desarrollo de Software", "7°", "2026-12-05", "11:00", "Laboratorio 1", "Prof. N. Quiroga", "Programación"],
+  ].map(([id, materia, anio, fecha, hora, aula, docente, orientacion = ""]) => ({
     id,
     materia,
     anio,
+    orientacion,
     fecha,
     hora,
     aula,
@@ -48,6 +49,7 @@ export const nuevaMesa = () => ({
   id: `m-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`,
   materia: "",
   anio: "",
+  orientacion: "",
   fecha: "",
   hora: "",
   aula: "",
@@ -63,7 +65,11 @@ export const nuevaSubcarpeta = () => ({
 
 const CLAVE = "tec1-mesas";
 
-const CAMPOS = ["materia", "anio", "fecha", "hora", "aula", "docente", "drive"];
+/* De 1° a 4° las materias son las mismas para todos; de 5° a 7° cambian
+   según la orientación. Una mesa sin orientación es para todos. */
+export const ORIENTACIONES = ["Informática", "Programación"];
+
+const CAMPOS = ["materia", "anio", "orientacion", "fecha", "hora", "aula", "docente", "drive"];
 const CAMPOS_SUBCARPETA = ["nombre", "link"];
 
 /* Sin la forma esperada vale el cronograma original. */

@@ -7,6 +7,7 @@ import {
   guardarMesas,
   nuevaMesa,
   nuevaSubcarpeta,
+  ORIENTACIONES,
   restaurarMesas,
   useMesas,
 } from "../../mesas.js";
@@ -15,6 +16,7 @@ import { puedeEditar } from "../../sesion.js";
 const columnas = [
   ["materia", "Materia", "text"],
   ["anio", "Año", "text"],
+  ["orientacion", "Orientación", "select"],
   ["fecha", "Fecha", "date"],
   ["hora", "Hora", "time"],
   ["aula", "Aula", "text"],
@@ -257,14 +259,28 @@ export default function Mesas({ ruta, usuario }) {
               >
                 {columnas.map(([campo, etiqueta, tipo]) => (
                   <td key={campo} data-label={etiqueta}>
-                    <input
-                      type={tipo}
-                      disabled={!editable}
-                      aria-label={`${etiqueta} de ${mesa.materia || "la mesa"}`}
-                      placeholder={tipo === "url" ? "https://drive.google.com/…" : ""}
-                      value={mesa[campo]}
-                      onChange={(e) => cambiar(mesa.id, campo, e.target.value)}
-                    />
+                    {tipo === "select" ? (
+                      <select
+                        disabled={!editable}
+                        aria-label={`${etiqueta} de ${mesa.materia || "la mesa"}`}
+                        value={mesa[campo]}
+                        onChange={(e) => cambiar(mesa.id, campo, e.target.value)}
+                      >
+                        <option value="">Todas</option>
+                        {ORIENTACIONES.map((o) => (
+                          <option key={o}>{o}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type={tipo}
+                        disabled={!editable}
+                        aria-label={`${etiqueta} de ${mesa.materia || "la mesa"}`}
+                        placeholder={tipo === "url" ? "https://drive.google.com/…" : ""}
+                        value={mesa[campo]}
+                        onChange={(e) => cambiar(mesa.id, campo, e.target.value)}
+                      />
+                    )}
                   </td>
                 ))}
                 {editable && (
