@@ -27,9 +27,6 @@ export const nombrePerfil = (rol) =>
 /* Qué rol entra a cada sección del panel. Los alumnos no figuran en ninguna. */
 export const accesos = {
   "/panel": ["direccion", "secretaria", "preceptor", "jefatura", "server", "docente"],
-  "/panel/alumnos": ["direccion", "secretaria", "preceptor", "jefatura"],
-  "/panel/asistencia": ["direccion", "preceptor", "jefatura"],
-  "/panel/calificaciones": ["direccion", "secretaria", "docente"],
   "/panel/grilla": ["direccion", "jefatura", "preceptor"],
   "/panel/curricular": ["direccion", "jefatura", "docente"],
   "/panel/proyectos": ["direccion", "jefatura"],
@@ -46,9 +43,6 @@ export const accesos = {
    El resto de los roles que figuran en `accesos` entra en modo lectura.
    Dirección edita todo. */
 export const edicion = {
-  "/panel/alumnos": ["secretaria"],
-  "/panel/asistencia": ["preceptor"],
-  "/panel/calificaciones": ["secretaria", "docente"],
   "/panel/grilla": ["jefatura"],
   "/panel/curricular": ["jefatura", "docente"],
   "/panel/proyectos": ["jefatura"],
@@ -128,10 +122,8 @@ const olvidarSesion = () => {
   }
 };
 
-/* Sin token no hay sesión: lo que haya quedado guardado sin él no vale.
-   Sólo en desarrollo existe la sesión de demostración, que no tiene token. */
-const valeSinToken = import.meta.env.DEV;
-let usuario = tokenActual() || valeSinToken ? leer() : null;
+/* Sin token no hay sesión: lo que haya quedado guardado sin él no vale. */
+let usuario = tokenActual() ? leer() : null;
 const oyentes = new Set();
 
 const avisar = () => oyentes.forEach((fn) => fn(usuario));
@@ -194,7 +186,7 @@ export const entrarConBackend = async (username, password, recordar = true) => {
 export const restaurarSesion = async () => {
   const token = tokenActual();
   if (!token) {
-    if (usuario && !valeSinToken) {
+    if (usuario) {
       olvidarSesion();
       usuario = null;
       avisar();

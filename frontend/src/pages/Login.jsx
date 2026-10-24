@@ -2,25 +2,18 @@ import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { logo } from "../data.js";
 import { ir } from "../router.js";
-import { entrar, entrarConBackend, perfiles, verPanel } from "../sesion.js";
-
-/* Modo demostración: sólo con el servidor de desarrollo de Vite. */
-const DEMO = import.meta.env.DEV;
+import { entrarConBackend, verPanel } from "../sesion.js";
 
 export default function Login({ motivo }) {
   const [usuario, setUsuario] = useState("");
   const [clave, setClave] = useState("");
   const [verClave, setVerClave] = useState(false);
-  const [rol, setRol] = useState("alumno");
   const [recordar, setRecordar] = useState(true);
   const [error, setError] = useState("");
   const [ayuda, setAyuda] = useState(false);
   const [cargando, setCargando] = useState(false);
 
-  /* Login real contra el backend. Sólo mientras se desarrolla (npm run dev),
-     si el backend no está levantado, entra con el perfil elegido para poder
-     recorrer el sitio. En el sitio publicado eso no existe: sería entrar sin
-     contraseña. */
+  /* Login contra el backend; sin servidor no se entra. */
   const enviar = async (e) => {
     e.preventDefault();
     setError("");
@@ -31,23 +24,10 @@ export default function Login({ motivo }) {
       /* Si se llegó desde una página del panel (motivo), se queda en esa: con
          la sesión iniciada, App ya la muestra. */
       if (!motivo) ir(verPanel(sesion) ? "/panel" : "/");
-      return;
     } catch (fallo) {
-      if (!(DEMO && fallo.sinConexion)) {
-        setError(fallo.message);
-        setCargando(false);
-        return;
-      }
+      setError(fallo.message);
+      setCargando(false);
     }
-
-    const sesion = {
-      rol,
-      usuario,
-      nombre: usuario.split("@")[0] || perfiles.find(([c]) => c === rol)[1],
-    };
-    entrar(sesion);
-    setCargando(false);
-    ir(verPanel(sesion) ? "/panel" : "/");
   };
 
   return (
@@ -65,8 +45,8 @@ export default function Login({ motivo }) {
         </p>
         <ul className="login__lista">
           {[
-            ["ph:student", "Alumnos y familias: boletín, previas y novedades."],
-            ["ph:chalkboard-teacher", "Docentes: planillas y planificaciones."],
+            ["ph:student", "Alumnos y familias: previas y novedades."],
+            ["ph:chalkboard-teacher", "Docentes: seguimiento curricular."],
             ["ph:shield-check", "Dirección: permisos y publicación."],
           ].map(([icono, texto]) => (
             <li key={texto}>
@@ -160,26 +140,6 @@ export default function Login({ motivo }) {
               personal de la escuela, Dirección puede ponerte una contraseña nueva
               desde gestión.
             </p>
-          )}
-
-          {/* Selector de demostración: sólo en desarrollo. */}
-          {DEMO && (
-            <fieldset className="login__perfiles">
-              <legend>Entrar como (demo, sin backend)</legend>
-              <div className="filtros__chips">
-                {perfiles.map(([clave, etiqueta, icono]) => (
-                  <button
-                    type="button"
-                    key={clave}
-                    className={`filtro ${rol === clave ? "filtro--activo" : ""}`}
-                    onClick={() => setRol(clave)}
-                  >
-                    <Icon icon={icono} width={15} height={15} aria-hidden="true" />
-                    {etiqueta}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
           )}
 
           <button

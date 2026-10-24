@@ -29,4 +29,9 @@ router.put('/mesas', autenticar, requerirRol(...EDITORES.mesas), cuerpo, c.guard
 router.put('/programas', autenticar, requerirRol(...EDITORES.programas), cuerpo, c.guardarProgramas);
 router.put('/proyectos/:area', autenticar, requerirRol(...EDITORES.proyectos), cuerpo, c.guardarProyectos);
 
+// Panel: grillas de Espacios y horarios y plano del colegio. Sólo con sesión.
+router.get('/panel', autenticar, c.obtenerPanel);
+router.put('/grillas', autenticar, requerirRol(...EDITORES.grillas), cuerpo, c.guardarGrillas);
+router.put('/plano', autenticar, requerirRol(...EDITORES.plano), cuerpo, c.guardarPlano);
+
 module.exports = router;

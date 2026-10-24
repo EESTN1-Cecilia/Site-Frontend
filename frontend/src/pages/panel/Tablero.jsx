@@ -1,55 +1,50 @@
+import { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import Layout from "./Layout.jsx";
-import {
-  TOPE_INASISTENCIAS,
-  alumnos,
-  asistenciaMensual,
-  grillaInicial,
-  notificaciones,
-  planillas,
-} from "../../panelData.js";
+import { dias, inventarioInicial, notificaciones } from "../../panelData.js";
+import { useGrillas } from "../../grillas.js";
+import { alternarCancelado, mismoSalon, renombrarSalon, usePlano } from "../../plano.js";
+import Editable from "../../components/Editable.jsx";
 
-/* Materias agrupadas por estado, para el gráfico de cursada. */
-const porEstado = alumnos
-  .flatMap((alumno) => alumno.materias)
-  .reduce((acc, [, estado]) => {
-    acc[estado] = (acc[estado] || 0) + 1;
-    return acc;
-  }, {});
+/* El panel no maneja datos de alumnos: ni números ni avisos sobre ellos. */
+/* "Bienvenido, …" con la fecha y la hora, que se actualiza sola. */
+function useAhora() {
+  const [ahora, setAhora] = useState(() => new Date());
+  useEffect(() => {
+    const reloj = setInterval(() => setAhora(new Date()), 30000);
+    return () => clearInterval(reloj);
+  }, []);
+  return ahora;
+}
 
-const totalMaterias = Object.values(porEstado).reduce((a, b) => a + b, 0);
+const fechaYHora = (fecha) =>
+  fecha.toLocaleString("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-const kpis = [
-  ["ph:student", "Alumnos activos", alumnos.length],
-  [
-    "ph:warning-circle",
-    "Con inasistencias sobre el tope",
-    alumnos.filter((a) => a.inasistencias > TOPE_INASISTENCIAS).length,
-  ],
-  [
-    "ph:arrows-clockwise",
-    "Materias en intensificación",
-    alumnos.reduce((total, a) => total + a.intensifica.length, 0),
-  ],
-  [
-    "ph:clipboard-text",
-    "Planillas pendientes",
-    planillas.filter((p) => p.estado !== "Entregada").length,
-  ],
-];
-
-export default function Tablero({ ruta }) {
-  const librados = grillaInicial.filter((clase) => clase.ausente);
+/* ---------- Encargada de Server: material ---------- */
+function TableroServer() {
+  const porCategoria = Object.entries(
+    inventarioInicial.reduce((acc, { categoria, cantidad, disponibles }) => {
+      const [total, prestadas] = acc[categoria] || [0, 0];
+      acc[categoria] = [total + cantidad, prestadas + cantidad - disponibles];
+      return acc;
+    }, {}),
+  );
+  const total = porCategoria.reduce((suma, [, [t]]) => suma + t, 0);
+  const prestadas = porCategoria.reduce((suma, [, [, p]]) => suma + p, 0);
 
   return (
-    <Layout
-      ruta={ruta}
-      chip="RESUMEN"
-      titulo="Tablero de gestión"
-      texto="Estado general de la escuela: asistencia, cursada y avisos del día."
-    >
+    <>
       <div className="kpis">
-        {kpis.map(([icono, etiqueta, valor]) => (
+        {[
+          ["ph:desktop-tower", "Material en total", total],
+          ["ph:hand-arrow-up", "Prestado ahora", prestadas],
+        ].map(([icono, etiqueta, valor]) => (
           <article className="kpi" key={etiqueta}>
             <span className="kpi__icono">
               <Icon icon={icono} width={22} height={22} aria-hidden="true" />
@@ -60,47 +55,149 @@ export default function Tablero({ ruta }) {
         ))}
       </div>
 
-      <div className="panel__cols">
-        <section className="tarjeta">
-          <h2 className="tarjeta__titulo">Asistencia por mes</h2>
-          <p className="tarjeta__bajada">
-            Porcentaje de presentes sobre la matrícula total.
-          </p>
-          <div className="barras">
-            {asistenciaMensual.map(([mes, valor]) => (
-              <div className="barra" key={mes}>
-                <div className="barra__pista">
-                  <div className="barra__valor" style={{ height: `${valor}%` }}>
-                    <span>{valor}%</span>
-                  </div>
-                </div>
-                <span className="barra__etiqueta">{mes.slice(0, 3)}</span>
+      <section className="tarjeta">
+        <h2 className="tarjeta__titulo">Por sector del inventario</h2>
+        <p className="tarjeta__bajada">Prestados sobre el total de cada tipo de material.</p>
+        <div className="barras-h">
+          {porCategoria.map(([categoria, [t, p]]) => (
+            <div className="barra-h" key={categoria}>
+              <span className="barra-h__etiqueta">{categoria}</span>
+              <div className="barra-h__pista">
+                <div className="barra-h__valor" style={{ width: `${(p / t) * 100}%` }} />
               </div>
-            ))}
-          </div>
-        </section>
+              <span className="barra-h__numero">
+                {p}/{t}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
 
-        <section className="tarjeta">
-          <h2 className="tarjeta__titulo">Materias en curso</h2>
-          <p className="tarjeta__bajada">
-            {totalMaterias} espacios curriculares registrados.
-          </p>
-          <div className="barras-h">
-            {Object.entries(porEstado).map(([estado, cantidad]) => (
-              <div className="barra-h" key={estado}>
-                <span className="barra-h__etiqueta">{estado}</span>
-                <div className="barra-h__pista">
-                  <div
-                    className={`barra-h__valor barra-h__valor--${estado.toLowerCase()}`}
-                    style={{ width: `${(cantidad / totalMaterias) * 100}%` }}
-                  />
-                </div>
-                <span className="barra-h__numero">{cantidad}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+/* ---------- Plano: qué profesor está en cada salón, según la grilla ---------- */
+function Plano() {
+  const pisos = usePlano();
+  const grillas = useGrillas();
+  const hoy = dias[new Date().getDay() - 1] ?? dias[0];
+  const [pisoId, setPisoId] = useState(pisos[0].id);
+  const [grillaId, setGrillaId] = useState(grillas[0].id);
+  const [dia, setDia] = useState(hoy);
+  const grilla = grillas.find((g) => g.id === grillaId) ?? grillas[0];
+  const [horaId, setHoraId] = useState(grilla.horas[0]?.id ?? "");
+  const hora = grilla.horas.some((h) => h.id === horaId) ? horaId : grilla.horas[0]?.id;
+  const piso = pisos.find((p) => p.id === pisoId) ?? pisos[0];
+
+  const enCurso = grilla.clases.filter((c) => c.dia === dia && c.hora === hora);
+
+  return (
+    <section className="tarjeta">
+      <h2 className="tarjeta__titulo">Plano del colegio</h2>
+      <p className="tarjeta__bajada">
+        Quién está en cada salón, según la grilla de Espacios y horarios. Hacé clic en el
+        nombre de un salón para cambiarlo, o en el ícono de al lado para cancelarlo.
+      </p>
+
+      <div className="filtros">
+        <div className="filtros__chips">
+          {pisos.map((p) => (
+            <button
+              key={p.id}
+              className={`filtro ${piso.id === p.id ? "filtro--activo" : ""}`}
+              onClick={() => setPisoId(p.id)}
+            >
+              {p.nombre}
+            </button>
+          ))}
+        </div>
+        {[
+          ["Grilla", grillaId, setGrillaId, grillas.map((g) => [g.id, g.nombre])],
+          ["Día", dia, setDia, dias.map((d) => [d, d])],
+          ["Horario", hora, setHoraId, grilla.horas.map((h) => [h.id, h.nombre])],
+        ].map(([etiqueta, valor, cambiar, opciones]) => (
+          <label className="campo campo--select" key={etiqueta}>
+            <span>{etiqueta}</span>
+            <select value={valor} onChange={(e) => cambiar(e.target.value)}>
+              {opciones.map(([id, nombre]) => (
+                <option key={id} value={id}>
+                  {nombre}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
       </div>
+
+      <div className="plano" style={{ aspectRatio: piso.proporcion }}>
+        <img className="plano__dibujo" src={piso.imagen} alt={`Plano de ${piso.nombre.toLowerCase()}`} />
+        {piso.salones.map((salon) => {
+          const clase = enCurso.find((c) => mismoSalon(c.aula, salon.nombre));
+          const ocupado = clase && !clase.ausente;
+          return (
+            <div
+              key={salon.id}
+              className={`plano__salon ${salon.chico ? "plano__salon--chico" : ""} ${
+                ocupado ? "plano__salon--ocupado" : ""
+              } ${salon.cancelado ? "plano__salon--cancelado" : ""}`}
+              style={{ left: `${salon.x}%`, top: `${salon.y}%` }}
+            >
+              <span className="plano__fila">
+                <Editable
+                  clase="plano__nombre"
+                  detener
+                  valor={salon.nombre}
+                  alCambiar={(v) => renombrarSalon(salon.id, v || "Sin nombre")}
+                />
+                <button
+                  className="plano__cancelar"
+                  title={salon.cancelado ? "Volver a habilitar el salón" : "Cancelar el salón"}
+                  aria-label={`${salon.cancelado ? "Habilitar" : "Cancelar"} ${salon.nombre}`}
+                  onClick={() => alternarCancelado(salon.id)}
+                >
+                  <Icon
+                    icon={salon.cancelado ? "ph:arrow-counter-clockwise" : "ph:prohibit"}
+                    width={12}
+                    height={12}
+                    aria-hidden="true"
+                  />
+                </button>
+              </span>
+              {salon.cancelado ? (
+                <span className="plano__profe plano__profe--aviso">
+                  {clase ? "Cancelada: reubicar clase" : "Cancelada"}
+                </span>
+              ) : (
+                <>
+                  {ocupado && <span className="plano__profe">{clase.profesor}</span>}
+                  {clase?.ausente && <span className="plano__profe">Libre: docente ausente</span>}
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+export default function Tablero({ ruta, usuario }) {
+  const ahora = useAhora();
+  const rol = usuario?.rol;
+  const nombre = usuario?.nombre || "";
+
+  return (
+    <Layout
+      ruta={ruta}
+      chip="TABLERO"
+      titulo={`Bienvenido, ${nombre}`}
+      texto={fechaYHora(ahora)}
+    >
+      {rol === "server" ? (
+        <TableroServer />
+      ) : (
+        (rol === "direccion" || rol === "jefatura") && <Plano />
+      )}
 
       <section className="tarjeta">
         <h2 className="tarjeta__titulo">Avisos</h2>
@@ -120,19 +217,6 @@ export default function Tablero({ ruta }) {
           ))}
         </ul>
       </section>
-
-      {librados.length > 0 && (
-        <section className="tarjeta">
-          <h2 className="tarjeta__titulo">Aulas libres ahora</h2>
-          <div className="etiquetas">
-            {librados.map((clase) => (
-              <span className="etiqueta etiqueta--libre" key={clase.id}>
-                {clase.aula} · {clase.curso} · {clase.dia} {clase.hora}
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
     </Layout>
   );
 }

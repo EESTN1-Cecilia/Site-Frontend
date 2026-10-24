@@ -361,3 +361,57 @@ describe('Mesas, programas y proyectos', () => {
     assert.strictEqual(cuerpo.programas[0].nombre, 'DiagramTec');
   });
 });
+
+describe('Panel: grillas y plano', () => {
+  const grillas = [
+    {
+      id: 'Básico',
+      nombre: 'Turno mañana',
+      horas: [{ id: '1°/2°', nombre: '1°/2°' }],
+      clases: [
+        { id: 'g1', ciclo: 'Básico', grupo: 'Grupo 1.1', curso: '1° 1', alumnos: 14, materia: 'Taller', profesor: 'Prof. Coria', aula: 'Taller 1', dia: 'Lunes', hora: '1°/2°', ausente: false },
+      ],
+    },
+  ];
+
+  it('sin sesión no se ven ni se guardan → 401', async () => {
+    assert.strictEqual((await peticion('GET', '/api/panel')).estado, 401);
+    assert.strictEqual((await peticion('PUT', '/api/grillas', { grillas })).estado, 401);
+  });
+
+  it('jefatura guarda las grillas y el panel las devuelve', async () => {
+    const res = await peticion('PUT', '/api/grillas', { grillas }, tokens.jefatura_area);
+    assert.strictEqual(res.estado, 200);
+    const { cuerpo } = await peticion('GET', '/api/panel', undefined, tokens.server);
+    assert.deepStrictEqual(cuerpo.grillas, grillas);
+  });
+
+  it('server no edita grillas ni plano → 403', async () => {
+    assert.strictEqual((await peticion('PUT', '/api/grillas', { grillas }, tokens.server)).estado, 403);
+    assert.strictEqual((await peticion('PUT', '/api/plano', { nombres: {} }, tokens.server)).estado, 403);
+  });
+
+  it('Dirección renombra y cancela salones', async () => {
+    const plano = { nombres: { 'pb-21': 'Aula 8' }, cancelados: ['pb-1'] };
+    assert.strictEqual((await peticion('PUT', '/api/plano', plano, tokens.direccion)).estado, 200);
+    const { cuerpo } = await peticion('GET', '/api/panel', undefined, tokens.direccion);
+    assert.deepStrictEqual(cuerpo.plano, plano);
+  });
+
+  it('datos con otra forma → 400', async () => {
+    for (const [ruta, cuerpo] of [
+      ['/api/grillas', { grillas: 'no' }],
+      ['/api/grillas', { grillas: [{ ...grillas[0], clases: [{ ...grillas[0].clases[0], alumnos: -3 }] }] }],
+      ['/api/plano', { nombres: { '../x': 'Aula' } }],
+      ['/api/plano', { cancelados: ['pb 1'] }],
+    ]) {
+      const res = await peticion('PUT', ruta, cuerpo, tokens.direccion);
+      assert.strictEqual(res.estado, 400, JSON.stringify(cuerpo));
+    }
+  });
+
+  it('el sitio público no recibe grillas ni plano', async () => {
+    const { cuerpo } = await peticion('GET', '/api/contenido');
+    assert.ok(!('grillas' in cuerpo) && !('plano' in cuerpo));
+  });
+});

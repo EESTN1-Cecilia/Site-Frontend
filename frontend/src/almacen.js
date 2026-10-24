@@ -38,6 +38,8 @@ const COPIAS = [
   "tec1-programas",
   "tec1-proyectos",
   "tec1-publicaciones",
+  "tec1-grillas",
+  "tec1-plano",
 ];
 
 export const borrarCopias = () =>

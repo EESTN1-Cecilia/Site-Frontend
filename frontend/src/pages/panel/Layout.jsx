@@ -1,18 +1,18 @@
 import { Icon } from "@iconify/react";
-import { ir } from "../../router.js";
-import { edicion, puede, puedeEditar, quienEdita, useSesion } from "../../sesion.js";
+import { ir, rutaActual } from "../../router.js";
+import {
+  edicion,
+  puede,
+  puedeEditar,
+  puedeEditarPagina,
+  quienEdita,
+  useSesion,
+} from "../../sesion.js";
+import { paginasEditables } from "./SitioPagina.jsx";
 
 export const menu = [
-  [
-    "Secretaría",
-    [
-      ["/panel", "ph:chart-donut", "Tablero"],
-      ["/panel/alumnos", "ph:student", "Alumnos"],
-      ["/panel/calificaciones", "ph:exam", "Notas y boletines"],
-    ],
-  ],
+  ["General", [["/panel", "ph:chart-donut", "Tablero"]]],
   ["Contenido del sitio", [["/panel/sitio", "ph:browsers", "Sitio público"]]],
-  ["Preceptoría", [["/panel/asistencia", "ph:calendar-check", "Asistencia"]]],
   [
     "Jefatura de Área",
     [
@@ -58,7 +58,37 @@ export default function Layout({ ruta, chip, titulo, texto, acciones, children }
         {visible.map(([grupo, items]) => (
           <div className="panel__grupo" key={grupo}>
             <p className="panel__grupo-titulo">{grupo}</p>
-            {items.map(([destino, icono, etiqueta]) => (
+            {items.map(([destino, icono, etiqueta]) =>
+              destino === "/panel/sitio" ? (
+                /* Desplegable con cada página que este rol puede editar. */
+                <details className="panel__desplegable" key={destino} open={activo(destino, ruta)}>
+                  <summary className={`panel__link ${activo(destino, ruta) ? "panel__link--activo" : ""}`}>
+                    <Icon icon={icono} width={18} height={18} aria-hidden="true" />
+                    {etiqueta}
+                    <Icon className="panel__flecha" icon="ph:caret-down" width={14} height={14} aria-hidden="true" />
+                  </summary>
+                  <button
+                    className={`panel__sublink ${ruta === destino ? "panel__sublink--activo" : ""}`}
+                    onClick={() => ir(destino)}
+                  >
+                    Todas las páginas
+                  </button>
+                  {Object.entries(paginasEditables)
+                    .filter(([pagina]) => puedeEditarPagina(usuario, pagina))
+                    .map(([pagina, [nombre]]) => {
+                      const url = `/panel/sitio/pagina?p=${encodeURIComponent(pagina)}`;
+                      return (
+                        <button
+                          key={pagina}
+                          className={`panel__sublink ${rutaActual() === url ? "panel__sublink--activo" : ""}`}
+                          onClick={() => ir(url)}
+                        >
+                          {nombre}
+                        </button>
+                      );
+                    })}
+                </details>
+              ) : (
               <button
                 key={destino}
                 className={`panel__link ${activo(destino, ruta) ? "panel__link--activo" : ""}`}
@@ -67,7 +97,8 @@ export default function Layout({ ruta, chip, titulo, texto, acciones, children }
                 <Icon icon={icono} width={18} height={18} aria-hidden="true" />
                 {etiqueta}
               </button>
-            ))}
+              ),
+            )}
           </div>
         ))}
       </aside>

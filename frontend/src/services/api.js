@@ -125,6 +125,27 @@ export function guardarProgramasEnServidor(token, programas) {
   });
 }
 
+/* Del panel: grillas de Espacios y horarios y plano del colegio. */
+export function obtenerPanel(token) {
+  return request("/panel", conToken(token));
+}
+
+export function guardarGrillasEnServidor(token, grillas) {
+  return request("/grillas", {
+    method: "PUT",
+    ...conToken(token),
+    body: JSON.stringify({ grillas }),
+  });
+}
+
+export function guardarPlanoEnServidor(token, plano) {
+  return request("/plano", {
+    method: "PUT",
+    ...conToken(token),
+    body: JSON.stringify(plano),
+  });
+}
+
 export function guardarProyectosEnServidor(token, area, proyectos) {
   return request(`/proyectos/${encodeURIComponent(area)}`, {
     method: "PUT",
