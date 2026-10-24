@@ -1665,30 +1665,6 @@
   text-underline-offset: 3px;
 }
 
-.login__perfiles {
-  margin: 4px 0 0;
-  padding: 14px;
-  border: 1px dashed var(--gris-claro);
-  border-radius: 16px;
-}
-
-.login__perfiles legend {
-  padding: 0 8px;
-  color: var(--gris-medio);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-}
-
-.login__perfiles .filtro {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 13px;
-  font-size: 13px;
-}
-
 .login__ayuda {
   color: var(--gris-medio);
   font-size: 13px;

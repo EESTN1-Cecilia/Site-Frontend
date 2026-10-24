@@ -122,10 +122,8 @@ const olvidarSesion = () => {
   }
 };
 
-/* Sin token no hay sesión: lo que haya quedado guardado sin él no vale.
-   Sólo en desarrollo existe la sesión de demostración, que no tiene token. */
-const valeSinToken = import.meta.env.DEV;
-let usuario = tokenActual() || valeSinToken ? leer() : null;
+/* Sin token no hay sesión: lo que haya quedado guardado sin él no vale. */
+let usuario = tokenActual() ? leer() : null;
 const oyentes = new Set();
 
 const avisar = () => oyentes.forEach((fn) => fn(usuario));
@@ -188,7 +186,7 @@ export const entrarConBackend = async (username, password, recordar = true) => {
 export const restaurarSesion = async () => {
   const token = tokenActual();
   if (!token) {
-    if (usuario && !valeSinToken) {
+    if (usuario) {
       olvidarSesion();
       usuario = null;
       avisar();
