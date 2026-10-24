@@ -11,16 +11,8 @@ import {
 import { paginasEditables } from "./SitioPagina.jsx";
 
 export const menu = [
-  [
-    "Secretaría",
-    [
-      ["/panel", "ph:chart-donut", "Tablero"],
-      ["/panel/alumnos", "ph:student", "Alumnos"],
-      ["/panel/calificaciones", "ph:exam", "Notas y boletines"],
-    ],
-  ],
+  ["General", [["/panel", "ph:chart-donut", "Tablero"]]],
   ["Contenido del sitio", [["/panel/sitio", "ph:browsers", "Sitio público"]]],
-  ["Preceptoría", [["/panel/asistencia", "ph:calendar-check", "Asistencia"]]],
   [
     "Jefatura de Área",
     [

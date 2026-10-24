@@ -65,8 +65,8 @@ export default function Login({ motivo }) {
         </p>
         <ul className="login__lista">
           {[
-            ["ph:student", "Alumnos y familias: boletín, previas y novedades."],
-            ["ph:chalkboard-teacher", "Docentes: planillas y planificaciones."],
+            ["ph:student", "Alumnos y familias: previas y novedades."],
+            ["ph:chalkboard-teacher", "Docentes: seguimiento curricular."],
             ["ph:shield-check", "Dirección: permisos y publicación."],
           ].map(([icono, texto]) => (
             <li key={texto}>

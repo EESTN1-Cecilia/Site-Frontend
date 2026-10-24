@@ -1,32 +1,12 @@
 import { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import Layout from "./Layout.jsx";
-import {
-  alumnos,
-  asistenciaMensual,
-  dias,
-  inventarioInicial,
-  notificaciones,
-  planillas,
-} from "../../panelData.js";
+import { dias, inventarioInicial, notificaciones } from "../../panelData.js";
 import { useGrillas } from "../../grillas.js";
 import { alternarCancelado, mismoSalon, renombrarSalon, usePlano } from "../../plano.js";
 import Editable from "../../components/Editable.jsx";
 
-/* Sólo números generales: nada puntual de un alumno (faltas, materias
-   deudoras), eso queda en los sectores que lo cargan. */
-const kpis = [
-  ["ph:student", "Alumnos activos", alumnos.length],
-  [
-    "ph:clipboard-text",
-    "Planillas pendientes",
-    planillas.filter((p) => p.estado !== "Entregada").length,
-  ],
-];
-
-/* Los avisos de un alumno en particular tampoco van en el tablero. */
-const avisos = notificaciones.filter((aviso) => aviso.tipo !== "alerta");
-
+/* El panel no maneja datos de alumnos: ni números ni avisos sobre ellos. */
 /* "Bienvenido, …" con la fecha y la hora, que se actualiza sola. */
 function useAhora() {
   const [ahora, setAhora] = useState(() => new Date());
@@ -216,40 +196,7 @@ export default function Tablero({ ruta, usuario }) {
       {rol === "server" ? (
         <TableroServer />
       ) : (
-        <>
-          <div className="kpis">
-            {kpis.map(([icono, etiqueta, valor]) => (
-              <article className="kpi" key={etiqueta}>
-                <span className="kpi__icono">
-                  <Icon icon={icono} width={22} height={22} aria-hidden="true" />
-                </span>
-                <p className="kpi__valor">{valor}</p>
-                <p className="kpi__etiqueta">{etiqueta}</p>
-              </article>
-            ))}
-          </div>
-
-          {(rol === "direccion" || rol === "jefatura") && <Plano />}
-
-          <section className="tarjeta">
-            <h2 className="tarjeta__titulo">Asistencia por mes</h2>
-            <p className="tarjeta__bajada">
-              Porcentaje de presentes sobre la matrícula total.
-            </p>
-            <div className="barras">
-              {asistenciaMensual.map(([mes, valor]) => (
-                <div className="barra" key={mes}>
-                  <div className="barra__pista">
-                    <div className="barra__valor" style={{ height: `${valor}%` }}>
-                      <span>{valor}%</span>
-                    </div>
-                  </div>
-                  <span className="barra__etiqueta">{mes.slice(0, 3)}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        </>
+        (rol === "direccion" || rol === "jefatura") && <Plano />
       )}
 
       <section className="tarjeta">
@@ -258,7 +205,7 @@ export default function Tablero({ ruta, usuario }) {
           Reemplazan las cadenas de WhatsApp: todo queda registrado acá.
         </p>
         <ul className="avisos">
-          {avisos.map((aviso) => (
+          {notificaciones.map((aviso) => (
             <li className={`avisos__item avisos__item--${aviso.tipo}`} key={aviso.id}>
               <Icon icon={aviso.icono} width={20} height={20} aria-hidden="true" />
               <div>

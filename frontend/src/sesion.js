@@ -27,9 +27,6 @@ export const nombrePerfil = (rol) =>
 /* Qué rol entra a cada sección del panel. Los alumnos no figuran en ninguna. */
 export const accesos = {
   "/panel": ["direccion", "secretaria", "preceptor", "jefatura", "server", "docente"],
-  "/panel/alumnos": ["direccion", "secretaria", "preceptor", "jefatura"],
-  "/panel/asistencia": ["direccion", "preceptor", "jefatura"],
-  "/panel/calificaciones": ["direccion", "secretaria", "docente"],
   "/panel/grilla": ["direccion", "jefatura", "preceptor"],
   "/panel/curricular": ["direccion", "jefatura", "docente"],
   "/panel/proyectos": ["direccion", "jefatura"],
@@ -46,9 +43,6 @@ export const accesos = {
    El resto de los roles que figuran en `accesos` entra en modo lectura.
    Dirección edita todo. */
 export const edicion = {
-  "/panel/alumnos": ["secretaria"],
-  "/panel/asistencia": ["preceptor"],
-  "/panel/calificaciones": ["secretaria", "docente"],
   "/panel/grilla": ["jefatura"],
   "/panel/curricular": ["jefatura", "docente"],
   "/panel/proyectos": ["jefatura"],

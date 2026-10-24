@@ -16,9 +16,6 @@ import Previas from "./src/pages/Previas.jsx";
 import Novedades from "./src/pages/Novedades.jsx";
 import Inscripcion from "./src/pages/Inscripcion.jsx";
 import Tablero from "./src/pages/panel/Tablero.jsx";
-import Alumnos from "./src/pages/panel/Alumnos.jsx";
-import Asistencia from "./src/pages/panel/Asistencia.jsx";
-import Calificaciones from "./src/pages/panel/Calificaciones.jsx";
 import Grilla from "./src/pages/panel/Grilla.jsx";
 import Curricular from "./src/pages/panel/Curricular.jsx";
 import ProyectosPanel from "./src/pages/panel/ProyectosPanel.jsx";
@@ -49,9 +46,6 @@ const paginas = {
   "/novedades": Novedades,
   "/inscripcion": Inscripcion,
   "/panel": Tablero,
-  "/panel/alumnos": Alumnos,
-  "/panel/asistencia": Asistencia,
-  "/panel/calificaciones": Calificaciones,
   "/panel/grilla": Grilla,
   "/panel/curricular": Curricular,
   "/panel/proyectos": ProyectosPanel,
