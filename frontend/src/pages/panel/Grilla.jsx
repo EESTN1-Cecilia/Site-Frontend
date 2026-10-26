@@ -1,194 +1,344 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Icon } from "@iconify/react";
 import Layout from "./Layout.jsx";
-import Editable from "../../components/Editable.jsx";
-import { dias } from "../../panelData.js";
-import { nombresSalones, salonCancelado } from "../../plano.js";
+import AsignacionModal from "../../components/AsignacionModal.jsx";
+import GrillaFormModal from "../../components/GrillaFormModal.jsx";
+import EditorCelda from "../../components/EditorCelda.jsx";
+import { CambioAulaModal } from "../../components/AccionesGrillaModal.jsx";
+import PlanillaGrilla from "./PlanillaGrilla.jsx";
+import { exportarGrillaPdf } from "../../exportarGrilla.js";
+import { ir } from "../../router.js";
 import { puedeEditar } from "../../sesion.js";
-import { cambiarGrillas, horasBase, useGrillas } from "../../grillas.js";
+import { tokenActual } from "../../conexion.js";
+import { obtenerRegistro } from "../../services/api.js";
+import { cambiarGrillas, useGrillas } from "../../grillas.js";
+import { cambiarAula, estadoActual, explicar, guardar, guardarLote, useAsignaciones } from "../../asignaciones.js";
+import { DIAS, aMinutos } from "../../horario.js";
 
-const nuevoId = (prefijo) => `${prefijo}-${Date.now().toString(36)}`;
+/* Espacios y horarios: la planilla semanal de cada grilla, con la forma de
+   la organización institucional (ciclo básico y superior, mañana y tarde,
+   lunes a viernes, filas 1 a 17). Cada clase es una asignación
+   (asignaciones.js), la misma que muestra el plano del Tablero.
 
-/* La grilla sale sola en el PDF: el resto de la pantalla se oculta al imprimir. */
-const exportarPdf = () => {
-  document.body.classList.add("imprimir-grilla");
-  window.addEventListener("afterprint", () => document.body.classList.remove("imprimir-grilla"), {
-    once: true,
+   Editar: un clic en la clase la abre con la misma forma de la celda. Lo
+   que se aplica queda marcado en la planilla y se guarda todo junto con
+   «Guardar cambios» (o se descarta). La grilla es la misma todas las
+   semanas: ausencias, cancelaciones y cambios de aula valen sólo para la
+   semana en curso y se guardan al momento. */
+
+const horario = (a) => (a.inicio ? `${a.inicio} a ${a.fin}` : a.modulo_nombre);
+const sinPendientes = () => ({ cambios: new Map(), altas: [], bajas: new Map() });
+
+/* Horario semanal de un grupo (o curso) en texto, para bajar. */
+const exportarLista = (clase, asignaciones) => {
+  const delGrupo = asignaciones
+    .filter((a) => (clase.grupo_id ? a.grupo_id === clase.grupo_id : a.id === clase.id))
+    .sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia) || (aMinutos(a.inicio) ?? 0) - (aMinutos(b.inicio) ?? 0));
+  const nombre = clase.grupo ?? clase.materia ?? "clase";
+  const texto = [
+    `Horario de ${nombre}${clase.curso ? ` (${clase.curso})` : ""}`,
+    "",
+    ...delGrupo.map(
+      (a) => `${a.dia.padEnd(10)} ${horario(a).padEnd(16)} ${a.materia ?? "Sin materia"} · ${a.docente ?? "sin docente"} · ${a.salon ?? "sin espacio"}`,
+    ),
+    "",
+    `Generado desde Espacios y horarios el ${new Date().toLocaleString("es-AR")}.`,
+  ].join("\n");
+  const url = URL.createObjectURL(new Blob([texto], { type: "text/plain;charset=utf-8" }));
+  const enlace = Object.assign(document.createElement("a"), {
+    href: url,
+    download: `horario-${nombre.replace(/[^\w.-]+/g, "-")}.txt`,
   });
-  window.print();
+  enlace.click();
+  URL.revokeObjectURL(url);
 };
 
-export default function Grilla({ ruta, usuario }) {
+/* Lo que se manda al servidor de una clase guardada. */
+const datosDe = (a, cambios = {}) => ({
+  grilla_id: a.grilla_id,
+  hora: a.hora,
+  dia: a.dia,
+  salon_id: a.salon_id,
+  docente_id: a.docente_id,
+  materia_id: a.materia_id,
+  grupo_id: a.grupo_id,
+  inicio: a.inicio_propio,
+  fin: a.fin_propio,
+  alumnos: a.alumnos,
+  estado: a.estado,
+  observaciones: a.observaciones,
+  ...cambios,
+});
+
+/* ¿El editor dejó la clase igual que como está guardada? */
+const igual = (a, d) =>
+  ["salon_id", "docente_id", "materia_id", "grupo_id", "alumnos", "inicio", "fin"].every((k) => (a[k] ?? null) === (d[k] ?? null));
+
+export default function Grilla({ ruta, params, usuario }) {
   const editable = puedeEditar(usuario, ruta);
   const grillas = useGrillas();
-  const setGrillas = cambiarGrillas;
-  const [actualId, setActualId] = useState(null);
-  const [activa, setActiva] = useState(null);
-  const [registro, setRegistro] = useState([]);
-  const origen = useRef(null);
-  const [moviendo, setMoviendo] = useState(null);
-  const [encima, setEncima] = useState(null);
-  const [tomado, setTomado] = useState(false);
+  const { cargado, cargando, error: errorCarga, datos } = useAsignaciones();
+  const [actualId, setActualId] = useState(params?.get("grilla") ?? null);
+  const [activa, setActiva] = useState(params?.get("clase") ? Number(params.get("clase")) : null);
+  const [ventana, setVentana] = useState(null); // { asignacion } | { inicial }
+  const [editor, setEditor] = useState(null); // { id } | { nuevo: { dia, hora } }, con su ancla
+  const [pendientes, setPendientes] = useState(sinPendientes);
+  const [guardando, setGuardando] = useState(false);
+  const [formulario, setFormulario] = useState(null); // "nueva" | "editar"
+  const [cambioAula, setCambioAula] = useState(null); // la clase que cambia de aula esta semana
+  const [aviso, setAviso] = useState(null); // { tipo, texto }
+  const [registro, setRegistro] = useState(null);
 
+  const vigentesG = grillas.filter((g) => g.vigente !== false);
+  const archivadas = grillas.filter((g) => g.vigente === false);
+  const actual = grillas.find((g) => g.id === actualId) ?? vigentesG[0] ?? grillas[0];
+  const guardadas = useMemo(
+    () => (actual ? datos.asignaciones.filter((a) => a.grilla_id === actual.id) : []),
+    [datos.asignaciones, actual],
+  );
+  const cuantos = pendientes.cambios.size + pendientes.altas.length + pendientes.bajas.size;
 
-  const actual = grillas.find((g) => g.id === actualId) ?? grillas[0];
-  const grilla = actual.clases;
-  const clase = grilla.find((c) => c.id === activa);
-  const nombreHora = (id) => actual.horas.find((h) => h.id === id)?.nombre ?? "";
+  /* La planilla muestra lo guardado con lo pendiente encima. */
+  const { clases, marcas } = useMemo(() => {
+    const nombre = (lista, id) => lista.find((x) => x.id === id)?.nombre ?? null;
+    const comoSeVe = (base, d) => {
+      const modulo = actual.horas.find((h) => h.id === d.hora);
+      return {
+        ...base,
+        ...d,
+        inicio: d.inicio ?? modulo?.inicio ?? null,
+        fin: d.fin ?? modulo?.fin ?? null,
+        modulo_nombre: modulo?.nombre,
+        materia: nombre(datos.materias, d.materia_id),
+        docente: nombre(datos.docentes, d.docente_id),
+        grupo: nombre(datos.grupos, d.grupo_id),
+        salon: nombre(datos.salones, d.salon_id),
+      };
+    };
+    const marcas = new Map();
+    const lista = guardadas
+      .filter((a) => !pendientes.bajas.has(a.id))
+      .map((a) => {
+        const d = pendientes.cambios.get(a.id);
+        if (!d) return a;
+        marcas.set(a.id, "cambio");
+        return comoSeVe(a, d);
+      });
+    for (const n of pendientes.altas) {
+      marcas.set(n.id, "nueva");
+      lista.push(comoSeVe({ id: n.id, version: 0, estado: "activa", salon_habitual: null }, n.datos));
+    }
+    return { clases: lista, marcas };
+  }, [guardadas, pendientes, datos, actual]);
 
-  /* Todos los cambios caen sobre la grilla que se está viendo. */
-  const enActual = (cambio) =>
-    setGrillas((previo) =>
-      previo.map((g) => (g.id === actual.id ? { ...g, ...cambio(g) } : g)),
-    );
-  const setGrilla = (cambio) => enActual((g) => ({ clases: cambio(g.clases) }));
+  /* El historial del servidor: se vuelve a pedir cuando cambian las clases. */
+  useEffect(() => {
+    const token = tokenActual();
+    if (!token) return;
+    obtenerRegistro(token, 15)
+      .then(({ registro: filas }) => setRegistro(filas))
+      .catch(() => setRegistro((r) => r ?? []));
+  }, [datos.asignaciones]);
 
-  const cambiar = (id, campo, valor) =>
-    setGrilla((previo) =>
-      previo.map((c) => (c.id === id ? { ...c, [campo]: valor } : c)),
-    );
+  /* Al llegar desde el plano con ?clase=, se lleva la clase a la vista. */
+  useEffect(() => {
+    if (activa) document.getElementById(`clase-${activa}`)?.scrollIntoView({ block: "center" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cargado]);
+
+  /* Con cambios sin guardar, el navegador avisa antes de salir. */
+  useEffect(() => {
+    if (!cuantos) return undefined;
+    const avisarSalida = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", avisarSalida);
+    return () => window.removeEventListener("beforeunload", avisarSalida);
+  }, [cuantos]);
+
+  const avisar = (tipo, texto) => setAviso({ tipo, texto });
+  const cerrarEditor = useCallback((devolverFoco) => {
+    setEditor((e) => {
+      if (devolverFoco === true && e?.ancla) document.getElementById(e.ancla)?.focus();
+      return null;
+    });
+  }, []);
 
   /* ---------- Grillas ---------- */
+  const cambiarGrilla = async (cambio, exito) => {
+    const r = await cambiarGrillas(cambio);
+    if (r.ok) {
+      if (exito) avisar("ok", exito);
+    } else avisar("error", explicar(r.error));
+    return r.ok;
+  };
+  const enActual = (cambio, exito) =>
+    cambiarGrilla((previo) => previo.map((g) => (g.id === actual.id ? { ...g, ...cambio(g) } : g)), exito);
+
   const elegir = (id) => {
+    if (cuantos && !window.confirm(`Tenés ${cuantos} cambio${cuantos === 1 ? "" : "s"} sin guardar en esta grilla. ¿Descartarlos?`)) return;
+    setPendientes(sinPendientes());
+    setEditor(null);
     setActualId(id);
     setActiva(null);
   };
 
-  const crearGrilla = () => {
-    const nueva = { id: nuevoId("gr"), nombre: "Nueva grilla", horas: horasBase(), clases: [] };
-    setGrillas((previo) => [...previo, nueva]);
-    elegir(nueva.id);
-  };
-
-  const quitarGrilla = () => {
-    if (
-      actual.clases.length &&
-      !window.confirm(`¿Eliminar la grilla “${actual.nombre}” con sus ${actual.clases.length} clases?`)
-    )
-      return;
-    setGrillas((previo) => previo.filter((g) => g.id !== actual.id));
-    elegir(null);
-  };
-
-  /* ---------- Horarios (las filas) ---------- */
-  const agregarHora = () =>
-    enActual((g) => ({ horas: [...g.horas, { id: nuevoId("h"), nombre: "Nuevo horario" }] }));
-
-  const renombrarHora = (id, nombre) =>
-    enActual((g) => ({
-      horas: g.horas.map((h) => (h.id === id ? { ...h, nombre: nombre || "Sin nombre" } : h)),
-    }));
-
-  const quitarHora = (hora) => {
-    const ocupadas = grilla.filter((c) => c.hora === hora.id).length;
-    if (
-      ocupadas &&
-      !window.confirm(`¿Eliminar el horario “${hora.nombre}”? Se quitan también sus ${ocupadas} clases.`)
-    )
-      return;
-    enActual((g) => ({
-      horas: g.horas.filter((h) => h.id !== hora.id),
-      clases: g.clases.filter((c) => c.hora !== hora.id),
-    }));
-    if (clase?.hora === hora.id) setActiva(null);
-  };
-
-  /* ---------- Clases ---------- */
-  const agregarClase = (dia, hora) => {
-    const nueva = {
-      id: nuevoId("g"),
-      ciclo: actual.nombre,
-      grupo: "Grupo",
-      curso: "Curso",
-      alumnos: 0,
-      materia: "Materia",
-      profesor: "Sin asignar",
-      aula: nombresSalones()[0],
-      dia,
-      hora,
-      ausente: false,
-    };
-    setGrilla((previo) => [...previo, nueva]);
-    setActiva(nueva.id);
-  };
-
-  const quitarClase = (id) => {
-    setGrilla((previo) => previo.filter((c) => c.id !== id));
-    setActiva(null);
-  };
-
-  const alternarAusencia = (id) => {
-    setGrilla((previo) =>
-      previo.map((c) => (c.id === id ? { ...c, ausente: !c.ausente } : c)),
+  /* Lo que devuelve el formulario de la grilla (nueva o configurada). */
+  const guardarGrilla = async (datosGrilla) => {
+    const nueva = formulario === "nueva";
+    const r = await cambiarGrillas((previo) =>
+      nueva ? [...previo, datosGrilla] : previo.map((g) => (g.id === datosGrilla.id ? datosGrilla : g)),
     );
-
-    const afectada = grilla.find((c) => c.id === id);
-    const cuando = `${afectada.dia} ${nombreHora(afectada.hora)}`;
-    setRegistro((previo) => [
-      {
-        id: `${id}-${Date.now()}`,
-        texto: afectada.ausente
-          ? `${afectada.profesor} vuelve a figurar presente en ${afectada.curso} (${cuando}).`
-          : `${afectada.profesor} ausente en ${afectada.curso} (${cuando}). ${afectada.aula} queda libre. Se avisó a preceptoría y dirección.`,
-      },
-      ...previo,
-    ]);
+    if (!r.ok) return { ok: false, mensaje: explicar(r.error) };
+    setFormulario(null);
+    if (nueva) elegir(datosGrilla.id);
+    avisar("ok", nueva ? `Grilla «${datosGrilla.nombre}» creada.` : "Grilla guardada.");
+    return { ok: true };
   };
 
-  const limpiar = () => {
-    origen.current = null;
-    setMoviendo(null);
-    setEncima(null);
-    setTomado(false);
+  /* PDF real con el formato de la organización institucional (lo guardado). */
+  const exportar = async () => {
+    if (cuantos && !window.confirm("Hay cambios sin guardar: el PDF sale con lo que está guardado. ¿Exportar igual?")) return;
+    try {
+      await exportarGrillaPdf({ grilla: actual, asignaciones: guardadas, turnos: datos.turnos, ciclos: datos.ciclos });
+    } catch (error) {
+      avisar("error", `No se pudo generar el PDF: ${error.message}`);
+    }
   };
 
-  /* Soltar en una celda mueve la clase a ese día y hora.
-     Si la celda está ocupada, las dos clases intercambian lugar. */
-  const soltarEn = (dia, hora) => {
-    const id = origen.current;
-    if (!id) return limpiar();
+  const hacerVigente = () => enActual(() => ({ vigente: true }), `«${actual.nombre}» vuelve a ser vigente.`);
 
-    const movida = grilla.find((c) => c.id === id);
-    if (movida.dia === dia && movida.hora === hora) return limpiar();
-
-    const ocupante = grilla.find(
-      (c) => c.dia === dia && c.hora === hora && c.id !== id,
-    );
-
-    setGrilla((previo) =>
-      previo.map((c) => {
-        if (c.id === id) return { ...c, dia, hora };
-        if (ocupante && c.id === ocupante.id)
-          return { ...c, dia: movida.dia, hora: movida.hora };
-        return c;
-      }),
-    );
-
-    setRegistro((previo) => [
-      {
-        id: `${id}-${Date.now()}`,
-        texto: ocupante
-          ? `${movida.grupo} y ${ocupante.grupo} intercambiaron horario. Se avisó a preceptoría y dirección.`
-          : `${movida.grupo} pasó a ${dia} ${nombreHora(hora)}. Se avisó a preceptoría y dirección.`,
-      },
-      ...previo,
-    ]);
-    limpiar();
+  const quitarGrilla = async () => {
+    if (!window.confirm(`¿Eliminar la grilla “${actual.nombre}”${guardadas.length ? ` con sus ${guardadas.length} clases` : ""}?`)) return;
+    if (await cambiarGrilla((previo) => previo.filter((g) => g.id !== actual.id), `Se eliminó la grilla ${actual.nombre}.`)) elegir(null);
   };
 
-  const exportarLista = (curso) => {
-    const url = URL.createObjectURL(
-      new Blob([`Listado de ${curso}\n(generado desde la grilla)\n`], {
-        type: "text/plain",
-      }),
-    );
-    const enlace = Object.assign(document.createElement("a"), {
-      href: url,
-      download: `listado-${curso.replace(/[°\s]/g, "")}.txt`,
+  /* ---------- Cambios pendientes ---------- */
+  const aplicar = (d) => {
+    const id = editor?.id;
+    setPendientes((p) => {
+      const sig = { cambios: new Map(p.cambios), altas: [...p.altas], bajas: new Map(p.bajas) };
+      if (!id) sig.altas.push({ id: -Date.now(), datos: d });
+      else if (id < 0) sig.altas = sig.altas.map((n) => (n.id === id ? { ...n, datos: d } : n));
+      else {
+        const base = guardadas.find((a) => a.id === id);
+        if (igual({ ...base }, d)) sig.cambios.delete(id);
+        else sig.cambios.set(id, { ...d, version: base.version });
+      }
+      return sig;
     });
-    enlace.click();
-    URL.revokeObjectURL(url);
+    if (id) setActiva(id);
+    cerrarEditor(true);
   };
+
+  const quitarClase = () => {
+    const id = editor?.id;
+    setPendientes((p) => {
+      const sig = { cambios: new Map(p.cambios), altas: p.altas.filter((n) => n.id !== id), bajas: new Map(p.bajas) };
+      if (id > 0) {
+        sig.cambios.delete(id);
+        sig.bajas.set(id, guardadas.find((a) => a.id === id).version);
+      }
+      return sig;
+    });
+    setEditor(null);
+  };
+
+  const descartar = () => {
+    if (!window.confirm(`¿Descartar ${cuantos} cambio${cuantos === 1 ? "" : "s"} sin guardar?`)) return;
+    setPendientes(sinPendientes());
+    setEditor(null);
+  };
+
+  const guardarCambios = async () => {
+    setGuardando(true);
+    try {
+      await guardarLote({
+        altas: pendientes.altas.map((n) => n.datos),
+        cambios: [...pendientes.cambios.entries()].map(([id, d]) => ({ ...d, id })),
+        bajas: [...pendientes.bajas.entries()].map(([id, version]) => ({ id, version })),
+      });
+      setPendientes(sinPendientes());
+      avisar("ok", `Se guardaron ${cuantos} cambio${cuantos === 1 ? "" : "s"}. El plano ya muestra la planilla actualizada.`);
+    } catch (error) {
+      // Si otra persona cambió alguna clase, ese cambio pendiente ya no vale.
+      if (error?.datos?.cambio) {
+        const ahora = estadoActual().datos.asignaciones;
+        setPendientes((p) => {
+          const sig = { cambios: new Map(p.cambios), altas: p.altas, bajas: new Map(p.bajas) };
+          for (const [id, d] of p.cambios) if (ahora.find((a) => a.id === id)?.version !== d.version) sig.cambios.delete(id);
+          for (const [id, v] of p.bajas) if (ahora.find((a) => a.id === id)?.version !== v) sig.bajas.delete(id);
+          return sig;
+        });
+        avisar("error", `${explicar(error)} Se quitaron de los pendientes las clases que cambió otra persona; el resto sigue sin guardar.`);
+      } else {
+        avisar("error", `${explicar(error)} No se guardó nada: corregilo y volvé a tocar «Guardar cambios».`);
+      }
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  /* ---------- Esta semana (se guarda al momento) ---------- */
+  const cambiarEstado = async (a, estado, mensaje) => {
+    try {
+      const nueva = await guardar(a.id, a.version, datosDe(a, { estado }));
+      avisar("ok", mensaje(nueva));
+    } catch (error) {
+      avisar("error", explicar(error));
+    }
+  };
+
+  const alAccion = async (accion) => {
+    const a = guardadas.find((x) => x.id === editor?.id);
+    if (!a) return;
+    setEditor(null);
+    setActiva(a.id);
+    if (accion === "ausente") {
+      const ausente = a.estado !== "docente_ausente";
+      cambiarEstado(a, ausente ? "docente_ausente" : "activa", (n) =>
+        ausente
+          ? `${n.docente} ausente esta semana (${n.dia} ${horario(n)}): ${n.salon} figura libre en el plano. La semana que viene vuelve sola.`
+          : `${n.docente} vuelve a figurar presente (${n.dia} ${horario(n)}).`,
+      );
+    }
+    if (accion === "cancelar") {
+      const cancelar = a.estado !== "suspendida";
+      if (cancelar && !window.confirm(`¿Cancelar ${a.materia ?? "la clase"} (${a.grupo ?? "sin grupo"}) del ${a.dia} ${horario(a)} esta semana? El aula queda libre en el plano.`)) return;
+      cambiarEstado(a, cancelar ? "suspendida" : "activa", (n) =>
+        cancelar
+          ? `Clase cancelada esta semana: ${n.materia ?? "clase"} del ${n.dia} ${horario(n)}. La semana que viene vuelve sola.`
+          : `Clase reactivada: ${n.materia ?? "clase"} del ${n.dia} ${horario(n)}.`,
+      );
+    }
+    if (accion === "aula") setCambioAula(a);
+    if (accion === "volver") {
+      try {
+        const nueva = await cambiarAula(a.id, a.version, a.salon_habitual);
+        avisar("ok", `${nueva.materia ?? "La clase"} vuelve a su aula habitual (${nueva.salon}).`);
+      } catch (error) {
+        avisar("error", explicar(error));
+      }
+    }
+    if (accion === "plano") ir(`/panel?espacio=${encodeURIComponent(a.salon_id)}`);
+    if (accion === "mas") setVentana({ asignacion: a });
+    if (accion === "horario-grupo") exportarLista(a, datos.asignaciones);
+  };
+
+  if (!actual) {
+    return (
+      <Layout ruta={ruta} chip="JEFATURA DE ÁREA" titulo="Espacios y horarios">
+        {errorCarga ? (
+          <p className="flash flash--error">{errorCarga}</p>
+        ) : (
+          <p className="nota-interna">{cargando ? "Cargando grillas…" : "No hay grillas."}</p>
+        )}
+      </Layout>
+    );
+  }
+
+  const enEditor = editor?.id ? clases.find((a) => a.id === editor.id) : null;
 
   return (
     <Layout
@@ -197,50 +347,84 @@ export default function Grilla({ ruta, usuario }) {
       titulo="Espacios y horarios"
       texto={
         editable
-          ? "Hacé clic sobre cualquier dato para corregirlo y arrastrá un bloque del manijero para cambiarlo de día u hora. Un casillero vacío agrega una clase."
+          ? "Hacé clic en una clase para editarla, o en «+ Clase» para agregar. Lo que cambies queda marcado hasta que toques «Guardar cambios». La grilla se mantiene de una semana a la otra."
           : "Grilla de aulas y talleres del ciclo básico y del superior."
       }
       acciones={
         <div className="filtros__chips">
-          {grillas.map((g) => (
-            <button
-              key={g.id}
-              className={`filtro ${actual.id === g.id ? "filtro--activo" : ""}`}
-              onClick={() => elegir(g.id)}
-            >
+          {vigentesG.map((g) => (
+            <button key={g.id} className={`filtro ${actual.id === g.id ? "filtro--activo" : ""}`} onClick={() => elegir(g.id)}>
               {g.nombre}
             </button>
           ))}
+          {archivadas.length > 0 && (
+            <select
+              className="filtro-select"
+              aria-label="Grillas archivadas"
+              value={actual.vigente === false ? actual.id : ""}
+              onChange={(e) => e.target.value && elegir(e.target.value)}
+            >
+              <option value="">Archivadas ({archivadas.length})</option>
+              {archivadas.map((g) => <option key={g.id} value={g.id}>{[g.nombre, g.periodo].filter(Boolean).join(" · ")}</option>)}
+            </select>
+          )}
           {editable && (
-            <button className="filtro" onClick={crearGrilla}>
+            <button className="filtro" onClick={() => setFormulario("nueva")}>
               <Icon icon="ph:plus" width={14} height={14} aria-hidden="true" /> Nueva grilla
             </button>
           )}
         </div>
       }
     >
+      {aviso && (
+        <p className={`flash ${aviso.tipo === "error" ? "flash--error" : aviso.tipo === "info" ? "flash--info" : ""}`} role={aviso.tipo === "error" ? "alert" : "status"}>
+          <Icon icon={aviso.tipo === "error" ? "ph:warning" : "ph:check-circle"} width={18} height={18} aria-hidden="true" />
+          <span>{aviso.texto}</span>
+          <button className="flash__cerrar" aria-label="Cerrar aviso" onClick={() => setAviso(null)}>
+            <Icon icon="ph:x" width={14} height={14} aria-hidden="true" />
+          </button>
+        </p>
+      )}
+      {errorCarga && <p className="flash flash--error">{errorCarga}</p>}
+
       <div className="grilla__barra">
-        <Editable
-          key={actual.id}
-          etiqueta="h2"
-          clase="tarjeta__titulo"
-          activo={editable}
-          detener
-          valor={actual.nombre}
-          alCambiar={(v) => enActual(() => ({ nombre: v || "Sin nombre" }))}
-        />
+        <h2 className="tarjeta__titulo">{actual.nombre}</h2>
         <div className="acciones-fila">
-          <button className="boton boton--fino" onClick={exportarPdf}>
+          <button className="boton boton--fino" onClick={() => ir("/panel")}>
+            <Icon icon="ph:map-trifold" width={15} height={15} aria-hidden="true" />
+            Ver el plano
+          </button>
+          <button className="boton boton--fino" onClick={exportar}>
             <Icon icon="ph:file-pdf" width={15} height={15} aria-hidden="true" />
             Exportar PDF
           </button>
           {editable && (
-            <button
-              className="boton boton--fino boton--peligro"
-              disabled={grillas.length === 1}
-              title={grillas.length === 1 ? "Tiene que quedar al menos una grilla" : undefined}
-              onClick={quitarGrilla}
-            >
+            <button className="boton boton--fino boton--primario" onClick={guardarCambios} disabled={!cuantos || guardando}>
+              <Icon icon="ph:floppy-disk" width={15} height={15} aria-hidden="true" />
+              {guardando ? "Guardando…" : "Guardar cambios"}
+              {cuantos > 0 && !guardando && <span className="boton__contador">{cuantos}</span>}
+            </button>
+          )}
+          {editable && cuantos > 0 && (
+            <button className="boton boton--fino" onClick={descartar} disabled={guardando}>
+              <Icon icon="ph:arrow-counter-clockwise" width={15} height={15} aria-hidden="true" />
+              Descartar
+            </button>
+          )}
+          {editable && actual.vigente === false && (
+            <button className="boton boton--fino" onClick={hacerVigente}>
+              <Icon icon="ph:check-circle" width={15} height={15} aria-hidden="true" />
+              Hacer vigente
+            </button>
+          )}
+          {editable && (
+            <button className="boton boton--fino" onClick={() => setFormulario("editar")}>
+              <Icon icon="ph:sliders-horizontal" width={15} height={15} aria-hidden="true" />
+              Configurar grilla
+            </button>
+          )}
+          {editable && grillas.length > 1 && (
+            <button className="boton boton--fino boton--peligro" onClick={quitarGrilla}>
               <Icon icon="ph:trash" width={15} height={15} aria-hidden="true" />
               Eliminar grilla
             </button>
@@ -248,315 +432,150 @@ export default function Grilla({ ruta, usuario }) {
         </div>
       </div>
 
-      <div className="tabla-scroll grilla__scroll">
-        <div className="grilla">
-          <div className="grilla__celda grilla__celda--esquina" />
-          {dias.map((dia) => (
-            <div className="grilla__celda grilla__celda--dia" key={dia}>
-              {dia}
-            </div>
-          ))}
-
-          {actual.horas.map(({ id: hora, nombre }) => (
-            <div className="grilla__fila" key={hora}>
-              <div className="grilla__celda grilla__celda--hora">
-                <Editable
-                  activo={editable}
-                  detener
-                  valor={nombre}
-                  alCambiar={(v) => renombrarHora(hora, v)}
-                />
-                {editable && (
-                  <button
-                    className="grilla__quitar"
-                    aria-label={`Eliminar el horario ${nombre}`}
-                    title="Eliminar este horario"
-                    onClick={() => quitarHora({ id: hora, nombre })}
-                  >
-                    <Icon icon="ph:x" width={12} height={12} aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-              {dias.map((dia) => {
-                const bloque = grilla.find(
-                  (c) => c.dia === dia && c.hora === hora,
-                );
-                const marca = `${dia}-${hora}`;
-
-                return (
-                  <div
-                    className={`grilla__celda ${
-                      encima === marca ? "grilla__celda--destino" : ""
-                    }`}
-                    key={marca}
-                    onDragOver={(e) => {
-                      if (!editable) return;
-                      e.preventDefault();
-                      setEncima(marca);
-                    }}
-                    onDragLeave={() => setEncima(null)}
-                    onDrop={() => editable && soltarEn(dia, hora)}
-                  >
-                    {bloque ? (
-                      <div
-                        className={`bloque ${bloque.ausente ? "bloque--libre" : ""} ${
-                          activa === bloque.id ? "bloque--activo" : ""
-                        } ${moviendo === bloque.id ? "bloque--moviendo" : ""} ${
-                          salonCancelado(bloque.aula) ? "bloque--cancelada" : ""
-                        }`}
-                        onClick={() => setActiva(bloque.id)}
-                        draggable={editable && tomado}
-                        onDragStart={() => {
-                          origen.current = bloque.id;
-                          setMoviendo(bloque.id);
-                        }}
-                        onDragEnd={limpiar}
-                      >
-                        {editable && (
-                          <span
-                            className="bloque__manijero"
-                            title="Arrastrar a otro día u hora"
-                            onMouseDown={() => setTomado(true)}
-                            onMouseUp={() => setTomado(false)}
-                          >
-                            <Icon
-                              icon="ph:dots-six-vertical"
-                              width={16}
-                              height={16}
-                              aria-hidden="true"
-                            />
-                          </span>
-                        )}
-
-                        <Editable
-                          clase="bloque__grupo"
-                          activo={editable}
-                          valor={bloque.grupo}
-                          alCambiar={(v) => cambiar(bloque.id, "grupo", v)}
-                        />
-
-                        {bloque.ausente ? (
-                          <span className="bloque__materia">LIBRE</span>
-                        ) : (
-                          <Editable
-                            clase="bloque__materia"
-                            activo={editable}
-                            valor={bloque.materia}
-                            alCambiar={(v) => cambiar(bloque.id, "materia", v)}
-                          />
-                        )}
-
-                        <span className="bloque__pie">
-                          <Editable
-                            activo={editable}
-                            valor={bloque.aula}
-                            alCambiar={(v) => cambiar(bloque.id, "aula", v)}
-                          />
-                          {" · "}
-                          <Editable
-                            activo={editable}
-                            valor={String(bloque.alumnos)}
-                            alCambiar={(v) =>
-                              cambiar(bloque.id, "alumnos", Number(v) || 0)
-                            }
-                          />
-                          {" al."}
-                        </span>
-                        {salonCancelado(bloque.aula) && (
-                          <span className="bloque__aviso">Aula cancelada: reubicar</span>
-                        )}
-                      </div>
-                    ) : editable ? (
-                      <button
-                        className="bloque bloque--vacio bloque--agregar"
-                        aria-label={`Agregar una clase el ${dia} en ${nombre}`}
-                        title="Agregar una clase"
-                        onClick={() => agregarClase(dia, hora)}
-                      >
-                        <Icon icon="ph:plus" width={16} height={16} aria-hidden="true" />
-                      </button>
-                    ) : (
-                      <span className="bloque bloque--vacio">—</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {editable && (
-        <button className="boton boton--fino grilla__agregar" onClick={agregarHora}>
-          <Icon icon="ph:plus" width={15} height={15} aria-hidden="true" />
-          Agregar horario
-        </button>
-      )}
-
-      {clase && (
-        <section className="tarjeta">
-          <div className="tarjeta__barra">
-            <div>
-              <p className="chip">{clase.grupo}</p>
-              <h2 className="tarjeta__titulo">
-                <Editable
-                  activo={editable}
-                  valor={clase.materia}
-                  alCambiar={(v) => cambiar(clase.id, "materia", v)}
-                />
-              </h2>
-            </div>
-            <button
-              className="cajon__cerrar"
-              aria-label="Cerrar"
-              onClick={() => setActiva(null)}
-            >
-              <Icon icon="ph:x" width={18} height={18} aria-hidden="true" />
-            </button>
-          </div>
-
-          <dl className="datos">
-            <div>
-              <dt>Curso</dt>
-              <dd>
-                <Editable
-                  activo={editable}
-                  valor={clase.curso}
-                  alCambiar={(v) => cambiar(clase.id, "curso", v)}
-                />
-              </dd>
-            </div>
-            <div>
-              <dt>Grilla</dt>
-              <dd>{actual.nombre}</dd>
-            </div>
-            <div>
-              <dt>Alumnos</dt>
-              <dd>
-                <Editable
-                  activo={editable}
-                  valor={String(clase.alumnos)}
-                  alCambiar={(v) =>
-                    cambiar(clase.id, "alumnos", Number(v) || 0)
-                  }
-                />
-              </dd>
-            </div>
-            <div>
-              <dt>Horario</dt>
-              <dd>
-                {clase.dia} · {nombreHora(clase.hora)}
-              </dd>
-            </div>
-            <div>
-              <dt>Profesor</dt>
-              <dd>
-                <Editable
-                  activo={editable}
-                  valor={clase.profesor}
-                  alCambiar={(v) => cambiar(clase.id, "profesor", v)}
-                />
-              </dd>
-            </div>
-            <div>
-              <dt>Estado</dt>
-              <dd>
-                {clase.ausente ? "Docente ausente · aula libre" : "Normal"}
-              </dd>
-            </div>
-          </dl>
-
-          <div className="acciones-fila">
-            {editable && (
-              <>
-                <button
-                  className={`boton ${clase.ausente ? "" : "boton--peligro"}`}
-                  onClick={() => alternarAusencia(clase.id)}
-                >
-                  <Icon
-                    icon={
-                      clase.ausente
-                        ? "ph:arrow-counter-clockwise"
-                        : "ph:user-minus"
-                    }
-                    width={16}
-                    height={16}
-                    aria-hidden="true"
-                  />
-                  {clase.ausente
-                    ? "Deshacer ausencia"
-                    : "Marcar ausencia del docente"}
-                </button>
-
-                <label className="campo campo--select">
-                  <span>Reasignar aula</span>
-                  <select
-                    value={clase.aula}
-                    onChange={(e) => cambiar(clase.id, "aula", e.target.value)}
-                  >
-                    {/* Los salones del plano; si la clase tenía otro, se mantiene. */}
-                    {[...new Set([clase.aula, ...nombresSalones()])].map((aula) => (
-                      <option key={aula}>{aula}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <button className="boton boton--peligro" onClick={() => quitarClase(clase.id)}>
-                  <Icon icon="ph:trash" width={16} height={16} aria-hidden="true" />
-                  Quitar de la grilla
-                </button>
-              </>
-            )}
-
-            <button className="boton" onClick={() => exportarLista(clase.curso)}>
-              <Icon
-                icon="ph:download-simple"
-                width={16}
-                height={16}
-                aria-hidden="true"
-              />
-              Exportar listado
-            </button>
-
-            <a
-              className="boton"
-              href="https://drive.google.com/drive/my-drive"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Icon
-                icon="ph:google-drive-logo"
-                width={16}
-                height={16}
-                aria-hidden="true"
-              />
-              Abrir en Drive
-            </a>
-          </div>
-        </section>
-      )}
-
-      <section className="tarjeta">
-        <h2 className="tarjeta__titulo">Registro de avisos</h2>
-        <p className="tarjeta__bajada">
-          Cada cambio en la grilla deja constancia y notifica a preceptores y
-          dirección.
+      {cuantos > 0 && (
+        <p className="flash flash--info grilla__pendientes" role="status">
+          <Icon icon="ph:pencil-simple-line" width={18} height={18} aria-hidden="true" />
+          <span>
+            {cuantos} cambio{cuantos === 1 ? "" : "s"} sin guardar (marcado{cuantos === 1 ? "" : "s"} en la planilla). Tocá «Guardar cambios» para
+            que valgan, también en el plano.
+          </span>
         </p>
-        {registro.length ? (
+      )}
+      {actual.vigente === false && (
+        <p className="flash flash--info" role="status">
+          <Icon icon="ph:archive" width={18} height={18} aria-hidden="true" />
+          <span>Grilla archivada: se puede consultar y exportar, pero no ocupa aulas en el plano.</span>
+        </p>
+      )}
+
+      <dl className="grilla__datos">
+        {[
+          ["Organización", actual.organizacion],
+          ["Ciclo", datos.ciclos[actual.ciclo]],
+          ["Período", actual.periodo],
+          [
+            "Turno",
+            datos.turnos[actual.turno] ??
+              [...new Set(actual.horas.map((h) => h.turno).filter(Boolean))]
+                .map((t, i) => (i ? (datos.turnos[t] ?? t).toLocaleLowerCase("es-AR") : datos.turnos[t] ?? t))
+                .join(" y "),
+          ],
+          ["Días", actual.dias.length === 5 ? "Lunes a viernes" : actual.dias.join(", ")],
+          ["Grupos", actual.grupos.length ? `${actual.grupos.length} elegidos` : "Todos"],
+        ]
+          .filter(([, v]) => v)
+          .map(([t, v]) => (
+            <div key={t}><dt>{t}</dt><dd>{v}</dd></div>
+          ))}
+      </dl>
+
+      <PlanillaGrilla
+        grilla={actual}
+        clases={clases}
+        turnos={datos.turnos}
+        ciclos={datos.ciclos}
+        editable={editable && cargado}
+        activa={activa}
+        pendientes={marcas}
+        alAbrir={(a, ancla) => {
+          setActiva(a.id);
+          if (editable && cargado) setEditor({ id: a.id, ancla });
+          else setVentana({ asignacion: a });
+        }}
+        alAgregar={(dia, hora, ancla) => setEditor({ nuevo: { grilla_id: actual.id, dia, hora }, ancla })}
+      />
+
+      {/* Desplegable (cerrado al entrar): el historial no compite con la planilla. */}
+      <details className="tarjeta registro">
+        <summary className="registro__resumen">
+          <span>
+            <span className="tarjeta__titulo">Registro de cambios</span>
+            <span className="tarjeta__bajada">Altas, cambios y bajas de clases, de todas las personas, más nuevas primero.</span>
+          </span>
+          {registro?.length > 0 && <span className="registro__cantidad">Últimos {registro.length}</span>}
+          <Icon className="registro__flecha" icon="ph:caret-down" width={18} height={18} aria-hidden="true" />
+        </summary>
+        {registro === null ? (
+          <p className="nota-interna">Cargando…</p>
+        ) : registro.length ? (
           <ul className="avisos">
             {registro.map((item) => (
               <li className="avisos__item avisos__item--ausencia" key={item.id}>
-                <Icon icon="ph:bell" width={20} height={20} aria-hidden="true" />
+                <Icon
+                  icon={{ alta: "ph:plus-circle", cambio: "ph:pencil-simple", baja: "ph:trash", intercambio: "ph:arrows-left-right" }[item.accion]}
+                  width={20}
+                  height={20}
+                  aria-hidden="true"
+                />
                 <div>
-                  <p className="avisos__titulo">{item.texto}</p>
+                  <p className="avisos__titulo">{item.detalle}</p>
+                  <p className="avisos__detalle">{item.usuario ?? "—"}</p>
                 </div>
+                <span className="avisos__fecha">
+                  {new Date(`${item.created_at.replace(" ", "T")}Z`).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" })}
+                </span>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="nota-interna">Todavía no hubo cambios en esta sesión.</p>
+          <p className="nota-interna">Todavía no hay cambios registrados.</p>
         )}
-      </section>
+      </details>
+
+      {editor && (
+        <EditorCelda
+          key={editor.id ?? `${editor.nuevo.dia}-${editor.nuevo.hora}`}
+          clase={enEditor}
+          inicial={editor.nuevo}
+          grilla={actual}
+          datos={datos}
+          anclaId={editor.ancla}
+          pendiente={!!editor.id && (pendientes.cambios.has(editor.id) || editor.id < 0)}
+          alAplicar={aplicar}
+          alQuitar={editor.id ? quitarClase : null}
+          alAccion={alAccion}
+          alCerrar={cerrarEditor}
+        />
+      )}
+
+      {formulario && (
+        <GrillaFormModal
+          grilla={formulario === "editar" ? actual : null}
+          datos={datos}
+          clases={formulario === "editar" ? guardadas : []}
+          alGuardar={guardarGrilla}
+          alCerrar={() => setFormulario(null)}
+        />
+      )}
+
+      {cambioAula && (
+        <CambioAulaModal
+          clase={cambioAula}
+          alCerrar={() => setCambioAula(null)}
+          alHecho={(mensaje) => {
+            setCambioAula(null);
+            avisar("ok", `${mensaje} Vale para esta semana.`);
+          }}
+        />
+      )}
+
+      {ventana && (
+        <AsignacionModal
+          espacioId={ventana.asignacion?.salon_id ?? null}
+          asignacion={ventana.asignacion ?? null}
+          inicial={ventana.inicial}
+          editable={editable && cargado}
+          alCerrar={() => setVentana(null)}
+          alGuardar={(mensaje, guardada) => {
+            setVentana(null);
+            avisar("ok", mensaje);
+            if (guardada) {
+              setActiva(guardada.id);
+              if (guardada.grilla_id !== actual.id) setActualId(guardada.grilla_id);
+            } else setActiva(null);
+          }}
+        />
+      )}
     </Layout>
   );
 }

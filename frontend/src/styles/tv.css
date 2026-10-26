@@ -1,0 +1,660 @@
+/* Televisor de los corredores (Pantalla.jsx). Todo en unidades de la
+   pantalla (vw / vh): se ve igual en un televisor de 32" o de 55", y en la
+   vista previa del panel. */
+.tv {
+  --titulo: "Oswald", "Arial Narrow", "Roboto Condensed", sans-serif;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  overflow: hidden;
+  background: #f4f1f1;
+  color: #1d1d1d;
+  font-family: inherit;
+  cursor: none;
+}
+
+.tv:hover {
+  cursor: default;
+}
+
+.tv--mensaje {
+  place-content: center;
+  justify-items: center;
+  gap: 1.5vh;
+  grid-template-rows: none;
+  text-align: center;
+  font-size: 2vw;
+}
+
+.tv--mensaje img {
+  width: 10vw;
+  border-radius: 50%;
+}
+
+.tv__chico {
+  color: #6b6b6b;
+  font-size: 1.2vw;
+}
+
+/* ---------- Cabecera: escudo, reloj y franja bordó rayada ---------- */
+.tv__cabeza {
+  display: flex;
+  align-items: center;
+  gap: 1.5vw;
+  padding: 1.2vh 4vw;
+  background: #fff;
+}
+
+.tv__logo {
+  width: 10.5vh;
+  height: 10.5vh;
+  border-radius: 50%;
+}
+
+.tv__reloj {
+  display: grid;
+  justify-items: end;
+  margin: 0 0 0 auto;
+  line-height: 1;
+}
+
+.tv__hora {
+  color: #5c0f0f;
+  font-family: var(--titulo);
+  font-size: 3.2vw;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.tv__fecha {
+  margin-top: 0.5vh;
+  color: #555;
+  font-size: 1.05vw;
+}
+
+.tv__completa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4vw;
+  margin-left: auto;
+  padding: 0.6vh 0.9vw;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  background: #fff;
+  color: #5c0f0f;
+  font-size: 0.8vw;
+  cursor: pointer;
+}
+
+.tv__completa + .tv__reloj {
+  margin-left: 2vw;
+}
+
+.tv__franja {
+  height: 3.6vh;
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0 0.25vw, transparent 0.25vw 1vw),
+    #6e2324;
+}
+
+/* Título de una sección, como «NOVEDADES». */
+.tv__seccion {
+  margin: 0 1vw;
+  padding: 1.2vh 0 0.9vh;
+  border-bottom: 2px solid #9a9a9a;
+  color: #5c0f0f;
+  font-family: var(--titulo);
+  font-size: 3vw;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* ---------- Pantalla dividida ---------- */
+.tv__cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 35vw;
+  gap: 1vw;
+  min-height: 0;
+  padding: 1.2vw;
+}
+
+.tv__mitad {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 1vw;
+  background: #fff;
+  box-shadow: 0 0.3vw 1.2vw rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+/* Plano (a todo el alto) y, al lado, el tablero de turnos. */
+.tv__mitad--plano {
+  flex-direction: column;
+  gap: 1vh;
+  padding: 1vh 1vw 1.2vh;
+}
+
+/* Todo el espacio que dejan la planta y las clases de abajo. */
+.tv-plano-marco {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tv-plano {
+  position: relative;
+  overflow: hidden;
+}
+
+/* El dibujo entero; se corre y se agranda para que se vea sólo el recorte. */
+.tv-plano__lienzo {
+  position: absolute;
+}
+
+.tv-plano__dibujo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.tv-plano__zonas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.tv-plano__zonas .zona {
+  cursor: default;
+}
+
+.tv-plano__aula {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 0.1vw 0.3vw;
+  border-radius: 0.25vw;
+  background: rgba(255, 255, 255, 0.92);
+  color: #222;
+  font-size: 0.66vw;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tv-plano__aula--chico {
+  font-size: 0.5vw;
+}
+
+.tv-plano__aula--ocupado { background: var(--estado-ocupado, #c0392b); color: #fff; }
+.tv-plano__aula--por-finalizar { background: var(--estado-por-finalizar-borde, #e0a800); color: #2b2100; }
+
+.tv__planta {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 1.4vw;
+  padding-bottom: 0.8vh;
+}
+
+.tv__planta h2 {
+  margin: 0;
+  color: var(--bordo-oscuro, #5c0f0f);
+  font-size: 1.8vw;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+/* Barra que se llena en el minuto: cuando termina, cambia la planta. */
+.tv__cambio {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 0.4vh;
+  border-radius: 999px;
+  background: #eee;
+}
+
+.tv__cambio::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: calc(var(--avance) * 100%);
+  border-radius: inherit;
+  background: var(--bordo-oscuro, #5c0f0f);
+  transition: width 1s linear;
+}
+
+.tv__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4vh 1vw;
+  margin-left: auto;
+  color: #555;
+  font-size: 0.8vw;
+}
+
+.tv__marca {
+  display: inline-block;
+  width: 0.8vw;
+  height: 0.8vw;
+  border-radius: 0.2vw;
+  vertical-align: -0.1vw;
+}
+
+.tv__marca--libre { background: var(--estado-libre, #2e8b57); }
+.tv__marca--ocupado { background: var(--estado-ocupado, #c0392b); }
+.tv__marca--por-finalizar { background: var(--estado-por-finalizar-borde, #e0a800); }
+
+/* ---------- Tablero de turnos ---------- */
+.tv-turnos {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 100%;
+  padding: 0 1vw;
+  overflow: hidden;
+}
+
+.tv-turnos__titulo {
+  margin: 0.6vh 0 0.6vh;
+  color: var(--bordo-oscuro, #5c0f0f);
+  font-size: 0.95vw;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tv-turnos__titulo span {
+  color: #888;
+  font-weight: 600;
+}
+
+.tv-turnos__lista {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6vh 0.8vw;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cada clase en dos renglones: aula · grupo · horario / docente · taller. */
+.tv-turnos__fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.2fr) auto;
+  grid-template-areas: "aula grupo docente hora";
+  align-items: center;
+  gap: 0 0.7vw;
+  padding: 0.6vh 0.7vw;
+  border-left: 0.3vw solid var(--estado-ocupado, #c0392b);
+  border-radius: 0.5vw;
+  background: #faf7f7;
+}
+
+.tv-turnos__fila--por-finalizar { border-left-color: var(--estado-por-finalizar-borde, #e0a800); }
+.tv-turnos__fila--proxima { border-left-color: #9a9a9a; }
+.tv-turnos__fila--docente_ausente,
+.tv-turnos__fila--suspendida { border-left-color: #bbb; color: #999; }
+
+.tv-turnos__aula {
+  grid-area: aula;
+  overflow: hidden;
+  color: var(--bordo-oscuro, #5c0f0f);
+  font-size: 1.15vw;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tv-turnos__grupo {
+  grid-area: grupo;
+  padding: 0.1vh 0.5vw;
+  border-radius: 0.3vw;
+  color: #111;
+  font-size: 1.1vw;
+  font-weight: 800;
+}
+
+.tv-turnos__grupo--amarillo { background: #ffff00; }
+.tv-turnos__grupo--salmon { background: #fde9d9; }
+.tv-turnos__grupo--celeste { background: #c9daf8; }
+
+.tv-turnos__hora {
+  grid-area: hora;
+  font-size: 0.9vw;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tv-turnos__docente {
+  grid-area: docente;
+  overflow: hidden;
+  font-size: 0.9vw;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tv-turnos__materia {
+  display: none; /* debajo del plano no hay lugar: está en los turnos */
+  grid-area: materia;
+  overflow: hidden;
+  color: #666;
+  font-size: 0.8vw;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tv-turnos__estado {
+  display: inline-block;
+  margin-left: 0.4vw;
+  padding: 0 0.4vw;
+  border-radius: 999px;
+  background: #eee;
+  font-size: 0.68vw;
+  font-weight: 700;
+}
+
+.tv-turnos__fila--por-finalizar .tv-turnos__estado { background: var(--estado-por-finalizar-fondo, #fff3cd); color: #7a5000; }
+.tv-turnos__fila--docente_ausente .tv-turnos__estado,
+.tv-turnos__fila--suspendida .tv-turnos__estado { background: var(--estado-ocupado-fondo, #fde2e1); color: #a0281d; }
+
+
+/* ---------- Turnos (como el llamador de una clínica) ---------- */
+.tv-llamador {
+  flex-direction: column;
+  padding: 1.2vw 1.4vw;
+  animation: tv-aparece 600ms ease;
+}
+
+@keyframes tv-aparece {
+  from { opacity: 0; transform: translateY(1vh); }
+  to { opacity: 1; transform: none; }
+}
+
+.tv-llamador__cabeza {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 1.2vw;
+  padding-bottom: 1vh;
+}
+
+.tv-llamador__cabeza h2 {
+  margin: 0;
+  color: var(--bordo-oscuro, #5c0f0f);
+  font-size: 2.1vw;
+  font-weight: 800;
+}
+
+.tv-llamador__cabeza p {
+  margin: 0;
+  color: #666;
+  font-size: 1vw;
+}
+
+/* Mismas columnas en el encabezado, la destacada y la lista. */
+.tv-llamador__columnas,
+.tv-llamador__destacada,
+.tv-llamador__fila {
+  display: grid;
+  grid-template-columns: 14% 22% minmax(0, 1fr) 18%;
+  align-items: center;
+  column-gap: 1vw;
+}
+
+.tv-llamador__columnas {
+  margin-top: 1.4vh;
+  padding: 0.8vh 1.2vw;
+  border-radius: 0.6vw 0.6vw 0 0;
+  background: #3a3a3a;
+  color: #fff;
+  font-size: 0.95vw;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tv-llamador__destacada {
+  position: relative;
+  padding: 1.6vh 1.2vw;
+  background: var(--bordo-oscuro, #5c0f0f);
+  color: #fff;
+}
+
+.tv-llamador__destacada .tv-llamador__grupo,
+.tv-llamador__destacada .tv-llamador__aula {
+  font-size: 3vw;
+}
+
+.tv-llamador__destacada .tv-llamador__docente {
+  font-size: 1.4vw;
+}
+
+.tv-llamador__destacada .tv-llamador__docente small {
+  display: block;
+  opacity: 0.8;
+  font-size: 0.95vw;
+  font-weight: 500;
+}
+
+.tv-llamador__destacada .tv-llamador__hora {
+  font-size: 1.5vw;
+}
+
+.tv-llamador__destacada--novedad {
+  animation: tv-llama 1.6s ease-in-out 3;
+}
+
+@keyframes tv-llama {
+  50% { background: #8a1d1d; }
+}
+
+.tv-llamador__aviso {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 0.8vh;
+  padding: 0.3vh 0.8vw;
+  border-radius: 999px;
+  background: #ffd84d;
+  color: #2b2100;
+  font-size: 1.05vw;
+  font-weight: 800;
+}
+
+.tv-llamador__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tv-llamador__fila {
+  padding: 1.1vh 1.2vw;
+  border-bottom: 1px solid #ece7e7;
+  font-size: 1.15vw;
+}
+
+.tv-llamador__fila:nth-child(even) {
+  background: #faf7f7;
+}
+
+.tv-llamador__grupo,
+.tv-llamador__aula {
+  font-size: 1.7vw;
+  font-weight: 800;
+}
+
+.tv-llamador__fila .tv-llamador__aula {
+  color: var(--bordo-oscuro, #5c0f0f);
+}
+
+.tv-llamador__docente {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tv-llamador__hora {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.tv-llamador__novedad {
+  margin-left: 0.6vw;
+  padding: 0.1vh 0.6vw;
+  border-radius: 999px;
+  background: #eee;
+  font-size: 0.85vw;
+  font-weight: 700;
+}
+
+.tv-llamador__novedad--cambio-aula,
+.tv-llamador__novedad--nueva,
+.tv-llamador__novedad--actualizada { background: #fff3c4; color: #6b4b00; }
+.tv-llamador__novedad--docente_ausente,
+.tv-llamador__novedad--suspendida { background: var(--estado-ocupado-fondo, #fde2e1); color: #a0281d; }
+
+.tv-llamador__fila--suspendida .tv-llamador__aula,
+.tv-llamador__fila--docente_ausente .tv-llamador__aula { color: #999; text-decoration: line-through; }
+
+.tv-llamador__pagina {
+  margin: auto 0 0;
+  color: #888;
+  font-size: 0.9vw;
+  text-align: right;
+}
+
+/* ---------- Imágenes ---------- */
+.tv__mitad--imagenes {
+  flex-direction: column;
+  gap: 1.2vh;
+  padding-bottom: 1vw;
+}
+
+.tv-carrusel {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin: 0 1vw;
+  border-radius: 0.8vw;
+  background: #1b1212;
+  overflow: hidden;
+}
+
+.tv-carrusel__imagen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+
+.tv-carrusel__imagen--visible {
+  opacity: 1;
+}
+
+.tv-carrusel__pie {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  padding: 3vh 1.4vw 1.4vh;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+  color: #fff;
+}
+
+.tv-carrusel__titulo {
+  flex: 1;
+  margin: 0;
+  font-size: 1.4vw;
+  font-weight: 800;
+}
+
+.tv-carrusel__origen {
+  padding: 0.3vh 0.7vw;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 0.75vw;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tv-carrusel__origen--3 { background: #7a1717; }
+
+.tv-carrusel__puntos {
+  display: flex;
+  gap: 0.35vw;
+}
+
+.tv-carrusel__puntos span {
+  width: 0.5vw;
+  height: 0.5vw;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.tv-carrusel__puntos span.activo {
+  background: #fff;
+}
+
+.tv-carrusel--vacio {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 1.5vh;
+  color: #fff;
+  text-align: center;
+}
+
+.tv-carrusel--vacio img {
+  width: 12vw;
+  border-radius: 50%;
+}
+
+.tv-carrusel--vacio p {
+  margin: 0;
+  font-size: 1.5vw;
+  font-weight: 800;
+}
+
+.tv-carrusel--vacio .tv-carrusel__fecha {
+  opacity: 0.7;
+  font-size: 1.1vw;
+  font-weight: 500;
+}
+
+.tv__sin-red {
+  position: fixed;
+  bottom: 1vh;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 0.4vw;
+  margin: 0;
+  padding: 0.5vh 1vw;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.8vw;
+  transform: translateX(-50%);
+}

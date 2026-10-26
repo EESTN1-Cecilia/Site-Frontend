@@ -52,6 +52,9 @@ const uploadRoutes = require('./src/routes/upload.Route');
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/cartelera', require('./src/routes/cartelera.Route'));
+app.use('/api/direccion', require('./src/routes/direccion.Route'));
+app.use('/api', require('./src/routes/asignaciones.Route'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
@@ -82,9 +85,25 @@ const PORT = process.env.PORT || 3000;
 // En modo test no se abre el puerto (los tests usan supertest/importan app).
 if (process.env.NODE_ENV !== 'test') {
   db.asegurarMigraciones().then(() => {
-    app.listen(PORT, () => {
+    // Express 5 pasa al callback el error de listen (p. ej. puerto ocupado):
+    // sin revisarlo, el aviso de arranque sale igual y el proceso termina en silencio.
+    app.listen(PORT, (err) => {
+      if (err) {
+        console.error(
+          err.code === 'EADDRINUSE'
+            ? `El puerto ${PORT} ya está en uso por otro programa. Cerralo o cambiá PORT en .env.`
+            : `No se pudo abrir el puerto ${PORT}: ${err.message}`
+        );
+        process.exit(1);
+      }
       console.log(`Servidor ejecutándose en el puerto ${PORT}`);
     });
+    // Al empezar la semana, ausencias, cancelaciones y cambios de aula de la
+    // anterior se restablecen solos (también se revisa al pedir los datos).
+    const { restablecerSemana } = require('./src/controllers/asignaciones.Controller');
+    const revisarSemana = () => restablecerSemana().catch((e) => console.error('[Semana]', e.message));
+    revisarSemana();
+    setInterval(revisarSemana, 15 * 60 * 1000).unref();
   });
 }
 

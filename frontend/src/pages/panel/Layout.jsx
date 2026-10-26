@@ -13,6 +13,7 @@ import { paginasEditables } from "./SitioPagina.jsx";
 export const menu = [
   ["General", [["/panel", "ph:chart-donut", "Tablero"]]],
   ["Contenido del sitio", [["/panel/sitio", "ph:browsers", "Sitio público"]]],
+  ["Comunicación", [["/panel/cartelera", "ph:television-simple", "Cartelera digital"]]],
   [
     "Jefatura de Área",
     [
@@ -110,14 +111,17 @@ export default function Layout({ ruta, chip, titulo, texto, acciones, children }
             Sitio público
           </button>
         )}
-        <div className="panel__encabezado">
-          <div>
-            <p className="chip">{chip}</p>
-            <h1 className="panel__titulo">{titulo}</h1>
-            {texto && <p className="panel__bajada">{texto}</p>}
+        {/* Sin título (el Tablero de Jefatura trae el suyo) no queda un hueco. */}
+        {(chip || titulo || acciones) && (
+          <div className="panel__encabezado">
+            <div>
+              {chip && <p className="chip">{chip}</p>}
+              {titulo && <h1 className="panel__titulo">{titulo}</h1>}
+              {texto && <p className="panel__bajada">{texto}</p>}
+            </div>
+            {acciones && <div className="panel__acciones">{acciones}</div>}
           </div>
-          {acciones && <div className="panel__acciones">{acciones}</div>}
-        </div>
+        )}
         {/* El tablero no tiene dueño: es sólo consulta y no lleva cartel. */}
         {edicion[ruta] && !puedeEditar(usuario, ruta) && (
           <p className="flash flash--info">

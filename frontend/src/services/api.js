@@ -1,4 +1,4 @@
-const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000/api").replace(
+const API_URL = (import.meta.env?.VITE_API_URL || "http://localhost:3000/api").replace(
   /\/$/,
   "",
 );
@@ -27,7 +27,12 @@ async function request(path, options = {}) {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.error || "No se pudo completar la solicitud");
+    /* El código y el cuerpo viajan con el error: un 409 trae con qué choca
+       la asignación y qué espacios quedan libres. */
+    const error = new Error(data.error || "No se pudo completar la solicitud");
+    error.status = response.status;
+    error.datos = data;
+    throw error;
   }
 
   return data;
@@ -125,11 +130,7 @@ export function guardarProgramasEnServidor(token, programas) {
   });
 }
 
-/* Del panel: grillas de Espacios y horarios y plano del colegio. */
-export function obtenerPanel(token) {
-  return request("/panel", conToken(token));
-}
-
+/* Grillas de Espacios y horarios (con la hora de cada módulo). */
 export function guardarGrillasEnServidor(token, grillas) {
   return request("/grillas", {
     method: "PUT",
@@ -138,12 +139,121 @@ export function guardarGrillasEnServidor(token, grillas) {
   });
 }
 
-export function guardarPlanoEnServidor(token, plano) {
-  return request("/plano", {
+/* ---------- Espacios y horarios + plano ----------
+   Una sola fuente de datos (tabla asignaciones del backend) para la grilla y
+   el plano. Lo usa asignaciones.js; las pantallas no llaman a esto directo. */
+export function obtenerAsignaciones(token) {
+  return request("/asignaciones", conToken(token));
+}
+
+export function guardarAsignacion(token, id, asignacion) {
+  return request(id ? `/asignaciones/${encodeURIComponent(id)}` : "/asignaciones", {
+    method: id ? "PUT" : "POST",
+    ...conToken(token),
+    body: JSON.stringify(asignacion),
+  });
+}
+
+export function quitarAsignacion(token, id, version) {
+  return request(`/asignaciones/${encodeURIComponent(id)}?version=${encodeURIComponent(version)}`, {
+    method: "DELETE",
+    ...conToken(token),
+  });
+}
+
+export function intercambiarAsignaciones(token, a, b) {
+  return request("/asignaciones/intercambiar", {
+    method: "POST",
+    ...conToken(token),
+    body: JSON.stringify({ a, b }),
+  });
+}
+
+/* «Guardar cambios» de la planilla: { altas, cambios, bajas }, todo o nada. */
+export function guardarLoteEnServidor(token, lote) {
+  return request("/asignaciones", {
     method: "PUT",
     ...conToken(token),
-    body: JSON.stringify(plano),
+    body: JSON.stringify(lote),
   });
+}
+
+/* Cambio de aula excepcional (o vuelta al aula habitual). */
+export function cambiarAulaEnServidor(token, id, salonId, version) {
+  return request(`/asignaciones/${encodeURIComponent(id)}/cambiar-aula`, {
+    method: "POST",
+    ...conToken(token),
+    body: JSON.stringify({ salon_id: salonId, version }),
+  });
+}
+
+/* Copia una grilla (la semana siguiente): { nombre, periodo, archivarOriginal }. */
+export function copiarGrillaEnServidor(token, id, datos) {
+  return request(`/grillas/${encodeURIComponent(id)}/copiar`, {
+    method: "POST",
+    ...conToken(token),
+    body: JSON.stringify(datos),
+  });
+}
+
+export function verificarAsignacion(token, asignacion) {
+  return request("/asignaciones/verificar", {
+    method: "POST",
+    ...conToken(token),
+    body: JSON.stringify(asignacion),
+  });
+}
+
+export function obtenerRegistro(token, limite = 30) {
+  return request(`/asignaciones/registro?limite=${limite}`, conToken(token));
+}
+
+/* tipo: "docentes" | "materias" | "grupos". Si ya existe, devuelve el mismo. */
+export function agregarAlCatalogo(token, tipo, datos) {
+  return request(`/${tipo}`, {
+    method: "POST",
+    ...conToken(token),
+    body: JSON.stringify(datos),
+  });
+}
+
+export function guardarSalon(token, id, cambios) {
+  return request(`/salones/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    ...conToken(token),
+    body: JSON.stringify(cambios),
+  });
+}
+
+/* Avisos en vivo (Server-Sent Events). Se usa fetch y no EventSource porque
+   EventSource no deja mandar el token en la cabecera (y en la URL quedaría
+   en los registros). `alAviso(evento, datos)` se llama por cada aviso; la
+   promesa termina cuando se corta la conexión. */
+export async function escucharEventos(token, alAviso, senal) {
+  const response = await fetch(`${API_URL}/eventos`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: "text/event-stream" },
+    signal: senal,
+  });
+  if (!response.ok || !response.body) {
+    const error = new Error("No se pudo abrir el canal de avisos");
+    error.status = response.status;
+    throw error;
+  }
+  const lector = response.body.getReader();
+  const decodificador = new TextDecoder();
+  let resto = "";
+  for (;;) {
+    const { value, done } = await lector.read();
+    if (done) return;
+    resto += decodificador.decode(value, { stream: true });
+    const bloques = resto.split("\n\n");
+    resto = bloques.pop();
+    for (const bloque of bloques) {
+      const evento = /^event: (.+)$/m.exec(bloque)?.[1];
+      const datos = /^data: (.+)$/m.exec(bloque)?.[1];
+      if (evento) alAviso(evento, datos ? JSON.parse(datos) : null);
+    }
+  }
 }
 
 export function guardarProyectosEnServidor(token, area, proyectos) {
@@ -166,4 +276,55 @@ export function subirPdf(token, archivo, destination) {
     headers: { Authorization: `Bearer ${token}` },
     body,
   });
+}
+
+/* ---------- Cartelera digital (televisores de los corredores) ---------- */
+export function obtenerCartelera(token) {
+  return request("/cartelera", conToken(token));
+}
+
+/* datos: { titulo, duracion, desde, hasta, fijada } */
+export function subirImagenCartelera(token, archivo, datos) {
+  const body = new FormData();
+  body.append("archivo", archivo);
+  for (const [clave, valor] of Object.entries(datos)) {
+    if (valor !== undefined && valor !== null && valor !== "") body.append(clave, String(valor));
+  }
+  return request("/cartelera", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body });
+}
+
+export function cambiarImagenCartelera(token, id, cambios) {
+  return request(`/cartelera/${encodeURIComponent(id)}`, { method: "PUT", ...conToken(token), body: JSON.stringify(cambios) });
+}
+
+export function quitarImagenCartelera(token, id) {
+  return request(`/cartelera/${encodeURIComponent(id)}`, { method: "DELETE", ...conToken(token) });
+}
+
+export function moverImagenCartelera(token, id, hacia) {
+  return request(`/cartelera/${encodeURIComponent(id)}/mover`, { method: "POST", ...conToken(token), body: JSON.stringify({ hacia }) });
+}
+
+export function crearPantalla(token, nombre) {
+  return request("/cartelera/pantallas", { method: "POST", ...conToken(token), body: JSON.stringify({ nombre }) });
+}
+
+export function renovarPantalla(token, id) {
+  return request(`/cartelera/pantallas/${encodeURIComponent(id)}/renovar`, { method: "POST", ...conToken(token) });
+}
+
+export function quitarPantalla(token, id) {
+  return request(`/cartelera/pantallas/${encodeURIComponent(id)}`, { method: "DELETE", ...conToken(token) });
+}
+
+/* Lo que pide el televisor con el enlace de su pantalla (sin sesión). */
+export function obtenerPantalla(enlace) {
+  return request(`/cartelera/pantalla/${encodeURIComponent(enlace)}`);
+}
+
+export const urlImagenCartelera = (clave) => `${API_URL}/cartelera/imagen/${encodeURIComponent(clave)}`;
+
+/* Tablero de Dirección: resumen de lo que hicieron los demás perfiles. */
+export function obtenerResumenDireccion(token) {
+  return request("/direccion/resumen", conToken(token));
 }

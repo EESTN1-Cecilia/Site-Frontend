@@ -63,6 +63,9 @@ Backend Node.js/Express que se encarga de la **autenticación**, la **autorizaci
 | `npm start` | Inicia el servidor (`node app.js`) |
 | `npm test` | Corre la suite de tests (`node --test src/test/*.test.js`) |
 | `npm run restablecer-admin` | Pone a `admin` la contraseña de `ADMIN_PASSWORD` y cierra sus sesiones |
+| `npm run importar-organizacion` | Revisa o importa el PDF de organización (ver «Importar la organización institucional») |
+| `npm run unificar-grillas` | Une una grilla a otra (`-- --origen X --destino Y`, con `--aplicar` para guardar): cada clase va al módulo de su turno que más se superpone y conserva su horario |
+| `npm run depurar-catalogos` | Muestra (o con `-- --aplicar`, borra) los docentes, materias y grupos que no están en la grilla oficial (ver «Depurar catálogos») |
 | `npm run restablecer-cuentas` | Solo en local: vuelve las 4 cuentas del seed a las contraseñas de `ADMIN_PASSWORD` y `SEED_PASSWORD` (para probar con una base que ya existía) |
 
 ---
@@ -90,7 +93,8 @@ levanta el servidor. Exporta `app` para que los tests puedan importarlo.
 
 ### `src/database/db.js`
 Crea la conexión a SQLite (`data/database.sqlite` o el archivo de `TEST_DB_NAME` en
-tests). Define el esquema (tablas `areas`, `usuarios`, `upload_logs`) y expone helpers
+tests). Define el esquema (tablas `areas`, `usuarios`, `upload_logs`, `contenido`,
+`publicaciones` y las del plano: `salones`, `docentes`, `materias`, `asignaciones`) y expone helpers
 **asíncronos** por todos lados:
 - `db.obtenerFila(sql, params)` → una fila.
 - `db.obtenerFilas(sql, params)` → varias filas.
@@ -143,6 +147,8 @@ scope `drive.file`. Expone `subirArchivo(buffer, nombre, carpetaId, mime)` y
   `permitir-cambio/:id` debe declararse antes de `/:id` para que Express no la capture
   como un id.
 - `upload.Route.js` → `POST /` con multer.
+- `asignaciones.Route.js` → Espacios y horarios + plano: asignaciones, espacios, grillas y
+  módulos, catálogo de docentes, materias y grupos, y avisos en vivo (ver más abajo).
 
 ### `src/utils/roles.js`
 Constantes `ROLES.JEFATURA_AREA`, `ROLES.SERVIDOR`, `ROLES.DIRECCION` y las listas fijas
@@ -207,6 +213,147 @@ sección, en JSON) y `publicaciones`. Los permisos se controlan acá, no en el f
   (`data:image/…`); nada de `javascript:`.
 - Estas rutas aceptan cuerpos de hasta 8 MB (las páginas y notas llevan imágenes); el
   resto de la API sigue en 10 KB.
+
+### Espacios y horarios + plano del colegio
+
+La grilla semanal (**Espacios y horarios**) y el **plano** del Tablero usan **una sola
+fuente de datos**: la tabla `asignaciones`. Cada fila es «tal docente da tal materia a tal
+grupo, en tal espacio, tal día y módulo». Lo que se carga en una pantalla aparece en la otra.
+
+| Método | Ruta | Quién | Qué hace |
+|--------|------|-------|----------|
+| GET | `/api/asignaciones?dia=&piso=&grilla=` | con sesión | Asignaciones + espacios, grillas con módulos, docentes, materias, grupos, tipos y estados (una sola llamada). |
+| POST | `/api/asignaciones` | Jefatura, Dirección | Crea `{ grilla_id, hora, dia, salon_id, docente_id, materia_id, grupo_id?, inicio?, fin?, alumnos?, estado?, observaciones? }`. |
+| PUT | `/api/asignaciones/:id` | Jefatura, Dirección | Modifica. Lleva `version` (la que vio quien edita). |
+| DELETE | `/api/asignaciones/:id?version=N` | Jefatura, Dirección | Quita. |
+| POST | `/api/asignaciones/intercambiar` | Jefatura, Dirección | `{ a: { id, version }, b: { id, version } }`: cambian de día y módulo (arrastrar en la grilla). |
+| POST | `/api/asignaciones/verificar` | Jefatura, Dirección | Devuelve los conflictos y espacios libres sin guardar. |
+| PUT | `/api/asignaciones` | Jefatura, Dirección | «Guardar cambios»: `{ altas: [...], cambios: [{ id, version, ... }], bajas: [{ id, version }] }` en una transacción; si una sola cosa falla (dato inválido, versión vieja, choque) no se guarda nada y el error dice cuál. |
+| POST | `/api/asignaciones/:id/cambiar-aula` | Jefatura, Dirección | `{ salon_id, version }`: cambio de aula excepcional; guarda el aula habitual en `salon_habitual`. Pedir el aula habitual la restituye. |
+| GET | `/api/asignaciones/registro?limite=` | con sesión | Historial de altas, cambios, bajas e intercambios. |
+| GET | `/api/disponibilidad?dia=&grilla_id=&hora=[&inicio=&fin=]` | con sesión | Espacios libres y ocupados en ese momento. |
+| GET | `/api/salones`, `/api/salones/:id` | con sesión | Espacios (y uno con sus asignaciones). |
+| PUT | `/api/salones/:id` | Jefatura, Dirección | `{ nombre?, tipo?, capacidad?, habilitado? }`. |
+| POST | `/api/docentes`, `/api/materias`, `/api/grupos` | Jefatura, Dirección | Agrega `{ nombre[, curso] }` al catálogo; si ya existe, devuelve el mismo. |
+| PUT | `/api/grillas` | Jefatura, Dirección | Grillas y módulos `{ grillas: [{ id, nombre, vigente, horas: [{ id, nombre, inicio, fin }] }] }`. Lo que se saca se borra con sus clases. |
+| POST | `/api/grillas/:id/copiar` | Jefatura, Dirección | `{ nombre, periodo, archivarOriginal }`: copia módulos y clases (activas, en su aula habitual). Con `archivarOriginal`, la copia queda vigente y la original archivada; si choca con otra grilla vigente, 409 y no se copia nada. |
+| GET | `/api/panel` | con sesión | Grillas y plano en el formato anterior (compatibilidad). |
+| PUT | `/api/plano` | Jefatura, Dirección | Nombres y cancelados en el formato anterior (compatibilidad). |
+| GET | `/api/eventos` | con sesión | Avisos en vivo (Server-Sent Events), ver abajo. |
+
+Reglas (`src/controllers/asignaciones.Controller.js`). El frontend avisa antes, pero el
+backend es el que decide; si no se cumplen, responde 409 con `conflictos` y `alternativas`:
+
+- **Superposición:** un espacio, un docente o un grupo no pueden tener dos clases activas
+  superpuestas. Dos intervalos se superponen si cada uno empieza antes de que termine el
+  otro: 08:00–09:20 y 09:20–10:40 **no** chocan (las consecutivas se permiten). Si alguna de
+  las dos no tiene hora (el módulo no la tiene cargada), se compara por módulo.
+- Sólo las asignaciones `activa` ocupan; `docente_ausente` y `suspendida` (clase cancelada) dejan el espacio libre.
+- **Excepciones de la semana:** marcar ausencia, cancelar o cambiar de aula guarda en `semana` el lunes
+  de la semana en curso. Al empezar la semana siguiente (se revisa al pedir los datos y cada 15
+  minutos) la clase vuelve a `activa` y a su aula habitual; si esa aula quedó ocupada, se queda
+  donde está y se anota en el historial.
+- Una clase puede no tener espacio (`salon_id` vacío): las del PDF en «SUM» o «TALLER» hasta que se les asigne un aula.
+- **Aula compartida** (`asignaciones.compartida`): dos clases marcadas así pueden compartir aula y grupo
+  (así figuran en la organización oficial); con cualquier otra clase siguen chocando, y el docente
+  nunca se comparte. Las marca el importador con `--compartidas`.
+- **Grillas vigentes:** cada grilla tiene `vigente`. Dos clases compiten sólo si son de la misma
+  grilla o si las dos grillas están vigentes: una semana archivada no ocupa aulas ni choca con la actual.
+- **Sólo aulas:** cada espacio tiene `clasificacion` `AULA` (admite clases) o `ESPACIO_COMUN`
+  (PAÑOL, E.O.E., administración, patios…: se ve y se consulta, pero no admite clases). Crear,
+  modificar o intercambiar una clase en un espacio común se rechaza con 400, también si se
+  pide directo a la API. Los espacios comunes no aparecen como libres ni como alternativa.
+- No se asigna un espacio deshabilitado ni más alumnos que su capacidad (si está cargada).
+- **Dos personas a la vez:** cada asignación tiene `version`. Si alguien la cambió mientras
+  otra persona la editaba, el segundo guardado recibe 409 con `cambio: true` en vez de pisarla.
+- Todas las escrituras van en una transacción (`db.transaccion`) y de a una (cola), así el
+  control de conflictos y el guardado son un solo paso.
+- Cambiar la hora de un módulo que haría superponer clases existentes se rechaza (409) y no
+  se guarda nada.
+
+**Avisos en vivo** (`src/utils/eventos.js`): cada pantalla abierta mantiene `GET /api/eventos`.
+Cuando alguien guarda, el servidor manda `event: cambio` con `{ tipo, version }` y las
+pantallas vuelven a pedir los datos: lo que cambia una persona aparece en la de las demás sin
+recargar. No lleva datos de docentes ni de grupos. Funciona con un único proceso de Node (como
+corre hoy); con varias instancias detrás de un balanceador haría falta un canal compartido.
+
+**Estado libre / ocupado / por finalizar:** no se guarda. Lo calcula el frontend
+(`frontend/src/horario.js`) con las asignaciones y la hora local del dispositivo.
+
+### Depurar catálogos
+
+`npm run depurar-catalogos` compara docentes, materias y grupos con la grilla oficial ya
+extraída (`src/datos/organizacion-octubre-2026.json`) y lista lo que no figura, las clases que
+lo usan y los grupos que toman el nombre oficial («Grupo 1.1» → «1.1», mismo id). No cambia
+nada. Con `-- --aplicar` lo **borra definitivamente** en una transacción: primero las clases que
+los usan (no quedan referencias huérfanas), después los catálogos, y limpia las listas de cada
+grilla. Hacer un respaldo antes (`VACUUM INTO`, ver más abajo). Queda en el historial.
+
+### Tablero de Dirección
+
+`GET /api/direccion/resumen` (sólo Dirección, `src/controllers/direccion.Controller.js`): el equipo por nivel
+(Dirección > Jefatura de Área > EMATP) con lo que hizo cada cuenta en los últimos 7 días, la actividad
+reciente de todos (historial de clases, cartelera, publicaciones, archivos subidos; lo sin usuario figura
+como «Sistema»), números de la grilla vigente y de la semana, y lo pendiente para Dirección. Sólo lectura.
+
+### Cartelera digital
+
+Imágenes para los televisores de los corredores y el enlace de cada televisor
+(`src/controllers/cartelera.Controller.js`, tablas `cartelera` y `pantallas`).
+
+| Método | Ruta | Quién | Qué hace |
+|--------|------|-------|----------|
+| GET | `/api/cartelera` | Dirección, Jefatura, EMATP | Imágenes (sin el archivo), cuáles pasan hoy, qué puede cambiar cada uno y, para Dirección y Jefatura, los televisores. |
+| POST | `/api/cartelera` | Dirección, Jefatura, EMATP | Multipart: `archivo` (JPG/PNG/WEBP/GIF reales, hasta 5 MB) + `titulo`, `duracion` (5–120 s), `desde`, `hasta`, `fijada`. Queda con el nivel de quien la carga. |
+| PUT / DELETE | `/api/cartelera/:id` | ídem | Cambia (título, duración, fechas, `activo`, `fijada`) o quita. Sólo lo del propio nivel o de niveles de abajo (403 si no). |
+| POST | `/api/cartelera/:id/mover` | ídem | `{ hacia: "arriba" \| "abajo" }` dentro de su nivel. |
+| POST / DELETE | `/api/cartelera/pantallas[/:id]`, `/api/cartelera/pantallas/:id/renovar` | Dirección, Jefatura | Televisores: crear, quitar y renovar el enlace (el anterior deja de valer). |
+| GET | `/api/cartelera/pantalla/:token` | el televisor (sin sesión) | Salones, clases de las grillas vigentes, imágenes que pasan hoy en orden y la hora del servidor. |
+| GET | `/api/cartelera/imagen/:clave` | sin sesión | La imagen, por su clave aleatoria. |
+
+Prioridad principal: Dirección; segunda: Jefatura de Área; tercera: EMATP (en la base, `nivel` 3, 2 y 1). En pantalla pasan por nivel y
+orden. Si hay una fijada vigente, de su nivel sólo pasan las fijadas y de los niveles de abajo
+nada; los de arriba siguen.
+
+### Importar la organización institucional (PDF de grillas)
+
+El PDF de organización de talleres («ORGANIZACION OCTUBRE.pdf») se incorpora en dos pasos,
+los dos repetibles sin duplicar nada:
+
+1. **Extraer** (en `frontend/`, usa `pdfjs-dist`): lee todas las páginas y guarda cada celda
+   tal cual figura (horario, materia, grupo, alumnos, espacio, docente) en
+   `backend/src/datos/organizacion-octubre-2026.json`.
+   ```bash
+   node scripts/extraer-organizacion.mjs "C:/ruta/ORGANIZACION OCTUBRE.pdf" ../backend/src/datos/organizacion-octubre-2026.json
+   ```
+2. **Importar** (en `backend/`):
+   ```bash
+   npm run importar-organizacion                              # sólo revisa: informe, sin cambios
+   npm run importar-organizacion -- --aplicar                 # carga materias, docentes y grupos
+   npm run importar-organizacion -- --aplicar --con-clases    # además, grillas y clases del PDF
+   npm run importar-organizacion -- --aplicar --con-clases --compartidas  # también las que comparten aula con otra del PDF
+   ```
+
+El informe queda en `data/informe-importacion-organizacion.md` (nuevos, coincidentes y dudosos).
+Reglas (`src/utils/importacion.js`, `src/utils/normalizar.js`):
+
+- Se compara sin tildes, mayúsculas ni palabras de enlace: «LABORATORIO SISTEMAS OPERATIVOS» y
+  «Laboratorio de Sistemas Operativos» son la misma materia; «1.1» y «Grupo 1.1», el mismo
+  grupo. Lo que ya existe conserva su id y su nombre (a un grupo sólo se le completan datos vacíos).
+- Una sigla («P.D.I.S.C.», «PDISC») se une con un nombre completo del mismo PDF sólo si sus
+  iniciales coinciden exactamente; si no, queda como sigla y para revisar.
+- Lo dudoso se guarda igual con `revisar` = motivo: siglas sin nombre completo, materias que
+  aparecen una o dos veces y se parecen a otra, grupos con distinta cantidad de alumnos según
+  la página, docentes con sólo el apellido que pueden ser otro («Grasso» → ¿Grasso C. o E.?).
+- Los espacios no se crean (son los del plano): se vinculan por nombre y los que no están
+  (SUM, AULA 9, TALLER) se informan. Una clase con espacio fuera del plano se importa sin
+  espacio y guarda en `observaciones` el que figura en el PDF.
+- `--asignar-espacio TALLER=pb-18` pasa al espacio del plano indicado las clases importadas
+  que quedaron sin espacio y figuran con ese nombre en el PDF, de a una y sólo si no se
+  superponen con otra en ese espacio; las que chocan siguen sin espacio y se listan en el informe.
+- Las clases del PDF sólo se importan con `--con-clases` (el PDF es la organización de un
+  período, no necesariamente lo vigente): una grilla por turno con sus módulos, cada celda una
+  vez (`asignaciones.origen`), y las que se superponen con otra no se guardan y se listan.
 
 ### Detalle de los cuerpos de ejemplo
 
@@ -334,7 +481,67 @@ upload_logs  (id, user_id FK, filename, original_name, destination, drive_file_i
 tokens_revocados (jti PK, expira)
 contenido    (seccion PK, datos JSON, actualizado_por FK, updated_at)
 publicaciones (id PK, datos JSON, estado CHECK, autor_id FK, created_at, updated_at)
+salones      (id PK "pb-8", piso CHECK, nombre, tipo, clasificacion CHECK('AULA','ESPACIO_COMUN'),
+              capacidad NULL, habilitado)
+docentes     (id, nombre UNIQUE NOCASE, revisar, activo, created_at)
+materias     (id, nombre UNIQUE NOCASE, revisar, activo, created_at)
+grupos       (id, nombre UNIQUE NOCASE, curso, alumnos, turno, revisar, activo, created_at)
+grillas      (id PK "Básico", nombre, orden, organizacion, periodo, turno, ciclo,
+              dias JSON, grupos JSON, materias JSON)   -- vacío = todos
+modulos      (id, grilla_id FK→grillas ON DELETE CASCADE, clave "1°/2°", nombre,
+              inicio "HH:MM" NULL, fin NULL, orden, UNIQUE(grilla_id, clave))
+asignaciones (id, modulo_id FK→modulos ON DELETE CASCADE, dia CHECK, salon_id FK NULL,
+              docente_id FK NULL, materia_id FK NULL, grupo_id FK NULL,
+              inicio NULL, fin NULL  -- sólo si difiere del módulo
+              alumnos, estado CHECK, observaciones, version, actualizado_por FK,
+              created_at, updated_at)
+asignaciones_registro (id, asignacion_id, accion CHECK, detalle, usuario_id FK, created_at)
+migraciones  (nombre PK, aplicada_at)   -- pasos de migración ya aplicados
 ```
+
+- Las claves foráneas están activadas (`PRAGMA foreign_keys = ON`).
+- `salon_id`, `docente_id` y `materia_id` pueden quedar vacíos sólo en clases que vinieron
+  de la versión anterior con datos incompletos; para guardar una clase hay que completarlos.
+- Los ids de `salones` son los mismos de `frontend/src/planoSalones.js` (`src/utils/salones.js`).
+
+#### Migración (automática al arrancar)
+
+`src/database/espacios.js` la aplica en `db.asegurarMigraciones()` (al arrancar el servidor).
+Es idempotente: cada paso queda anotado en `migraciones` y no se repite.
+
+1. `salones` suma `tipo`, `capacidad` y `habilitado`; el tipo inicial sale del nombre del
+   plano (Aula, Taller, Laboratorio…). La capacidad queda vacía: no figura en los planos.
+2. El JSON `contenido.plano` (nombres cambiados y salones cancelados) pasa a `salones`.
+3. El JSON `contenido.grillas` pasa a `grillas`, `modulos` y `asignaciones`: cada clase con
+   su docente, materia y grupo (se agregan al catálogo). Los textos de relleno de una clase
+   nueva ("Sin asignar", "Materia", "Grupo", "Curso") **no** se toman como datos, y si el aula
+   tiene un nombre repetido en el plano ("Aula 3" hay tres) queda sin espacio, para elegirlo.
+4. La tabla `asignaciones` de la versión anterior (salón + hora de texto) se pasa al módulo.
+5. `clasificacion` sale del tipo de cada espacio (aula, taller, laboratorio y compartido son
+   `AULA`; el resto, `ESPACIO_COMUN`). Dirección o Jefatura la pueden cambiar
+   (`PUT /api/salones/:id`).
+6. La escuela renombró tres espacios, con el mismo id (no se pierde ninguna relación):
+   Aula 6 → **PAÑOL** y Bunker → **E.O.E.** (espacios comunes) y Taller 1 → **Aula 8** (aula).
+   Las clases que ya estaban en PAÑOL no se borran: quedan marcadas para reubicar y se anota en
+   el historial. Los datos viejos que nombran "Aula 6", "Bunker" o "Taller 1" se reconocen.
+7. En el primer piso, con el mismo id: «Pañol» (`1p-4`) pasa a **Aula 9** (aula), «Sin nombre»
+   (`1p-17`) a **SERVER** (espacio común) y «Jefe de área» (`1p-5`) a **Jefatura de Área**, de
+   tipo `institucional`: nunca admite clases (mensaje propio) ni se puede reclasificar como aula.
+8. Los JSON originales quedan como respaldo en `contenido` con los nombres
+   `grillas_respaldo` y `plano_respaldo`.
+9. Una sola grilla para la organización: las grillas de mañana y tarde que había creado el
+   importador (`org-…-manana`, `org-…-tarde`) se unen en `org-…`, con `modulos.turno` en cada
+   módulo (mismas clases; las claves pasan a `manana-1°`, `tarde-1°`…). El importador ya crea
+   una sola grilla.
+10. `modulos.rangos` (los otros horarios del encabezado del PDF) y `asignaciones.semana`
+    (lunes de una excepción de la semana).
+11. `grillas.vigente` (1 por defecto: las grillas existentes siguen vigentes) y
+   `asignaciones.salon_habitual` (aula de siempre durante un cambio de aula excepcional).
+
+Respaldo antes de una operación que borra datos (con el backend detenido):
+`node -e "new (require('sqlite3').Database)('data/database.sqlite').run(\"VACUUM INTO 'data/respaldo.sqlite'\")"`.
+
+No hay variables de entorno nuevas.
 
 - `token_version`: sube cada vez que cambia la contraseña; los tokens con una versión
   anterior dejan de valer.

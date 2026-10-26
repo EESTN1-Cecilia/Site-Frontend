@@ -20,6 +20,9 @@ const rutaDb = path.join(dataDir, nombreArchivo);
 const db = new sqlite3.Database(rutaDb);
 
 db.serialize(() => {
+  // SQLite no controla las claves foráneas si no se le pide (por conexión).
+  db.run('PRAGMA foreign_keys = ON');
+
   db.run(`CREATE TABLE IF NOT EXISTS areas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nombre TEXT NOT NULL UNIQUE,
@@ -140,6 +143,27 @@ db.asegurarMigraciones = async function () {
   await db.agregarColumnaSiNoExiste('usuarios', 'password_change_allowed', 'INTEGER DEFAULT 1');
   await db.agregarColumnaSiNoExiste('usuarios', 'password_change_count', 'INTEGER DEFAULT 0');
   await db.agregarColumnaSiNoExiste('usuarios', 'token_version', 'INTEGER DEFAULT 0');
+  // Nombre y apellido de la persona (el username es sólo para entrar).
+  await db.agregarColumnaSiNoExiste('usuarios', 'nombre', 'TEXT');
+
+  // Espacios, grillas, módulos y asignaciones (plano y Espacios y horarios).
+  await require('./espacios').migrar(db);
+  // Cartelera digital (televisores de los corredores).
+  await require('./cartelera').migrar(db);
+};
+
+// Varias escrituras como una sola: o quedan todas o ninguna. Quien llama se
+// encarga de que no corran dos transacciones a la vez (van en una cola).
+db.transaccion = async function (tarea) {
+  await db.ejecutar('BEGIN IMMEDIATE');
+  try {
+    const resultado = await tarea();
+    await db.ejecutar('COMMIT');
+    return resultado;
+  } catch (error) {
+    await db.ejecutar('ROLLBACK').catch(() => {});
+    throw error;
+  }
 };
 
 module.exports = db;

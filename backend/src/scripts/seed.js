@@ -35,6 +35,8 @@ async function semilla() {
     const areas = [
       { nombre: 'matematica', carpetaId: process.env.DRIVE_JEFE_AREA_ID || 'PLACEHOLDER' },
       { nombre: 'lengua', carpetaId: process.env.DRIVE_JEFE_AREA_ID || 'PLACEHOLDER' },
+      // Jefatura de Área sin un departamento en particular.
+      { nombre: 'general', carpetaId: process.env.DRIVE_JEFE_AREA_ID || 'PLACEHOLDER' },
     ];
 
     const idsArea = {};
@@ -72,18 +74,20 @@ async function semilla() {
     console.log('Usuario superadmin asegurado (admin)');
 
     // Cuentas de sector: contraseña de SEED_PASSWORD, un único cambio disponible
+    // Las jefaturas de Área son Daniela Monje y Mariano Cipres (las cuentas
+    // jefatura_matematica y jefatura_lengua se dieron de baja).
     const sectores = [
-      { username: 'jefatura_matematica', rol: ROLES.JEFATURA_AREA, area_id: idsArea['matematica'] },
-      { username: 'jefatura_lengua', rol: ROLES.JEFATURA_AREA, area_id: idsArea['lengua'] },
-      { username: 'ematp', rol: ROLES.SERVIDOR, area_id: null },
+      { username: 'daniela_monje', nombre: 'Daniela Monje', rol: ROLES.JEFATURA_AREA, area_id: idsArea['general'] },
+      { username: 'mariano_cipres', nombre: 'Mariano Cipres', rol: ROLES.JEFATURA_AREA, area_id: idsArea['general'] },
+      { username: 'ematp', nombre: null, rol: ROLES.SERVIDOR, area_id: null },
     ];
 
     for (const sector of sectores) {
       await db.ejecutar(
         `INSERT OR IGNORE INTO usuarios
-          (username, password_hash, rol, area_id, password_change_allowed, password_change_count)
-         VALUES (?, ?, ?, ?, 1, 0)`,
-        sector.username, hashSector, sector.rol, sector.area_id
+          (username, nombre, password_hash, rol, area_id, password_change_allowed, password_change_count)
+         VALUES (?, ?, ?, ?, ?, 1, 0)`,
+        sector.username, sector.nombre, hashSector, sector.rol, sector.area_id
       );
     }
     // La contraseña no se imprime: queda en el historial de la terminal y en logs.

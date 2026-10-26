@@ -29,6 +29,8 @@ import { limpiarError, useConexion } from "./src/conexion.js";
 import { sincronizarContenido } from "./src/sincronizar.js";
 import Server from "./src/pages/panel/Server.jsx";
 import Direccion from "./src/pages/panel/Direccion.jsx";
+import Cartelera from "./src/pages/panel/Cartelera.jsx";
+import Pantalla from "./src/pages/Pantalla.jsx";
 import LimiteDeError from "./src/components/LimiteDeError.jsx";
 import { Menu, Pie } from "./src/components/Marco.jsx";
 import "./src/styles/app.css";
@@ -56,6 +58,7 @@ const paginas = {
   "/panel/sitio/pagina": SitioPagina,
   "/panel/server": Server,
   "/panel/direccion": Direccion,
+  "/panel/cartelera": Cartelera,
 };
 
 function SinAcceso({ usuario }) {
@@ -138,6 +141,8 @@ function App() {
   );
 
   if (esLogin) return <LimiteDeError key={ruta}><Login /></LimiteDeError>;
+  /* El televisor de los corredores: pantalla completa, sin menú ni sesión. */
+  if (camino === "/tv") return <LimiteDeError key={ruta}><Pantalla params={params} /></LimiteDeError>;
 
   return (
     <>

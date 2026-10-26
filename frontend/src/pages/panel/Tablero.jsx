@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import Layout from "./Layout.jsx";
-import { dias, inventarioInicial, notificaciones } from "../../panelData.js";
-import { useGrillas } from "../../grillas.js";
-import { alternarCancelado, mismoSalon, renombrarSalon, usePlano } from "../../plano.js";
-import Editable from "../../components/Editable.jsx";
+import { inventarioInicial, notificaciones } from "../../panelData.js";
+import PanelJefatura from "./PanelJefatura.jsx";
+import PanelDireccion from "./PanelDireccion.jsx";
+import PlanoSalones from "./PlanoSalones.jsx";
 
 /* El panel no maneja datos de alumnos: ni números ni avisos sobre ellos. */
 /* "Bienvenido, …" con la fecha y la hora, que se actualiza sola. */
@@ -76,147 +76,54 @@ function TableroServer() {
   );
 }
 
-/* ---------- Plano: qué profesor está en cada salón, según la grilla ---------- */
-function Plano() {
-  const pisos = usePlano();
-  const grillas = useGrillas();
-  const hoy = dias[new Date().getDay() - 1] ?? dias[0];
-  const [pisoId, setPisoId] = useState(pisos[0].id);
-  const [grillaId, setGrillaId] = useState(grillas[0].id);
-  const [dia, setDia] = useState(hoy);
-  const grilla = grillas.find((g) => g.id === grillaId) ?? grillas[0];
-  const [horaId, setHoraId] = useState(grilla.horas[0]?.id ?? "");
-  const hora = grilla.horas.some((h) => h.id === horaId) ? horaId : grilla.horas[0]?.id;
-  const piso = pisos.find((p) => p.id === pisoId) ?? pisos[0];
-
-  const enCurso = grilla.clases.filter((c) => c.dia === dia && c.hora === hora);
-
-  return (
-    <section className="tarjeta">
-      <h2 className="tarjeta__titulo">Plano del colegio</h2>
-      <p className="tarjeta__bajada">
-        Quién está en cada salón, según la grilla de Espacios y horarios. Hacé clic en el
-        nombre de un salón para cambiarlo, o en el ícono de al lado para cancelarlo.
-      </p>
-
-      <div className="filtros">
-        <div className="filtros__chips">
-          {pisos.map((p) => (
-            <button
-              key={p.id}
-              className={`filtro ${piso.id === p.id ? "filtro--activo" : ""}`}
-              onClick={() => setPisoId(p.id)}
-            >
-              {p.nombre}
-            </button>
-          ))}
-        </div>
-        {[
-          ["Grilla", grillaId, setGrillaId, grillas.map((g) => [g.id, g.nombre])],
-          ["Día", dia, setDia, dias.map((d) => [d, d])],
-          ["Horario", hora, setHoraId, grilla.horas.map((h) => [h.id, h.nombre])],
-        ].map(([etiqueta, valor, cambiar, opciones]) => (
-          <label className="campo campo--select" key={etiqueta}>
-            <span>{etiqueta}</span>
-            <select value={valor} onChange={(e) => cambiar(e.target.value)}>
-              {opciones.map(([id, nombre]) => (
-                <option key={id} value={id}>
-                  {nombre}
-                </option>
-              ))}
-            </select>
-          </label>
-        ))}
-      </div>
-
-      <div className="plano" style={{ aspectRatio: piso.proporcion }}>
-        <img className="plano__dibujo" src={piso.imagen} alt={`Plano de ${piso.nombre.toLowerCase()}`} />
-        {piso.salones.map((salon) => {
-          const clase = enCurso.find((c) => mismoSalon(c.aula, salon.nombre));
-          const ocupado = clase && !clase.ausente;
-          return (
-            <div
-              key={salon.id}
-              className={`plano__salon ${salon.chico ? "plano__salon--chico" : ""} ${
-                ocupado ? "plano__salon--ocupado" : ""
-              } ${salon.cancelado ? "plano__salon--cancelado" : ""}`}
-              style={{ left: `${salon.x}%`, top: `${salon.y}%` }}
-            >
-              <span className="plano__fila">
-                <Editable
-                  clase="plano__nombre"
-                  detener
-                  valor={salon.nombre}
-                  alCambiar={(v) => renombrarSalon(salon.id, v || "Sin nombre")}
-                />
-                <button
-                  className="plano__cancelar"
-                  title={salon.cancelado ? "Volver a habilitar el salón" : "Cancelar el salón"}
-                  aria-label={`${salon.cancelado ? "Habilitar" : "Cancelar"} ${salon.nombre}`}
-                  onClick={() => alternarCancelado(salon.id)}
-                >
-                  <Icon
-                    icon={salon.cancelado ? "ph:arrow-counter-clockwise" : "ph:prohibit"}
-                    width={12}
-                    height={12}
-                    aria-hidden="true"
-                  />
-                </button>
-              </span>
-              {salon.cancelado ? (
-                <span className="plano__profe plano__profe--aviso">
-                  {clase ? "Cancelada: reubicar clase" : "Cancelada"}
-                </span>
-              ) : (
-                <>
-                  {ocupado && <span className="plano__profe">{clase.profesor}</span>}
-                  {clase?.ausente && <span className="plano__profe">Libre: docente ausente</span>}
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-export default function Tablero({ ruta, usuario }) {
+export default function Tablero({ ruta, params, usuario }) {
   const ahora = useAhora();
   const rol = usuario?.rol;
   const nombre = usuario?.nombre || "";
 
+  /* Jefatura y Dirección tienen su encabezado propio (escuela, cargo, fecha
+     y hora): no se repite el saludo ni la fecha arriba. */
+  const encabezado =
+    rol === "jefatura" || rol === "direccion" ? {} : { chip: "TABLERO", titulo: `Bienvenido, ${nombre}`, texto: fechaYHora(ahora) };
+
   return (
-    <Layout
-      ruta={ruta}
-      chip="TABLERO"
-      titulo={`Bienvenido, ${nombre}`}
-      texto={fechaYHora(ahora)}
-    >
+    <Layout ruta={ruta} {...encabezado}>
+      {rol === "jefatura" && <PanelJefatura usuario={usuario} />}
+      {rol === "direccion" && <PanelDireccion usuario={usuario} />}
+
       {rol === "server" ? (
         <TableroServer />
       ) : (
-        (rol === "direccion" || rol === "jefatura") && <Plano />
+        (rol === "direccion" || rol === "jefatura") && <PlanoSalones editable params={params} />
       )}
 
-      <section className="tarjeta">
-        <h2 className="tarjeta__titulo">Avisos</h2>
-        <p className="tarjeta__bajada">
-          Reemplazan las cadenas de WhatsApp: todo queda registrado acá.
-        </p>
+      {/* Avisos: lista desplegable; cada aviso muestra el título y la fecha,
+          y el detalle se abre con un clic. */}
+      <details className="tarjeta registro" open>
+        <summary className="registro__resumen">
+          <span>
+            <span className="tarjeta__titulo">Avisos</span>
+            <span className="tarjeta__bajada">Reemplazan las cadenas de WhatsApp: todo queda registrado acá.</span>
+          </span>
+          <span className="registro__cantidad">{notificaciones.length} avisos</span>
+          <Icon className="registro__flecha" icon="ph:caret-down" width={18} height={18} aria-hidden="true" />
+        </summary>
         <ul className="avisos">
           {notificaciones.map((aviso) => (
-            <li className={`avisos__item avisos__item--${aviso.tipo}`} key={aviso.id}>
-              <Icon icon={aviso.icono} width={20} height={20} aria-hidden="true" />
-              <div>
-                <p className="avisos__titulo">{aviso.titulo}</p>
+            <li key={aviso.id}>
+              <details className={`avisos__item avisos__item--${aviso.tipo} avisos__item--desplegable`}>
+                <summary className="avisos__resumen">
+                  <Icon icon={aviso.icono} width={20} height={20} aria-hidden="true" />
+                  <span className="avisos__titulo">{aviso.titulo}</span>
+                  <span className="avisos__fecha">{aviso.fecha}</span>
+                  <Icon className="avisos__flecha" icon="ph:caret-down" width={16} height={16} aria-hidden="true" />
+                </summary>
                 <p className="avisos__detalle">{aviso.detalle}</p>
-              </div>
-              <span className="avisos__fecha">{aviso.fecha}</span>
+              </details>
             </li>
           ))}
         </ul>
-      </section>
+      </details>
     </Layout>
   );
 }

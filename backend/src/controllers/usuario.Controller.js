@@ -10,7 +10,7 @@ const RONDAS_BCRYPT = 12;
 async function listarUsuarios(req, res) {
   try {
     const usuarios = await db.obtenerFilas(
-      `SELECT id, username, rol, area_id, activo, password_change_allowed, password_change_count, created_at
+      `SELECT id, username, nombre, rol, area_id, activo, password_change_allowed, password_change_count, created_at
        FROM usuarios`
     );
     return res.json({ usuarios });
@@ -24,7 +24,7 @@ async function obtenerUsuarioPorId(req, res) {
   try {
     const { id } = req.params;
     const usuario = await db.obtenerFila(
-      `SELECT id, username, rol, area_id, activo, password_change_allowed, password_change_count, created_at
+      `SELECT id, username, nombre, rol, area_id, activo, password_change_allowed, password_change_count, created_at
        FROM usuarios WHERE id = ?`,
       id
     );
@@ -52,7 +52,7 @@ async function listarAreas(req, res) {
 
 async function crearUsuario(req, res) {
   try {
-    const { username, password, rol, area_id } = req.body;
+    const { username, password, rol, area_id, nombre } = req.body;
 
     if (!username || !password || !rol) {
       return res.status(400).json({ error: 'Usuario, contraseña y rol son requeridos' });
@@ -64,6 +64,11 @@ async function crearUsuario(req, res) {
 
     if (!esRolValido(rol)) {
       return res.status(400).json({ error: 'Rol inválido' });
+    }
+
+    // Nombre y apellido: opcional, para mostrarlo en el panel.
+    if (nombre !== undefined && nombre !== null && (typeof nombre !== 'string' || nombre.trim().length > 100)) {
+      return res.status(400).json({ error: 'El nombre tiene que ser texto de hasta 100 caracteres' });
     }
 
     if (typeof password !== 'string' || password.length < 8) {
@@ -89,13 +94,14 @@ async function crearUsuario(req, res) {
 
     // Toda cuenta nueva arranca con password_change_allowed=1 y contador en 0.
     const resultado = await db.ejecutar(
-      'INSERT INTO usuarios (username, password_hash, rol, area_id, password_change_allowed, password_change_count) VALUES (?, ?, ?, ?, 1, 0)',
-      username, hashContrasena, rol, area_id || null
+      'INSERT INTO usuarios (username, nombre, password_hash, rol, area_id, password_change_allowed, password_change_count) VALUES (?, ?, ?, ?, ?, 1, 0)',
+      username, nombre ? nombre.trim() : null, hashContrasena, rol, area_id || null
     );
 
     return res.status(201).json({
       id: resultado.lastID,
       username,
+      nombre: nombre ? nombre.trim() : null,
       rol,
       area_id: area_id || null,
       password_change_allowed: true,
