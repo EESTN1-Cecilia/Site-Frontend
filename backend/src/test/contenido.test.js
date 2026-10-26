@@ -363,13 +363,15 @@ describe('Mesas, programas y proyectos', () => {
 });
 
 describe('Panel: grillas y plano', () => {
+  // Las clases ya no van en las grillas (tabla asignaciones, ver asignaciones.test.js):
+  // acá sólo grillas y módulos con su hora de inicio y fin.
   const grillas = [
     {
       id: 'Básico',
       nombre: 'Turno mañana',
-      horas: [{ id: '1°/2°', nombre: '1°/2°' }],
-      clases: [
-        { id: 'g1', ciclo: 'Básico', grupo: 'Grupo 1.1', curso: '1° 1', alumnos: 14, materia: 'Taller', profesor: 'Prof. Coria', aula: 'Taller 1', dia: 'Lunes', hora: '1°/2°', ausente: false },
+      horas: [
+        { id: '1°/2°', nombre: '1°/2°', inicio: '07:30', fin: '08:50' },
+        { id: '3°/4°', nombre: '3°/4°', inicio: null, fin: null },
       ],
     },
   ];
@@ -383,7 +385,7 @@ describe('Panel: grillas y plano', () => {
     const res = await peticion('PUT', '/api/grillas', { grillas }, tokens.jefatura_area);
     assert.strictEqual(res.estado, 200);
     const { cuerpo } = await peticion('GET', '/api/panel', undefined, tokens.server);
-    assert.deepStrictEqual(cuerpo.grillas, grillas);
+    assert.deepStrictEqual(cuerpo.grillas.map(({ id, nombre, horas }) => ({ id, nombre, horas: horas.map(({ turno, rangos, ...h }) => h) })), grillas);
   });
 
   it('server no edita grillas ni plano → 403', async () => {
@@ -401,7 +403,9 @@ describe('Panel: grillas y plano', () => {
   it('datos con otra forma → 400', async () => {
     for (const [ruta, cuerpo] of [
       ['/api/grillas', { grillas: 'no' }],
-      ['/api/grillas', { grillas: [{ ...grillas[0], clases: [{ ...grillas[0].clases[0], alumnos: -3 }] }] }],
+      ['/api/grillas', { grillas: [] }],
+      ['/api/grillas', { grillas: [{ ...grillas[0], horas: [{ id: 'x', nombre: 'x', inicio: '09:00', fin: '08:00' }] }] }],
+      ['/api/grillas', { grillas: [{ ...grillas[0], horas: [{ id: 'x', nombre: 'x', inicio: '9:00' }] }] }],
       ['/api/plano', { nombres: { '../x': 'Aula' } }],
       ['/api/plano', { cancelados: ['pb 1'] }],
     ]) {

@@ -17,6 +17,13 @@ const obtenerHashFicticio = () => {
 // Login: valida credenciales con bcrypt y emite un JWT.
 // Anti-enumeración: usuario inexistente, deshabilitado y contraseña incorrecta
 // devuelven el mismo 401 y tardan lo mismo (siempre se corre bcrypt).
+// Área de una jefatura ("matematica"), para mostrarla en el panel.
+async function nombreDeArea(usuario) {
+  if (usuario.rol !== ROLES.JEFATURA_AREA || !usuario.area_id) return null;
+  const area = await db.obtenerFila('SELECT nombre FROM areas WHERE id = ?', usuario.area_id);
+  return area ? area.nombre : null;
+}
+
 // Anti fuerza bruta: tope de intentos fallidos por IP y por usuario (utils/intentos.js).
 async function iniciarSesion(req, res) {
   const { username, password } = req.body || {};
@@ -42,7 +49,7 @@ async function iniciarSesion(req, res) {
 
   try {
     const usuario = await db.obtenerFila(
-      'SELECT id, username, password_hash, rol, area_id, activo, token_version FROM usuarios WHERE username = ?',
+      'SELECT id, username, nombre, password_hash, rol, area_id, activo, token_version FROM usuarios WHERE username = ?',
       username
     );
 
@@ -64,8 +71,10 @@ async function iniciarSesion(req, res) {
       usuario: {
         id: usuario.id,
         username: usuario.username,
+        nombre: usuario.nombre || null,
         rol: usuario.rol,
         area_id: usuario.area_id,
+        area: await nombreDeArea(usuario),
       },
     });
   } catch (error) {
@@ -100,7 +109,7 @@ async function cerrarSesion(req, res) {
 async function obtenerUsuario(req, res) {
   try {
     const usuario = await db.obtenerFila(
-      'SELECT id, username, rol, area_id, password_change_allowed, password_change_count FROM usuarios WHERE id = ?',
+      'SELECT id, username, nombre, rol, area_id, password_change_allowed, password_change_count FROM usuarios WHERE id = ?',
       req.usuario.id
     );
 
@@ -111,6 +120,7 @@ async function obtenerUsuario(req, res) {
     const respuesta = {
       id: usuario.id,
       username: usuario.username,
+      nombre: usuario.nombre || null,
       rol: usuario.rol,
       area_id: usuario.area_id,
       password_change_allowed: !!usuario.password_change_allowed,
@@ -118,8 +128,8 @@ async function obtenerUsuario(req, res) {
     };
 
     if (usuario.rol === ROLES.JEFATURA_AREA && usuario.area_id) {
-      const area = await db.obtenerFila('SELECT nombre FROM areas WHERE id = ?', usuario.area_id);
-      respuesta.destinos = area ? [area.nombre] : [];
+      respuesta.area = await nombreDeArea(usuario);
+      respuesta.destinos = respuesta.area ? [respuesta.area] : [];
     } else if (usuario.rol === ROLES.SERVIDOR) {
       respuesta.destinos = ['server'];
     } else if (usuario.rol === ROLES.DIRECCION) {

@@ -1,60 +1,39 @@
-import { useEffect, useState } from "react";
-import { conId, guardarLocal, leerLocal } from "./almacen.js";
-import { enviar } from "./conexion.js";
+import { tokenActual } from "./conexion.js";
 import { guardarGrillasEnServidor } from "./services/api.js";
-import { grillaInicial, horas } from "./panelData.js";
+import { cargarAsignaciones, estadoActual, ponerGrillas, useAsignaciones } from "./asignaciones.js";
 
-/* Grillas de Espacios y horarios. Las edita Grilla.jsx y las lee el plano del
-   Tablero. Se guardan en el servidor (sección "grillas", sólo con sesión) y
-   este navegador se queda una copia por si el servidor no responde. */
-const CLAVE = "tec1-grillas";
+/* Grillas de Espacios y horarios (Básico, Superior…) y sus módulos, cada uno
+   con su hora de inicio y fin. Las clases NO van acá: son asignaciones
+   (asignaciones.js), las mismas que muestra el plano.
 
-export const horasBase = () => horas.map((nombre) => ({ id: nombre, nombre }));
+   Viven en el backend (tablas grillas y modulos) y llegan con el resto de los
+   datos del plano. */
 
-/* Una grilla por ciclo para empezar; después se crean las que hagan falta
-   (por turno, por taller…), cada una con sus propios horarios. */
-const iniciales = () =>
-  ["Básico", "Superior"].map((nombre) => ({
-    id: nombre,
-    nombre,
-    horas: horasBase(),
-    clases: grillaInicial.filter((c) => c.ciclo === nombre),
-  }));
+/* Módulos de una grilla nueva: los de siempre, sin hora (la carga la escuela). */
+export const horasBase = () =>
+  ["1°/2°", "3°/4°", "5°/6°", "7°/8°"].map((nombre) => ({ id: nombre, nombre, inicio: null, fin: null }));
 
-/* Sin la forma esperada valen las grillas de ejemplo. */
-const sanear = (datos) => {
-  const validas = conId(datos)
-    .filter((g) => Array.isArray(g.horas) && Array.isArray(g.clases))
-    .map((g) => ({ ...g, horas: conId(g.horas), clases: conId(g.clases) }));
-  return validas.length ? validas : iniciales();
-};
-
-let lista = sanear(leerLocal(CLAVE));
-const oyentes = new Set();
-
-const persistir = () => {
-  guardarLocal(CLAVE, lista);
-  oyentes.forEach((fn) => fn(lista));
-};
-
-/* null = nadie guardó grillas todavía: valen las de ejemplo. */
-export const hidratarGrillas = (deServidor) => {
-  lista = deServidor ? sanear(deServidor) : iniciales();
-  persistir();
-};
-
-/* `cambio(lista)` devuelve la lista nueva; se aplica al instante y se manda. */
-export const cambiarGrillas = (cambio) => {
-  lista = cambio(lista);
-  persistir();
-  return enviar((token) => guardarGrillasEnServidor(token, lista));
-};
+/* `cambio(lista)` devuelve la lista nueva. Se muestra al instante; si el
+   servidor la rechaza (un horario que hace chocar clases, sin conexión) se
+   vuelve a lo guardado y se devuelve el error para avisarlo. */
+export async function cambiarGrillas(cambio) {
+  const antes = estadoActual().datos.grillas;
+  const nuevas = cambio(antes);
+  ponerGrillas(nuevas);
+  try {
+    const token = tokenActual();
+    if (!token) throw new Error("La sesión se cerró. Volvé a ingresar.");
+    const { grillas } = await guardarGrillasEnServidor(token, nuevas);
+    ponerGrillas(grillas);
+    // Borrar un horario o una grilla se lleva sus clases.
+    await cargarAsignaciones();
+    return { ok: true };
+  } catch (error) {
+    ponerGrillas(antes);
+    return { ok: false, error };
+  }
+}
 
 export function useGrillas() {
-  const [actual, setActual] = useState(lista);
-  useEffect(() => {
-    oyentes.add(setActual);
-    return () => oyentes.delete(setActual);
-  }, []);
-  return actual;
+  return useAsignaciones().datos.grillas;
 }

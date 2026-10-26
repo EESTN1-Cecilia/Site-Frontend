@@ -37,6 +37,7 @@ export const accesos = {
   "/panel/sitio/pagina": ["direccion", "secretaria", "jefatura", "server"],
   "/panel/server": ["direccion", "server"],
   "/panel/direccion": ["direccion"],
+  "/panel/cartelera": ["direccion", "jefatura", "server"],
 };
 
 /* Quién es dueño de cada sección y puede modificarla.
@@ -54,6 +55,8 @@ export const edicion = {
   "/panel/sitio/pagina": ["secretaria", "jefatura", "server"],
   "/panel/server": ["server"],
   "/panel/direccion": [],
+  /* Cada uno carga en su nivel (Dirección > Jefatura > EMATP): lo decide el backend. */
+  "/panel/cartelera": ["jefatura", "server"],
 };
 
 export const puede = (usuario, ruta) =>
@@ -175,6 +178,7 @@ export const entrarConBackend = async (username, password, recordar = true) => {
       rol: normalizarRol(respuesta.usuario.rol),
       usuario: respuesta.usuario.username,
       nombre: respuesta.usuario.nombre || respuesta.usuario.username,
+      area: respuesta.usuario.area || null,
     },
     recordar,
   );
@@ -201,6 +205,7 @@ export const restaurarSesion = async () => {
         rol: normalizarRol(actual.rol),
         usuario: actual.username,
         nombre: actual.nombre || actual.username,
+        area: actual.area || null,
       },
       sesionRecordada(),
     );

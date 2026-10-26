@@ -5,7 +5,7 @@ const db = require('../database/db');
 const RONDAS_BCRYPT = 12;
 
 // Las cuentas de sector que crea seed.js (misma lista).
-const SECTORES = ['jefatura_matematica', 'jefatura_lengua', 'ematp'];
+const SECTORES = ['daniela_monje', 'mariano_cipres', 'ematp'];
 
 // Vuelve las cuentas del seed a las contraseñas del .env: "admin" a la de
 // ADMIN_PASSWORD y las de sector a la de SEED_PASSWORD. Sirve para probar el

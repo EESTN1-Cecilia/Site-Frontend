@@ -383,78 +383,8 @@ const guardarProyectos = responder('guardarProyectos', (req, res) =>
   })
 );
 
-// ---------- Panel: grillas y plano (sólo con sesión, no van al sitio) ----------
-
-// GET /api/panel: lo que el panel necesita además del contenido público.
-const obtenerPanel = responder('obtenerPanel', async (req, res) =>
-  res.json({ grillas: await leerSeccion('grillas'), plano: await leerSeccion('plano') })
-);
-
-const numero = (valor, nombre, max) => {
-  const n = Number(valor ?? 0);
-  if (!Number.isInteger(n) || n < 0 || n > max) falla(`${nombre} tiene que ser un número entre 0 y ${max}`);
-  return n;
-};
-
-// PUT /api/grillas { grillas }: todas las grillas de Espacios y horarios.
-// Los ids de grillas y horarios pueden traer tildes o "°" ("Básico", "1°/2°").
-const guardarGrillas = responder('guardarGrillas', async (req, res) => {
-  const grillas = lista((req.body || {}).grillas, 'grillas', 50).map((g, i) => {
-    if (!esObjeto(g)) falla(`grillas[${i}] inválida`);
-    return {
-      id: texto(g.id, `grillas[${i}].id`, 100),
-      nombre: texto(g.nombre, `grillas[${i}].nombre`, 100),
-      horas: lista(g.horas, `grillas[${i}].horas`, 30).map((h, j) => {
-        if (!esObjeto(h)) falla(`grillas[${i}].horas[${j}] inválido`);
-        return { id: texto(h.id, 'id de horario', 100), nombre: texto(h.nombre, 'horario', 100) };
-      }),
-      clases: lista(g.clases, `grillas[${i}].clases`, 500).map((c, j) => {
-        if (!esObjeto(c)) falla(`grillas[${i}].clases[${j}] inválida`);
-        return {
-          id: texto(c.id, 'id de clase', 100),
-          ciclo: textoOpcional(c.ciclo, 'ciclo', 100),
-          grupo: textoOpcional(c.grupo, 'grupo', 100),
-          curso: textoOpcional(c.curso, 'curso', 100),
-          alumnos: numero(c.alumnos, 'alumnos', 1000),
-          materia: textoOpcional(c.materia, 'materia', 200),
-          profesor: textoOpcional(c.profesor, 'profesor', 200),
-          aula: textoOpcional(c.aula, 'aula', 100),
-          dia: textoOpcional(c.dia, 'dia', 20),
-          hora: texto(c.hora, 'hora', 100),
-          ausente: c.ausente === true,
-        };
-      }),
-    };
-  });
-
-  await guardarSeccion('grillas', grillas, req.usuario.id);
-  return res.json({ grillas });
-});
-
-// PUT /api/plano { nombres, cancelados }: nombres cambiados de los salones
-// ({ "pb-3": "Aula 8" }) y los salones cancelados (ids).
-const guardarPlano = responder('guardarPlano', async (req, res) => {
-  const cuerpo = req.body;
-  if (!esObjeto(cuerpo)) falla('El plano tiene que ser un objeto');
-  const entradas = Object.entries(esObjeto(cuerpo.nombres) ? cuerpo.nombres : {});
-  if (entradas.length > 200) falla('nombres tiene demasiados elementos');
-
-  const plano = {
-    nombres: Object.fromEntries(
-      entradas.map(([id, nombre]) => [identificador(id, 'salón'), texto(nombre, `nombre de ${id}`, 100)])
-    ),
-    cancelados: lista(cuerpo.cancelados ?? [], 'cancelados', 200).map((id) => identificador(id, 'salón')),
-  };
-
-  await guardarSeccion('plano', plano, req.usuario.id);
-  return res.json({ plano });
-});
-
 module.exports = {
   obtenerContenido,
-  obtenerPanel,
-  guardarGrillas,
-  guardarPlano,
   guardarTextos,
   guardarAjustes,
   listarPublicaciones,

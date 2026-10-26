@@ -17,7 +17,10 @@
     "start": "node app.js",
     "restablecer-admin": "node src/scripts/restablecer-admin.js",
     "restablecer-cuentas": "node src/scripts/restablecer-cuentas.js",
-    "test": "node --test src/test/*.test.js"
+    "test": "node --test src/test/*.test.js",
+    "importar-organizacion": "node src/scripts/importar-organizacion.js",
+    "depurar-catalogos": "node src/scripts/depurar-catalogos.js",
+    "unificar-grillas": "node src/scripts/unificar-grillas.js"
   },
   "keywords": [],
   "author": "",
