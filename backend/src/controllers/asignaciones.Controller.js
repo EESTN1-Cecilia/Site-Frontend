@@ -669,6 +669,7 @@ const copiarGrilla = responder('copiarGrilla', (req, res) =>
     if (!nombre) falla('Poné un nombre a la grilla nueva');
     const periodo = textoOpcional(cuerpo.periodo, 'período', 60).trim();
     const archivar = cuerpo.archivarOriginal === true;
+    if (archivar && original.principal) falla('La grilla principal no se archiva: la copia queda como consulta y los cambios se hacen sobre la principal');
     const nueva = `${original.id.slice(0, 60)}-c${Date.now().toString(36)}`;
 
     const orden = (await db.obtenerFila('SELECT COALESCE(MAX(orden), -1) + 1 AS n FROM grillas')).n;
@@ -794,6 +795,22 @@ const guardarGrillas = responder('guardarGrillas', (req, res) =>
     });
     if (!grillas.length) falla('Tiene que quedar al menos una grilla');
     if (new Set(grillas.map((g) => g.id)).size !== grillas.length) falla('Hay dos grillas con el mismo id');
+
+    // La grilla principal es permanente: no se borra ni se archiva, y sus
+    // horarios con clases no se quitan (así no se pierden asignaciones).
+    const principal = await db.obtenerFila('SELECT id, nombre FROM grillas WHERE principal = 1');
+    if (principal) {
+      const enviada = grillas.find((g) => g.id === principal.id);
+      if (!enviada) falla(`La grilla principal «${principal.nombre}» no se puede eliminar`);
+      if (!enviada.vigente) falla(`La grilla principal «${principal.nombre}» no se puede archivar`);
+      const claves = enviada.horas.map((h) => h.id);
+      const conClases = await db.obtenerFila(
+        `SELECT m.nombre FROM modulos m WHERE m.grilla_id = ? AND m.clave NOT IN (${claves.map(() => '?').join(', ') || "''"})
+           AND EXISTS (SELECT 1 FROM asignaciones a WHERE a.modulo_id = m.id) LIMIT 1`,
+        principal.id, ...claves
+      );
+      if (conClases) falla(`El horario ${conClases.nombre} de la grilla principal tiene clases: quitalas antes de eliminarlo`);
+    }
 
     const ids = grillas.map((g) => g.id);
     const borradas = await db.obtenerFilas(

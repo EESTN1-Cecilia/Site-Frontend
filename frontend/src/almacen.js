@@ -40,12 +40,14 @@ const COPIAS = [
   "tec1-publicaciones",
   "tec1-grillas",
   "tec1-plano",
+  "tec1-asignaciones",
 ];
 
 export const borrarCopias = () =>
   COPIAS.forEach((clave) => {
     try {
       localStorage.removeItem(clave);
+      sessionStorage.removeItem(clave);
     } catch {
       /* nada que borrar */
     }

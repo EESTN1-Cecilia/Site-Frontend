@@ -388,6 +388,11 @@ async function migrar(db) {
     }
   });
 
+  // Grilla principal de Espacios y horarios (una sola, marcada con principal = 1).
+  await db.agregarColumnaSiNoExiste('grillas', 'principal', 'INTEGER NOT NULL DEFAULT 0');
+  await db.ejecutar('CREATE UNIQUE INDEX IF NOT EXISTS idx_grillas_principal ON grillas(principal) WHERE principal = 1');
+  await inicializarPrincipal(db);
+
   // Los textos de relleno que entraron al catálogo en la versión anterior.
   await unaVez(db, 'catalogo-sin-relleno', async () => {
     await db.ejecutar(
@@ -396,6 +401,42 @@ async function migrar(db) {
     await db.ejecutar(
       "UPDATE materias SET activo = 0 WHERE nombre = 'Materia' AND id NOT IN (SELECT materia_id FROM asignaciones WHERE materia_id IS NOT NULL)"
     );
+  });
+}
+
+// La organización institucional (PDF «ORGANIZACION OCTUBRE», extraído a
+// datos/organizacion-octubre-2026.json) es la grilla principal y permanente.
+// Se carga UNA sola vez: si ya hay grilla principal, no se toca; si la grilla
+// del PDF ya estaba importada, sólo se la marca como principal (sus datos
+// actuales quedan como están). Ni los cambios de semana ni las copias la
+// reemplazan. En los tests no se carga sola (INICIALIZAR_GRILLA=1 la fuerza).
+async function inicializarPrincipal(db) {
+  if (process.env.NODE_ENV === 'test' && !process.env.INICIALIZAR_GRILLA) return;
+  const actual = await db.obtenerFila('SELECT id FROM grillas WHERE principal = 1');
+  if (actual) {
+    await db.ejecutar('UPDATE grillas SET vigente = 1 WHERE id = ? AND vigente = 0', actual.id);
+    return;
+  }
+  const { analizar, aplicar } = require('../utils/importacion');
+  const datos = require('../datos/organizacion-octubre-2026.json');
+  const existentes = {
+    materias: await db.obtenerFilas('SELECT id, nombre FROM materias'),
+    docentes: await db.obtenerFilas('SELECT id, nombre FROM docentes'),
+    grupos: await db.obtenerFilas('SELECT id, nombre FROM grupos'),
+    salones: await db.obtenerFilas('SELECT id, nombre, clasificacion FROM salones'),
+  };
+  const informe = analizar(datos, existentes);
+  const id = informe.clases[0]?.grilla.id;
+  if (!id) return;
+  const yaEstaba = await db.obtenerFila('SELECT 1 FROM grillas WHERE id = ?', id);
+  if (!yaEstaba) {
+    const r = await aplicar(db, informe, { clases: true, fuente: datos.fuente, compartidas: true });
+    console.log(`[Grilla principal] Cargada desde ${datos.fuente}: ${r.clases} clases${r.conflictos.length ? `, ${r.conflictos.length} sin cargar por superposición` : ''}.`);
+  }
+  await db.transaccion(async () => {
+    await db.ejecutar('UPDATE grillas SET principal = 0 WHERE principal = 1');
+    await db.ejecutar('UPDATE grillas SET principal = 1, vigente = 1 WHERE id = ?', id);
+    await db.ejecutar("INSERT OR IGNORE INTO migraciones (nombre) VALUES ('grilla-principal')");
   });
 }
 
@@ -413,7 +454,8 @@ const lista = (json) => {
 };
 
 async function leerGrillas(db) {
-  const grillas = await db.obtenerFilas('SELECT * FROM grillas ORDER BY orden, id');
+  // La principal va primero: es la que se abre al entrar.
+  const grillas = await db.obtenerFilas('SELECT * FROM grillas ORDER BY principal DESC, orden, id');
   const modulos = await db.obtenerFilas('SELECT * FROM modulos ORDER BY orden, id');
   return grillas.map((g) => ({
     id: g.id,
@@ -423,6 +465,7 @@ async function leerGrillas(db) {
     turno: g.turno ?? '',
     ciclo: g.ciclo ?? '',
     vigente: g.vigente !== 0,
+    principal: g.principal === 1,
     // Vacío = todos los días / todos los grupos / todas las materias.
     dias: lista(g.dias) ?? DIAS,
     grupos: lista(g.grupos) ?? [],
