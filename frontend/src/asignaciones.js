@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { tokenActual } from "./conexion.js";
+import { sesionRecordada, tokenActual } from "./conexion.js";
 import { seSuperponen } from "./horario.js";
 import {
   agregarAlCatalogo,
@@ -42,11 +42,39 @@ const vacio = {
   estados: {},
 };
 
-let estado = { cargando: false, cargado: false, error: "", enVivo: false, datos: vacio, token: null };
+/* Última grilla traída del servidor, guardada en el navegador de esta sesión
+   (donde está el token). Es sólo para mostrar algo al instante mientras llega
+   lo del servidor, que siempre la reemplaza: la fuente es la base de datos.
+   Se borra al entrar y al salir (borrarCopias). */
+const RESPALDO = "tec1-asignaciones";
+const lugar = () => (sesionRecordada() ? localStorage : sessionStorage);
+const leerRespaldo = () => {
+  try {
+    if (!tokenActual()) return null;
+    const r = JSON.parse(lugar().getItem(RESPALDO));
+    return r && Array.isArray(r.grillas) && Array.isArray(r.asignaciones) && r.grillas.length ? r : null;
+  } catch {
+    return null;
+  }
+};
+const guardarRespaldo = (datos) => {
+  try {
+    lugar().setItem(RESPALDO, JSON.stringify(datos));
+  } catch {
+    /* sin lugar o bloqueado: sólo en memoria */
+  }
+};
+const inicial = () => {
+  const r = leerRespaldo();
+  return { cargando: false, cargado: false, error: "", enVivo: false, datos: r ? { ...vacio, ...r } : vacio, token: r ? tokenActual() : null };
+};
+
+let estado = inicial();
 const oyentes = new Set();
 
 const cambiar = (nuevo) => {
   estado = { ...estado, ...nuevo };
+  if (nuevo.datos && estado.cargado && estado.datos.grillas.length) guardarRespaldo(estado.datos);
   oyentes.forEach((fn) => fn(estado));
 };
 const conDatos = (cambio) => cambiar({ datos: { ...estado.datos, ...cambio(estado.datos) } });

@@ -91,7 +91,8 @@ export default function Grilla({ ruta, params, usuario }) {
 
   const vigentesG = grillas.filter((g) => g.vigente !== false);
   const archivadas = grillas.filter((g) => g.vigente === false);
-  const actual = grillas.find((g) => g.id === actualId) ?? vigentesG[0] ?? grillas[0];
+  /* Al entrar se abre la grilla principal (permanente, guardada en el servidor). */
+  const actual = grillas.find((g) => g.id === actualId) ?? grillas.find((g) => g.principal) ?? vigentesG[0] ?? grillas[0];
   const guardadas = useMemo(
     () => (actual ? datos.asignaciones.filter((a) => a.grilla_id === actual.id) : []),
     [datos.asignaciones, actual],
@@ -210,6 +211,7 @@ export default function Grilla({ ruta, params, usuario }) {
   const hacerVigente = () => enActual(() => ({ vigente: true }), `«${actual.nombre}» vuelve a ser vigente.`);
 
   const quitarGrilla = async () => {
+    if (actual.principal) return;
     if (!window.confirm(`¿Eliminar la grilla “${actual.nombre}”${guardadas.length ? ` con sus ${guardadas.length} clases` : ""}?`)) return;
     if (await cambiarGrilla((previo) => previo.filter((g) => g.id !== actual.id), `Se eliminó la grilla ${actual.nombre}.`)) elegir(null);
   };
@@ -423,7 +425,7 @@ export default function Grilla({ ruta, params, usuario }) {
               Configurar grilla
             </button>
           )}
-          {editable && grillas.length > 1 && (
+          {editable && grillas.length > 1 && !actual.principal && (
             <button className="boton boton--fino boton--peligro" onClick={quitarGrilla}>
               <Icon icon="ph:trash" width={15} height={15} aria-hidden="true" />
               Eliminar grilla
