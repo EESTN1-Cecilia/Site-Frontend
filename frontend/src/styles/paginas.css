@@ -622,6 +622,28 @@
   color: var(--rojo-secundario);
   font-size: 15px;
   font-weight: 500;
+  transition: color 180ms;
+}
+
+.nota__link svg {
+  transition: transform 200ms;
+}
+
+.nota__link:hover {
+  color: var(--bordo-oscuro);
+}
+
+.nota__link:hover svg {
+  transform: translateX(3px);
+}
+
+.nota__foto--abre {
+  cursor: pointer;
+}
+
+.nota__link:focus-visible {
+  outline: 2px solid var(--rojo-institucional);
+  outline-offset: 3px;
 }
 
 /* ---------- Atajos del inicio ---------- */
@@ -1797,7 +1819,7 @@ main > .pagina-libre {
 
 .pagina-libre .punto__numero::before {
   content: counter(punto, decimal-leading-zero);
-  font-size: 26px;
+  font-size: 16px;
 }
 
 /* Las preguntas frecuentes llegan sin el ícono de la flecha (el editor las

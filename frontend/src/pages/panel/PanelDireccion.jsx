@@ -112,7 +112,7 @@ export default function PanelDireccion({ usuario }) {
           <div className="direccion__identidad">
             <img className="direccion__escudo" src={logo} alt="Logo de la E.E.S. Técnica N° 1" width="200" height="200" />
             <div>
-              <p className="direccion__escuela">E.E.S. Técnica N° 1 · Cecilia Berdichevski</p>
+              <p className="direccion__escuela">E.E.S. Técnica N° 1 · Cecilia Berdichevsky</p>
               <h1 className="direccion__titulo" id="direccion-titulo">
                 Dirección
               </h1>

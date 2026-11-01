@@ -48,7 +48,7 @@ export default function PanelJefatura({ usuario }) {
             height="200"
           />
           <div>
-            <p className="institucional__escuela">E.E.S. Técnica N° 1 · Cecilia Berdichevski</p>
+            <p className="institucional__escuela">E.E.S. Técnica N° 1 · Cecilia Berdichevsky</p>
             <h1 className="institucional__titulo" id="institucional-titulo">
               Jefatura de Área{area && <span> · {area}</span>}
             </h1>

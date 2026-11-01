@@ -1,6 +1,6 @@
-# Sitio de la Técnica 1 · Cecilia Berdichevski
+# Sitio de la Técnica 1 · Cecilia Berdichevsky
 
-Sitio web de la E.E.S. Técnica N°1 "Cecilia Berdichevski" (Esteban Echeverría). Tiene dos partes:
+Sitio web de la E.E.S. Técnica N°1 "Cecilia Berdichevsky" (Esteban Echeverría). Tiene dos partes:
 
 - **Sitio público**: lo que ven alumnos y familias (portada, evaluación de saberes, intensificación y previas, novedades, inscripción y proyectos de cada orientación).
 - **Sistema de gestión** (`/panel`): lo usa el personal para cargar contenido, editar las páginas del sitio y administrar cuentas. Cada rol ve y edita solo lo que le corresponde.

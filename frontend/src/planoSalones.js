@@ -49,6 +49,8 @@ export const salonesPorPiso = {
     ["1p-15", "Aula 10", 53.4, 80.7],
     // Recinto chico pegado a la Biblioteca (abajo).
     ["1p-18", "Aula 17", 7.4, 40.6, true],
+    // Preceptoría del primer piso: recinto chico sin nombre en los PDF (arriba de los baños, junto al Aula 15).
+    ["1p-19", "Preceptoría", 42.3, 31.2, true],
   ],
 };
 

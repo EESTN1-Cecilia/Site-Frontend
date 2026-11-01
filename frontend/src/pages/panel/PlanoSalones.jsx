@@ -128,6 +128,93 @@ export default function PlanoSalones({ editable, params }) {
     };
   }, [fijado]);
 
+  /* Carteles de los espacios fijos: un rótulo por recinto (o por grupo, como
+     Secretaría y Dirección), centrado en la caja que ocupa y con la letra
+     calculada para que entre: lo que limita es el ancho de la línea más larga
+     o el alto de todas las líneas. Las medidas van en cqw (% del ancho del
+     plano), así el texto sigue al dibujo al achicar o hacer zoom. */
+  const carteles = Object.values(
+    visibles
+      .filter((s) => s.fijo && s.zona)
+      .reduce((grupos, s) => {
+        const clave = s.fijo.grupo ?? s.id;
+        (grupos[clave] ??= { clave, fijo: s.fijo, zonas: [] }).zonas.push(s.zona);
+        return grupos;
+      }, {}),
+  ).map(({ clave, fijo, zonas }) => {
+    const puntos = zonas.flat();
+    const ys = puntos.map((p) => p[1]);
+    const [y0, y1] = [Math.min(...ys), Math.max(...ys)];
+    // Tramo horizontal [izq, der] que ocupa el recinto a la altura y (en %).
+    const tramo = (y) => {
+      const cortes = [];
+      for (const z of zonas) {
+        z.forEach(([xa, ya], i) => {
+          const [xb, yb] = z[(i + 1) % z.length];
+          if ((ya <= y && yb > y) || (yb <= y && ya > y)) cortes.push(xa + ((y - ya) / (yb - ya)) * (xb - xa));
+        });
+      }
+      return cortes.length ? [Math.min(...cortes), Math.max(...cortes)] : null;
+    };
+    // Centro del recinto (centroide del área) para el alto; el ancho se ajusta abajo.
+    let area = 0;
+    let cy = 0;
+    for (const z of zonas) {
+      z.forEach(([xa, ya], i) => {
+        const [xb, yb] = z[(i + 1) % z.length];
+        const f = xa * yb - xb * ya;
+        area += f;
+        cy += (ya + yb) * f;
+      });
+    }
+    const y = Math.min(Math.max(area ? cy / (3 * area) : (y0 + y1) / 2, y0), y1) - (y1 - y0) * 0.08; // un poco arriba: ahí el recinto en diagonal es más ancho
+    const palabras = fijo.rotulo.split(" ");
+    let lineas = [fijo.rotulo];
+    if (palabras.length > 1 && fijo.rotulo.length > 12) {
+      // Corta en el espacio más cercano al medio.
+      let mejor = 1;
+      for (let i = 1; i < palabras.length; i++) {
+        const dif = (n) => Math.abs(palabras.slice(0, n).join(" ").length - fijo.rotulo.length / 2);
+        if (dif(i) < dif(mejor)) mejor = i;
+      }
+      lineas = [palabras.slice(0, mejor).join(" "), palabras.slice(mejor).join(" ")];
+    }
+    const largo = Math.max(...lineas.map((l) => l.length));
+    // El rótulo es una pastilla: además del texto lleva ~0,9em de relleno a los lados y ~0,3em arriba y abajo.
+    // Se achica hasta que la pastilla entre en el recinto a la altura de su borde de arriba y de abajo
+    // (en un recinto en diagonal el tramo útil es el más angosto de los dos).
+    const alturaEm = lineas.length * 1.15 + 0.3;
+    const anchoEm = largo * 0.6 + 0.9;
+    // Recinto angosto y alto (como la Preceptoría del primer piso): el rótulo va de costado, leyendo de abajo hacia arriba.
+    const ancho0 = Math.max(...puntos.map((p) => p[0])) - Math.min(...puntos.map((p) => p[0]));
+    const alto0 = ((y1 - y0) * piso.alto) / piso.ancho; // en cqw
+    const letraH = (ancho0 * 0.92) / anchoEm;
+    const letraV = Math.min((alto0 * 0.92) / anchoEm, (ancho0 * 0.9) / alturaEm);
+    if (lineas.length === 1 && letraV > letraH * 1.3) {
+      const xs = puntos.map((p) => p[0]);
+      return { clave, fijo, lineas, letra: Math.min(letraV, 1.45), x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (y0 + y1) / 2, vertical: true };
+    }
+    let letra = 1.45;
+    let x = (Math.min(...puntos.map((p) => p[0])) + Math.max(...puntos.map((p) => p[0]))) / 2;
+    for (let i = 0; i < 8; i++) {
+      const mitad = ((alturaEm * letra * piso.ancho) / piso.alto / 2) * 1; // % de alto de media pastilla
+      const arriba = tramo(y - mitad) ?? tramo(y);
+      const abajo = tramo(y + mitad) ?? tramo(y);
+      const izq = Math.max(arriba[0], abajo[0]);
+      const der = Math.min(arriba[1], abajo[1]);
+      letra = Math.min(letra, ((der - izq) * 0.92) / anchoEm, (((y1 - y0) * piso.alto) / piso.ancho * 0.85) / alturaEm);
+    }
+    // Lo más cerca posible del centro del dibujo sin salirse del recinto.
+    const mitadAncho = (anchoEm * letra) / 2;
+    const mitadAlto = (alturaEm * letra * piso.ancho) / piso.alto / 2;
+    const arriba = tramo(y - mitadAlto) ?? tramo(y);
+    const abajo = tramo(y + mitadAlto) ?? tramo(y);
+    const izq = Math.max(arriba[0], abajo[0]) + mitadAncho;
+    const der = Math.min(arriba[1], abajo[1]) - mitadAncho;
+    x = izq <= der ? Math.min(Math.max(x, izq), der) : (izq + der) / 2;
+    return { clave, fijo, lineas, letra, x, y };
+  });
+
   const abrir = (salon) => {
     if (salon.institucional) {
       setFijado((f) => (f === salon.id ? null : salon.id));
@@ -147,6 +234,8 @@ export default function PlanoSalones({ editable, params }) {
   };
   // Se decide al dibujar (no al abrir): con ?espacio= los datos pueden llegar después.
   const espacioAbierto = abierto && pisos.flatMap((p) => p.salones).find((s) => s.id === abierto.espacioId);
+  // Un espacio institucional (fijo) no abre ventana ni con ?espacio= en la dirección.
+  const sinVentana = !!espacioAbierto?.institucional;
   const irAGrilla = (a) => ir(`/panel/grilla?grilla=${encodeURIComponent(a.grilla_id)}&clase=${a.id}`);
   const opciones = (lista) => lista.map((x) => [String(x.id), x.nombre]);
 
@@ -266,6 +355,14 @@ export default function PlanoSalones({ editable, params }) {
             <span>Institucional (no asignable)</span>
           </li>
           <li>
+            <span className="plano-leyenda__marca plano-leyenda__marca--fijo-azul" />
+            <span>Preceptoría (fijo)</span>
+          </li>
+          <li>
+            <span className="plano-leyenda__marca plano-leyenda__marca--fijo-bordo" />
+            <span>Secretaría, Dirección y Jefatura (fijo)</span>
+          </li>
+          <li>
             <span className="plano-leyenda__marca plano-leyenda__marca--deshabilitado" />
             <span>Deshabilitado</span>
           </li>
@@ -356,6 +453,18 @@ export default function PlanoSalones({ editable, params }) {
               .filter((s) => s.zona)
               .map((s) => {
                 const { estado } = situacion.get(s.id);
+                if (s.fijo) {
+                  // Fijo e institucional: sólo se mira. Sin foco, clic ni rótulo emergente.
+                  return (
+                    <polygon
+                      key={s.id}
+                      points={s.zona.map((p) => p.join(",")).join(" ")}
+                      className={`zona zona--fijo zona--fijo-${s.fijo.color}`}
+                      data-espacio={s.id}
+                      aria-hidden="true"
+                    />
+                  );
+                }
                 return (
                   <polygon
                     key={s.id}
@@ -383,8 +492,19 @@ export default function PlanoSalones({ editable, params }) {
                 );
               })}
           </svg>
+          {carteles.map((c) => (
+            <span
+              key={c.clave}
+              className={`plano__fijo plano__fijo--${c.fijo.color} ${c.vertical ? "plano__fijo--vertical" : ""}`}
+              style={{ left: `${c.x}%`, top: `${c.y}%`, fontSize: `${c.letra.toFixed(3)}cqw` }}
+            >
+              {c.lineas.map((l) => (
+                <span key={l}>{l}</span>
+              ))}
+            </span>
+          ))}
           {/* La Jefatura no lleva rótulo en el dibujo: sólo el contorno rayado. */}
-          {visibles.filter((s) => !(s.institucional && s.zona)).map((s) => {
+          {visibles.filter((s) => !(s.institucional && (s.zona || s.fijo))).map((s) => {
             const { estado } = situacion.get(s.id);
             const conZona = !!s.zona;
             const Etiqueta = conZona ? "span" : "button";
@@ -451,10 +571,10 @@ export default function PlanoSalones({ editable, params }) {
         })}
       </ul>
 
-      {espacioAbierto?.comun && (
+      {espacioAbierto?.comun && !sinVentana && (
         <EspacioComunModal espacio={espacioAbierto} editable={editable && cargado} alCerrar={() => setAbierto(null)} />
       )}
-      {abierto && !espacioAbierto?.comun && (
+      {abierto && !espacioAbierto?.comun && !sinVentana && (
         <AsignacionModal
           espacioId={abierto.espacioId}
           asignacion={abierto.asignacion}

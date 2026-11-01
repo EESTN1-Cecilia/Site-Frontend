@@ -3,6 +3,7 @@ import { Icon } from "@iconify/react";
 import Encabezado from "../components/Encabezado.jsx";
 import Texto, { Bloque, Caso, Dato, Imagen } from "../components/Texto.jsx";
 import Bloques from "../components/Bloques.jsx";
+import NotaModal from "../components/NotaModal.jsx";
 import ZonaLibre from "../components/ZonaLibre.jsx";
 import { Dinamico, PaginaEditable, usePaginaGuardada } from "../components/PaginaEditable.jsx";
 import { usePublicaciones } from "../publicaciones.js";
@@ -16,7 +17,7 @@ const fecha = (iso) =>
     year: "numeric",
   });
 
-function Nota({ novedad, destacada }) {
+function Nota({ novedad, destacada, onAbrir }) {
   /* La primera imagen hace de portada y el resto va en el cuerpo. */
   const bloques = novedad.bloques || [];
   const portadaIndice = bloques.findIndex((b) => b.tipo === "imagen");
@@ -33,7 +34,7 @@ function Nota({ novedad, destacada }) {
       }`}
     >
       {portada && (
-        <div className="nota__foto">
+        <div className="nota__foto nota__foto--abre" onClick={() => onAbrir(novedad.id)}>
           <Imagen id={clave(`bloque:${portada.id}`)} dueno={PUBLICACIONES} src={portada.url} />
           {novedad.borrador && <span className="nota__sello">SIN PUBLICAR</span>}
         </div>
@@ -68,16 +69,22 @@ function Nota({ novedad, destacada }) {
           <Bloques pub={novedad} bloques={links} />
         </>
       )}
-      <span className="nota__link">
+      <button
+        type="button"
+        className="nota__link"
+        aria-haspopup="dialog"
+        onClick={() => onAbrir(novedad.id)}
+      >
         <Texto id="novedades.leer">Leer más</Texto>
         <Icon icon="ph:arrow-right" width={15} height={15} aria-hidden="true" />
-      </span>
+      </button>
     </article>
   );
 }
 
 export default function Novedades({ params }) {
   const [categoria, setCategoria] = useState("Todas");
+  const [abierta, setAbierta] = useState(null);
   const publicaciones = usePublicaciones();
   const guardada = usePaginaGuardada("novedades.pagina");
 
@@ -96,6 +103,7 @@ export default function Novedades({ params }) {
   const categorias = ["Todas", ...new Set(todas.map((n) => n.categoria))];
   const lista = todas.filter((n) => categoria === "Todas" || n.categoria === categoria);
   const [destacada, ...resto] = lista;
+  const activa = lista.find((n) => n.id === abierta);
 
   /* Partes automáticas: los filtros por categoría y las notas publicadas. */
   const filtrosDeCategoria = (
@@ -114,13 +122,23 @@ export default function Novedades({ params }) {
 
   const notas = (
     <>
-      {destacada && <Nota novedad={destacada} destacada />}
+      {destacada && <Nota novedad={destacada} destacada onAbrir={setAbierta} />}
 
       <div className="notas">
         {resto.map((novedad) => (
-          <Nota novedad={novedad} key={novedad.id} />
+          <Nota novedad={novedad} key={novedad.id} onAbrir={setAbierta} />
         ))}
       </div>
+
+      {activa && (
+        <NotaModal
+          novedad={activa}
+          lista={lista}
+          fecha={fecha}
+          onCambiar={setAbierta}
+          onCerrar={() => setAbierta(null)}
+        />
+      )}
 
       <Caso visible={lista.length === 0} cuando="cuando no hay novedades en la categoría elegida">
         <p className="vacio">

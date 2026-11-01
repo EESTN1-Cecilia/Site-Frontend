@@ -36,7 +36,7 @@ export default function Login({ motivo }) {
         <img className="login__logo" src={logo} alt="Logo Técnica 1" />
         <h1 className="login__marca-titulo">
           Técnica 1
-          <span>Cecilia Berdichevski</span>
+          <span>Cecilia Berdichevsky</span>
         </h1>
         <p className="login__marca-texto">
           Un solo acceso para toda la escuela. Cada persona ve lo que le
