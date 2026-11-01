@@ -1,6 +1,6 @@
-import cicloBasicoImage from "./assets/images/ciclo-basico-taller.jpg";
-import informaticaImage from "./assets/images/informatica-robotica.jpg";
-import programacionImage from "./assets/images/programacion-proyectos.jpg";
+import cicloBasicoImage from "./assets/images/propuesta-ciclo-basico.webp";
+import informaticaImage from "./assets/images/propuesta-informatica.webp";
+import programacionImage from "./assets/images/propuesta-programacion.webp";
 
 export const imageBase = "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/";
 export const logo = `${imageBase}logoTec-joLAT0Y1wGN9vfVIUw2ZyQQuMMXJ85.png`;

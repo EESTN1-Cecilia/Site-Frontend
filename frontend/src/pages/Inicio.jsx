@@ -438,7 +438,7 @@ export default function Inicio({ params }) {
                     <Texto id="inicio.hero.titulo">Técnica 1</Texto>
                     <br />
                     <Texto id="inicio.hero.destacado" clase="hero__destacado">
-                      Cecilia Berdichevski
+                      Cecilia Berdichevsky
                     </Texto>
                   </Bloque>
                 );

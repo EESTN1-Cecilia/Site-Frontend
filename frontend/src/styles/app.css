@@ -779,46 +779,209 @@ img {
 
 
 /* ---------- Identidad ---------- */
-.identidad {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: clamp(32px, 5vw, 64px);
-  align-items: start;
+/* La sección ya recibe el aire de abajo de la anterior: sin relleno arriba el
+   espacio entre las dos queda a la mitad. */
+.seccion:has(.identidad) {
+  padding-top: 0;
 }
 
-.puntos {
+.identidad {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
+  gap: clamp(36px, 5vw, 64px);
+}
+
+/* Línea de vida: los cuatro valores como un recorrido. En celular va en
+   vertical; desde 820px, en horizontal a lo ancho. Cada uno es un nodo
+   numerado y el último (a dónde se llega) va relleno. */
+.puntos {
+  --hueco: clamp(20px, 3vw, 40px);
+
+  display: flex;
+  flex-direction: column;
+  padding-top: 6px;
 }
 
 .punto {
-  display: flex;
-  align-items: flex-start;
-  gap: 18px;
-  padding: clamp(18px, 2.5vw, 24px);
-  border-radius: 20px;
-  background: var(--tarjeta);
-  border: 1px solid var(--gris-claro);
+  --nodo: 52px;
+
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--nodo) 1fr;
+  align-items: start;
+  gap: clamp(16px, 2.4vw, 24px);
+  padding-bottom: clamp(22px, 3vw, 34px);
+}
+
+.punto:last-child {
+  padding-bottom: 0;
+}
+
+/* Tramo de línea hacia el nodo siguiente. */
+.punto:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--nodo) + 4px);
+  bottom: 4px;
+  left: calc(var(--nodo) / 2 - 1px);
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(var(--rojo-suave), var(--rojo-claro));
 }
 
 .punto__numero {
-  color: var(--rojo-secundario);
-  font-size: 26px;
-  font-weight: 600;
-  opacity: 0.5;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--nodo);
+  height: var(--nodo);
+  border: 2px solid var(--rojo-suave);
+  border-radius: 50%;
+  background: var(--blanco);
+  box-shadow: 0 0 0 6px var(--blanco);
+  color: var(--bordo-oscuro);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  transition: background 220ms, border-color 220ms, color 220ms, transform 220ms;
+}
+
+.punto:last-child .punto__numero,
+.punto:hover .punto__numero {
+  border-color: var(--rojo-institucional);
+  background: var(--rojo-institucional);
+  color: var(--blanco);
+}
+
+.punto:hover .punto__numero {
+  transform: scale(1.06);
 }
 
 .punto__titulo {
+  padding-top: 8px;
   color: var(--bordo-oscuro);
-  font-size: clamp(18px, 2vw, 20px);
+  font-size: clamp(20px, 2.2vw, 24px);
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .punto__texto {
+  margin-top: 6px;
   color: var(--gris-oscuro);
-  font-size: 15px;
-  margin-top: 5px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Cada punto aparece al llegar a la vista (donde el navegador lo permite). */
+@supports (animation-timeline: view()) {
+  .punto {
+    animation: punto-entra linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+}
+
+@keyframes punto-entra {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+@media (max-width: 520px) {
+  .punto {
+    --nodo: 44px;
+  }
+
+  .punto__numero {
+    font-size: 14px;
+  }
+}
+
+/* ---- Pantallas anchas: cabecera en dos columnas y línea horizontal ---- */
+@media (min-width: 820px) {
+  .identidad > div:first-child {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    column-gap: clamp(40px, 6vw, 88px);
+    align-items: end;
+  }
+
+  .identidad > div:first-child > .chip {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .identidad > div:first-child > .titulo {
+    grid-column: 1;
+  }
+
+  .identidad > div:first-child > .texto {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: end;
+    margin: 0 0 6px;
+    padding-left: clamp(20px, 2.6vw, 32px);
+    border-left: 3px solid var(--rojo-claro);
+  }
+
+  .puntos {
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    column-gap: var(--hueco);
+    padding-top: 0;
+    border-top: 1px solid var(--gris-claro);
+    padding-top: clamp(28px, 4vw, 44px);
+  }
+
+  .punto {
+    --nodo: 60px;
+
+    display: block;
+    padding-bottom: 0;
+    text-align: center;
+  }
+
+  /* El tramo pasa a ser horizontal: va del centro de este nodo al centro del
+     siguiente (queda detrás del círculo). */
+  .punto:not(:last-child)::before {
+    top: calc(var(--nodo) / 2 - 1px);
+    right: calc(-50% - var(--hueco));
+    bottom: auto;
+    left: 50%;
+    width: auto;
+    height: 2px;
+    background: linear-gradient(90deg, var(--rojo-suave), var(--rojo-claro));
+  }
+
+  .punto__numero {
+    margin: 0 auto 20px;
+    font-size: 18px;
+  }
+
+  .punto__titulo {
+    padding-top: 0;
+  }
+
+  .punto__texto {
+    max-width: 26ch;
+    margin-inline: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .punto {
+    animation: none;
+  }
+
+  .punto__numero {
+    transition: none;
+  }
+
+  .punto:hover .punto__numero {
+    transform: none;
+  }
 }
 
 /* ---------- Footer ---------- */

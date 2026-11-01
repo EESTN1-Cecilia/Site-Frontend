@@ -83,7 +83,7 @@ export function Menu({ ruta, usuario, inscripcionAbierta, menuAbierto, setMenuAb
               <Texto id="inicio.menu.titulo">Técnica 1</Texto>
             </span>
             <span className="marca__bajada">
-              <Texto id="inicio.menu.bajada">CECILIA BERDICHEVSKI</Texto>
+              <Texto id="inicio.menu.bajada">CECILIA BERDICHEVSKY</Texto>
             </span>
           </span>
         </button>
@@ -114,7 +114,7 @@ export function Pie({ usuario, inscripcionAbierta, redes }) {
         <div className="footer__grid">
           <div className="footer__marca">
             <p className="footer__titulo">
-              <Texto id="inicio.pie.titulo">Técnica 1 Cecilia Berdichevski</Texto>
+              <Texto id="inicio.pie.titulo">Técnica 1 Cecilia Berdichevsky</Texto>
             </p>
             <p className="footer__bajada">
               <Texto id="inicio.pie.direccion">
@@ -166,7 +166,7 @@ export function Pie({ usuario, inscripcionAbierta, redes }) {
         </div>
         <p className="copyright">
           © {new Date().getFullYear()}{" "}
-          <Texto id="inicio.pie.copyright">Técnica 1 Cecilia Berdichevski. Todos los derechos reservados.</Texto>
+          <Texto id="inicio.pie.copyright">Técnica 1 Cecilia Berdichevsky. Todos los derechos reservados.</Texto>
         </p>
       </div>
     </footer>

@@ -15,7 +15,7 @@ import ZonaLibre from "../components/ZonaLibre.jsx";
 import { Dinamico, PaginaEditable, usePaginaGuardada } from "../components/PaginaEditable.jsx";
 import Bloques from "../components/Bloques.jsx";
 import { pasosPrevias } from "../contenido.js";
-import { ORIENTACIONES, useMesas } from "../mesas.js";
+import { useMesas } from "../mesas.js";
 import { usePublicaciones } from "../publicaciones.js";
 
 const MESAS = "/panel/mesas";
@@ -87,10 +87,33 @@ const columnas = [
   ["drive", "Drive"],
 ];
 
+/* Botones de año. De 5° a 7° hay uno por orientación. */
+const OPCIONES_ANIO = [
+  { etiqueta: "Todos" },
+  { etiqueta: "1°", anio: 1 },
+  { etiqueta: "2°", anio: 2 },
+  { etiqueta: "3°", anio: 3 },
+  { etiqueta: "4°", anio: 4 },
+  { etiqueta: "5° Inf", anio: 5, orientacion: "Informática" },
+  { etiqueta: "5° Prog", anio: 5, orientacion: "Programación" },
+  { etiqueta: "6° Inf", anio: 6, orientacion: "Informática" },
+  { etiqueta: "6° Prog", anio: 6, orientacion: "Programación" },
+  { etiqueta: "7° Inf", anio: 7, orientacion: "Informática" },
+  { etiqueta: "7° Prog", anio: 7, orientacion: "Programación" },
+];
+
+/* Los años de una mesa pueden venir como "4°", "1° y 2°" o "1° a 3°". */
+const aniosDeMesa = (texto = "") => {
+  const n = (texto.match(/\d+/g) || []).map(Number);
+
+  if (n.length < 2 || !/\sa\s/.test(texto)) return n;
+
+  return Array.from({ length: n[n.length - 1] - n[0] + 1 }, (_, i) => n[0] + i);
+};
+
 export default function Previas({ params }) {
   const [busqueda, setBusqueda] = useState("");
   const [anio, setAnio] = useState("Todos");
-  const [orientacion, setOrientacion] = useState("Todas");
   const publicaciones = usePublicaciones();
 
   const enVistaPrevia = publicaciones.find(
@@ -102,7 +125,7 @@ export default function Previas({ params }) {
   ];
 
   const { carpeta, subcarpetas, mesas } = useMesas();
-  const anios = ["Todos", ...new Set(mesas.map((m) => m.anio).filter(Boolean))];
+  const opcion = OPCIONES_ANIO.find((o) => o.etiqueta === anio) || OPCIONES_ANIO[0];
 
   /* Por fecha y hora; las que no tienen fecha van al final. */
   const filtradas = [...mesas]
@@ -112,9 +135,10 @@ export default function Previas({ params }) {
     .filter(
       (m) =>
         m.materia.toLowerCase().includes(busqueda.trim().toLowerCase()) &&
-        (anio === "Todos" || m.anio === anio) &&
-        /* Sin orientación es de 1° a 4° (o de las dos): se ve siempre. */
-        (orientacion === "Todas" || !m.orientacion || m.orientacion === orientacion),
+        (!opcion.anio ||
+          (aniosDeMesa(m.anio).includes(opcion.anio) &&
+            /* Sin orientación es de las dos: se ve en ambos botones. */
+            (!opcion.orientacion || !m.orientacion || m.orientacion === opcion.orientacion))),
     );
 
   const plano = usePlano();
@@ -160,33 +184,16 @@ export default function Previas({ params }) {
     if (filtro.id === "anios")
       return (
         <Bloque key={filtro.id} {...b} className="filtros__chips">
-          {anios.map((valor) => (
+          {OPCIONES_ANIO.map(({ etiqueta }) => (
             <button
-              key={valor}
-              className={`filtro ${anio === valor ? "filtro--activo" : ""}`}
-              onClick={() => setAnio(valor)}
+              key={etiqueta}
+              className={`filtro ${anio === etiqueta ? "filtro--activo" : ""}`}
+              aria-pressed={anio === etiqueta}
+              onClick={() => setAnio(etiqueta)}
             >
-              {valor === "Todos" ? <Texto id="previas.cronograma.todos">Todos</Texto> : valor}
+              {etiqueta === "Todos" ? <Texto id="previas.cronograma.todos">Todos</Texto> : etiqueta}
             </button>
           ))}
-          {/* De 5° a 7° las materias cambian según la orientación. */}
-          {mesas.some((m) => m.orientacion) && (
-            <span className="filtros__orientacion">
-              {["Todas", ...ORIENTACIONES].map((valor) => (
-                <button
-                  key={valor}
-                  className={`filtro ${orientacion === valor ? "filtro--activo" : ""}`}
-                  onClick={() => setOrientacion(valor)}
-                >
-                  {valor === "Todas" ? (
-                    <Texto id="previas.cronograma.orientaciones">Las dos orientaciones</Texto>
-                  ) : (
-                    valor
-                  )}
-                </button>
-              ))}
-            </span>
-          )}
         </Bloque>
       );
 

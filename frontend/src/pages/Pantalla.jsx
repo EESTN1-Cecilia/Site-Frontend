@@ -245,7 +245,7 @@ function Carrusel({ imagenes, ahora }) {
     return (
       <div className="tv-carrusel tv-carrusel--vacio">
         <img src={logo} alt="" />
-        <p>E.E.S. Técnica N° 1 «Cecilia Berdichevski»</p>
+        <p>E.E.S. Técnica N° 1 «Cecilia Berdichevsky»</p>
         <p className="tv-carrusel__fecha">{fechaYHoraLarga(ahora)}</p>
       </div>
     );
@@ -353,7 +353,7 @@ export default function Pantalla({ params }) {
       {/* Cabecera blanca con el escudo y el reloj (con segundos), y la franja
           bordó rayada debajo. */}
       <header className="tv__cabeza">
-        <img className="tv__logo" src={logo} alt="E.E.S. Técnica N° 1 «Cecilia Berdichevski»" />
+        <img className="tv__logo" src={logo} alt="E.E.S. Técnica N° 1 «Cecilia Berdichevsky»" />
         {!completa && (
           <button className="tv__completa" onClick={() => raiz.current?.requestFullscreen?.()}>
             <Icon icon="ph:corners-out" width={18} height={18} aria-hidden="true" /> Pantalla completa

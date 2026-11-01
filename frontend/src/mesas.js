@@ -9,9 +9,17 @@ import { guardarMesasEnServidor } from "./services/api.js";
 
 export { esLinkValido } from "./links.js";
 
+const CARPETA =
+  "https://drive.google.com/drive/folders/1OHWHKxjDuzcytS84ASQCqNHY3KXevnws?usp=sharing";
+
+/* Carpeta que tenía el sitio antes: si quedó guardada (en el servidor o en
+   este navegador) se cambia por la actual. Un link que puso Dirección a mano
+   se respeta. */
+const CARPETA_ANTERIOR =
+  "https://drive.google.com/drive/folders/1ekod6AXga5ImRl3ZIbo16AT7GAJTbwfN?usp=sharing";
+
 const semilla = () => ({
-  carpeta:
-    "https://drive.google.com/drive/folders/1ekod6AXga5ImRl3ZIbo16AT7GAJTbwfN?usp=sharing",
+  carpeta: CARPETA,
   /* Carpetas internas de "Todos los trabajos": una por subdivisión. Los
      nombres y links definitivos los tiene que confirmar Pablo o la Jefatura
      de Área; mientras tanto quedan en null, como ya se hace con otras
@@ -76,7 +84,7 @@ const CAMPOS_SUBCARPETA = ["nombre", "link"];
 const sanear = (datos) =>
   esObjeto(datos) && Array.isArray(datos.mesas)
     ? {
-        carpeta: texto(datos.carpeta),
+        carpeta: texto(datos.carpeta) === CARPETA_ANTERIOR ? CARPETA : texto(datos.carpeta),
         subcarpetas: Array.isArray(datos.subcarpetas)
           ? conId(datos.subcarpetas).map((s) => ({ id: s.id, ...campos(s, CAMPOS_SUBCARPETA) }))
           : semilla().subcarpetas,

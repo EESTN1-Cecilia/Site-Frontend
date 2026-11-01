@@ -390,7 +390,7 @@ export default function Evaluacion() {
           <span>
             <span className="insignia__nombre">
               <Texto id="evaluacion.hero.escuela">
-                E.E.S. TÉCNICA N°1 · CECILIA BERDICHEVSKI
+                E.E.S. TÉCNICA N°1 · CECILIA BERDICHEVSKY
               </Texto>
             </span>
             <span className="insignia__ciclo">

@@ -208,7 +208,7 @@ export function construirPdf(jsPDF, autoTable, { grilla, asignaciones, turnos = 
   for (let i = 1; i <= total; i++) {
     doc.setPage(i);
     doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(90);
-    doc.text(`E.E.S. Técnica N° 1 «Cecilia Berdichevski» · generado el ${generado}`, MARGEN, alto - MARGEN + 8);
+    doc.text(`E.E.S. Técnica N° 1 «Cecilia Berdichevsky» · generado el ${generado}`, MARGEN, alto - MARGEN + 8);
     doc.text(`Página ${i} de ${total}`, ancho - MARGEN, alto - MARGEN + 8, { align: "right" });
   }
   return doc;
