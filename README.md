@@ -72,6 +72,7 @@ ADMIN_PASSWORD=Admin-prueba-2026
 SEED_PASSWORD=Sector-prueba-2026
 ```
 
+
 > **¿La base ya estaba creada?** El seed no cambia la contraseña de las cuentas que ya existen. Si la base se creó antes con otras contraseñas, ninguna de las de abajo va a funcionar hasta correr, en `backend/`:
 >
 > ```bash
