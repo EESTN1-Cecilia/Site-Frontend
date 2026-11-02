@@ -10,6 +10,10 @@ import { usePublicaciones } from "../publicaciones.js";
 
 const PUBLICACIONES = "/panel/publicaciones";
 
+/* Notas que no se muestran por ahora (siguen guardadas: para volver a verlas,
+   sacarlas de esta lista). */
+const OCULTAS = new Set(["n2", "n3", "n4", "n5"]);
+
 const fecha = (iso) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString("es-AR", {
     day: "numeric",
@@ -22,7 +26,8 @@ function Nota({ novedad, destacada, onAbrir }) {
   const bloques = novedad.bloques || [];
   const portadaIndice = bloques.findIndex((b) => b.tipo === "imagen");
   const portada = portadaIndice >= 0 ? bloques[portadaIndice] : null;
-  const cuerpo = bloques.filter((_, i) => i !== portadaIndice);
+  /* Los bloques "-soloNota" (como el enlace a la fuente) van sólo en la nota abierta. */
+  const cuerpo = bloques.filter((b, i) => i !== portadaIndice && !String(b.id).endsWith("-soloNota"));
   const resumen = cuerpo.find((b) => b.tipo === "parrafo");
   const links = cuerpo.filter((b) => b.tipo === "link");
   const clave = (resto) => `pub:${novedad.id}:${resto}`;
@@ -90,7 +95,7 @@ export default function Novedades({ params }) {
 
   /* Sólo lo aprobado por Dirección, de la más nueva a la más vieja. */
   const publicadas = publicaciones
-    .filter((pub) => pub.estado === "publicada" && pub.ruta === "/novedades")
+    .filter((pub) => pub.estado === "publicada" && pub.ruta === "/novedades" && !OCULTAS.has(pub.id))
     .sort((a, b) => b.fecha.localeCompare(a.fecha));
 
   /* Si Dirección está previsualizando, el borrador entra como si ya estuviera. */
