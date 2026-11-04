@@ -29,6 +29,14 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'no-referrer');
   // Las respuestas de la API (tokens, datos de usuarios) no se guardan en caché.
   res.setHeader('Cache-Control', 'no-store');
+  // La API sólo devuelve JSON: ningún recurso externo ni marco puede cargarse desde ella.
+  res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+  // Sólo por HTTPS (directo o detrás de un proxy con TRUST_PROXY): el navegador
+  // recuerda que este sitio se abre siempre cifrado.
+  if (req.secure) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   next();
 });
 
@@ -37,6 +45,11 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true,
 }));
+
+// Límite general de pedidos por IP (el login tiene además el suyo, más estricto).
+if (process.env.NODE_ENV !== 'test') {
+  app.use('/api', require('./src/middleware/limite.Middleware').limitarPedidos);
+}
 
 // Contenido del sitio: va antes del JSON global porque lleva su propio límite
 // (las páginas y notas tienen imágenes) y lee el cuerpo después de autenticar.

@@ -1,6 +1,8 @@
+import { respuestasSitio } from "../contenido.js";
 import { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import Encabezado from "../components/Encabezado.jsx";
+import CirculosEncabezado from "../components/CirculosEncabezado.jsx";
 import VisorPdf from "../components/VisorPdf.jsx";
 import Texto, { Bloque, Campo, Caso, Imagen, useLista } from "../components/Texto.jsx";
 import ZonaLibre from "../components/ZonaLibre.jsx";
@@ -379,12 +381,10 @@ export default function Evaluacion() {
         titulo={<Texto id="evaluacion.hero.titulo">Evaluación de</Texto>}
         destacado={<Texto id="evaluacion.hero.destacado">saberes</Texto>}
         texto={
-          <Texto id="evaluacion.hero.texto">
-            Todo el material de primero, segundo y tercer año en un solo lugar,
-            más cómo se lee el boletín y cómo sigue tu trayectoria.
-          </Texto>
+          <Texto id="evaluacion.hero.texto">{respuestasSitio.evaluacion}</Texto>
         }
       >
+        <CirculosEncabezado variante="evaluacion" />
         <div className="insignia">
           <Imagen id="evaluacion.hero.logo" className="insignia__logo" src={logo} alt="" />
           <span>

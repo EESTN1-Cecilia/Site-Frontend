@@ -593,6 +593,16 @@ Reglas:
   `Cache-Control: no-store` y `X-XSS-Protection: 0` (el filtro viejo de los navegadores
   está obsoleto).
 - CORS restringido a `CORS_ORIGIN`.
+- Límite general de pedidos por IP en toda la API (`RATE_LIMIT_MAX` por `RATE_LIMIT_VENTANA_S`;
+  600 por minuto por defecto), además del límite propio del login. Responde 429 con `Retry-After`.
+- Más cabeceras: `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` (la API sólo
+  devuelve JSON), `Permissions-Policy`, `Cross-Origin-Opener-Policy` y `Strict-Transport-Security`
+  cuando la conexión llega por HTTPS.
+- Sobre RLS: no aplica a este proyecto. «Row Level Security» es una función de PostgreSQL y
+  este backend usa SQLite, que no la tiene. El equivalente está en el backend: cada pedido se
+  autentica, el usuario y su rol se leen de la BD (no del cliente) y el acceso a cada fila se
+  decide en los controladores (rol, área y propiedad). Si algún día se migra a PostgreSQL,
+  ahí sí convendría sumar RLS como segunda barrera.
 - Roles validados en backend contra una lista fija.
 - SQL parametrizado (anti-inyección).
 - Errores genéricos en producción (sin stack traces, rutas ni credenciales).

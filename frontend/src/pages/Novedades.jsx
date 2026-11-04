@@ -1,3 +1,5 @@
+import { respuestasSitio } from "../contenido.js";
+import CirculosEncabezado from "../components/CirculosEncabezado.jsx";
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import Encabezado from "../components/Encabezado.jsx";
@@ -167,12 +169,11 @@ export default function Novedades({ params }) {
         titulo={<Texto id="novedades.hero.titulo">Novedades de la</Texto>}
         destacado={<Texto id="novedades.hero.destacado">escuela</Texto>}
         texto={
-          <Texto id="novedades.hero.texto">
-            Avisos institucionales, calendario académico y lo que están haciendo
-            los cursos.
-          </Texto>
+          <Texto id="novedades.hero.texto">{respuestasSitio.novedades}</Texto>
         }
-      />
+      >
+        <CirculosEncabezado variante="comunidad" />
+      </Encabezado>
 
       <Bloque id="novedades.lista" como="section" className="seccion contenedor">
         <Dinamico id="categorias">{filtrosDeCategoria}</Dinamico>
