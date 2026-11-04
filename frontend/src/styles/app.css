@@ -847,7 +847,8 @@ img {
 }
 
 .punto:last-child .punto__numero,
-.punto:hover .punto__numero {
+.punto:hover .punto__numero,
+.punto--activo .punto__numero {
   border-color: var(--rojo-institucional);
   background: var(--rojo-institucional);
   color: var(--blanco);
@@ -855,6 +856,10 @@ img {
 
 .punto:hover .punto__numero {
   transform: scale(1.06);
+}
+
+.punto--activo .punto__numero {
+  transform: scale(1.1);
 }
 
 .punto__titulo {

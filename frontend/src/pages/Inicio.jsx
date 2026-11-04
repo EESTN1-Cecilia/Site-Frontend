@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import ProposalCard from "../components/ProposalCard.jsx";
 import FactGiratorio from "../components/FactGiratorio.jsx";
@@ -117,6 +117,7 @@ const secciones = [
 const AUTOMATICAS = { propuestas: "cursos", atajos: "accesos", programas: "programas" };
 
 export default function Inicio({ params }) {
+  const [puntoActivo, setPuntoActivo] = useState(0);
   const edicion = useEdicionTextos();
   const { inscripcionAbierta } = useAjustes();
   const programas = useProgramas();
@@ -135,6 +136,22 @@ export default function Inicio({ params }) {
   const [listaPropuestas, bloquePropuesta] = useLista("inicio.propuestas", propuestas);
   const [listaAtajos, bloqueAtajo] = useLista("inicio.atajos", atajos, { duplicable: true });
   const [listaPuntos, bloquePunto] = useLista("inicio.puntos", puntos, { duplicable: true });
+
+  useEffect(() => {
+    const nodos = document.querySelectorAll(".puntos .punto");
+    if (!nodos.length) return;
+    const observer = new IntersectionObserver((entradas) => {
+      const visibles = entradas
+        .filter((entrada) => entrada.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+      if (visibles.length) {
+        const indice = Array.from(nodos).indexOf(visibles[0].target);
+        if (indice >= 0) setPuntoActivo(indice);
+      }
+    }, { rootMargin: "-35% 0px -35% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] });
+    nodos.forEach((nodo) => observer.observe(nodo));
+    return () => observer.disconnect();
+  }, [listaPuntos.length]);
   const guardada = usePaginaGuardada("inicio.pagina");
 
   const tarjetasQueGiran = (
@@ -251,8 +268,8 @@ export default function Inicio({ params }) {
         </div>
         <div className="puntos">
           {listaPuntos.map((punto, i) => (
-            <Bloque key={punto.id} {...bloquePunto(punto)} como="article" className="punto">
-              <span className="punto__numero">{String(i + 1).padStart(2, "0")}</span>
+            <Bloque key={punto.id} {...bloquePunto(punto)} como="article" className={`punto${puntoActivo === i ? " punto--activo" : ""}`}>
+              <span className="punto__numero" aria-current={puntoActivo === i ? "step" : undefined}>{String(i + 1).padStart(2, "0")}</span>
               <div>
                 <h3 className="punto__titulo">
                   <Texto id={`inicio.puntos.${punto.id}.titulo`}>{punto.titulo}</Texto>
