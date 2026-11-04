@@ -114,3 +114,10 @@ export const pasosInscripcion = [
   ],
   ["Confirmación de vacante", "Queda registrada la matrícula en el legajo."],
 ];
+
+export const respuestasSitio = {
+  evaluacion: "Todo el material de primero, segundo y tercer año en un solo lugar, más cómo se lee el boletín y cómo sigue tu trayectoria.",
+  previas: "Los espacios pendientes de acreditación se intensifican con un plan de trabajo por materia. Buscá tu mesa y presentate con el plan resuelto.",
+  novedades: "Avisos institucionales, calendario académico y lo que están haciendo los cursos.",
+  reserva: "Si tu hijo o hija tiene un hermano que estudia en Técnica 1, completá el formulario para solicitar la reserva de vacante.",
+};

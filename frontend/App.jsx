@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "@iconify/react";
+import AsistenteSitio from "./src/components/AsistenteSitio.jsx";
 import { ir, separar, useRuta } from "./src/router.js";
 import {
   nombrePerfil,
@@ -89,6 +90,10 @@ function App() {
   const { inscripcionAbierta, redes } = useAjustes();
   const conexion = useConexion();
   const [showTop, setShowTop] = useState(false);
+  const ojosRobot = useRef(null);
+  const botonAsistente = useRef(null);
+  const [asistenteAbierto, setAsistenteAbierto] = useState(false);
+  const [asistentePensando, setAsistentePensando] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   /* Si hay token guardado, el backend confirma quién es. */
@@ -114,7 +119,19 @@ function App() {
   }, [usuario?.usuario]);
 
   useEffect(() => {
-    const onScroll = () => setShowTop(window.scrollY > 420);
+    const movimientoReducido = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let ultimoParpadeo = -Infinity;
+    const onScroll = () => {
+      setShowTop(window.scrollY > 420);
+      const ahora = performance.now();
+      if (ojosRobot.current && !movimientoReducido.matches && ahora - ultimoParpadeo >= 900) {
+        ultimoParpadeo = ahora;
+        ojosRobot.current.animate([{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }], {
+          duration: 230,
+          easing: "ease-in-out",
+        });
+      }
+    };
 
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -183,6 +200,70 @@ function App() {
             ? "Vista previa · este contenido todavía no está publicado"
             : "Vista previa · así lo ven los alumnos"}
         </p>
+      )}
+
+      {!esPanel && (
+        <button
+          ref={botonAsistente}
+          type="button"
+          className={`robot-tecnica${asistentePensando ? " robot-tecnica--pensando" : ""}`}
+          aria-label="Asistente de Técnica 1"
+          aria-expanded={asistenteAbierto}
+          aria-controls={asistenteAbierto ? "asistente-sitio" : undefined}
+          onClick={() => {
+            setAsistentePensando(false);
+            setAsistenteAbierto(!asistenteAbierto);
+          }}
+        >
+          <svg viewBox="0 0 992 1088" width="992" height="1088" aria-hidden="true">
+            <defs>
+              <clipPath id="robot-tecnica-silueta">
+                <path d="M220 335C220 166 316 46 503 46C686 46 797 163 797 335C797 414 744 466 657 490L664 498C738 520 788 513 837 628C858 684 883 763 880 807C879 832 868 848 855 857C849 881 834 904 820 913C806 919 793 904 796 890C780 902 768 886 775 867C758 883 755 858 768 831C755 801 745 744 737 678C732 763 714 834 681 846C640 905 577 944 506 944C429 944 369 904 332 846C301 834 283 764 279 678C269 753 258 805 244 830C257 851 260 873 244 874L223 861C233 881 223 902 210 897C216 912 201 918 190 910C170 896 160 878 160 853C140 838 131 813 138 777C147 723 168 654 181 628C218 526 269 521 350 502L359 490C276 469 220 421 220 335Z" />
+              </clipPath>
+            </defs>
+            <image href={`${import.meta.env.BASE_URL}robot-tecnica.jpg`} width="992" height="1088" clipPath="url(#robot-tecnica-silueta)" />
+            <g className="robot-tecnica__sonrisa">
+              <g fill="#152c38">
+                <ellipse cx="406" cy="280" rx="41" ry="55" />
+                <ellipse cx="614" cy="280" rx="41" ry="55" />
+              </g>
+              <path d="M380 289Q406 250 432 289M588 289Q614 250 640 289" fill="none" stroke="#64f58f" strokeWidth="11" strokeLinecap="round" />
+              <path d="M446 351Q446 337 464 339Q508 350 552 339Q571 336 571 351C562 409 467 420 446 351Z" />
+            </g>
+            <g className="robot-tecnica__escaneo">
+              <defs>
+                <clipPath id="robot-tecnica-visor">
+                  <path d="M385 164Q505 150 633 164C690 170 716 256 721 320C728 410 646 440 508 441C363 441 292 411 294 327C297 259 326 173 385 164Z" />
+                </clipPath>
+                <linearGradient id="robot-tecnica-luz">
+                  <stop stopColor="#8bf9ff" stopOpacity="0" />
+                  <stop offset=".5" stopColor="#b4fbff" stopOpacity=".72" />
+                  <stop offset="1" stopColor="#8bf9ff" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <g clipPath="url(#robot-tecnica-visor)">
+                <path className="robot-tecnica__barrido" d="M233 145h100l-70 305H163Z" fill="url(#robot-tecnica-luz)" />
+              </g>
+            </g>
+            <g className="robot-tecnica__cara-pensando">
+              <g fill="#132936">
+                <ellipse cx="406" cy="280" rx="43" ry="57" />
+                <ellipse cx="614" cy="280" rx="43" ry="57" />
+                <ellipse cx="508" cy="367" rx="65" ry="39" />
+              </g>
+              <path d="M374 272Q406 316 438 272M582 272Q614 316 646 272" fill="none" stroke="#fff08a" strokeWidth="22" strokeLinecap="round" />
+            </g>
+          </svg>
+          <span ref={ojosRobot} className="robot-tecnica__ojos" />
+        </button>
+      )}
+
+      {!esPanel && asistenteAbierto && (
+        <AsistenteSitio alPensar={setAsistentePensando} alCerrar={(devolverFoco = true) => {
+          setAsistentePensando(false);
+          setAsistenteAbierto(false);
+          if (devolverFoco !== false) botonAsistente.current?.focus();
+        }} />
       )}
 
       {showTop && (

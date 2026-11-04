@@ -1,6 +1,8 @@
+import { respuestasSitio } from "../contenido.js";
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import Encabezado from "../components/Encabezado.jsx";
+import CirculosEncabezado from "../components/CirculosEncabezado.jsx";
 import Texto, {
   Bloque,
   Campo,
@@ -420,13 +422,11 @@ export default function Previas({ params }) {
         titulo={<Texto id="previas.hero.titulo">Intensificación y</Texto>}
         destacado={<Texto id="previas.hero.destacado">previas</Texto>}
         texto={
-          <Texto id="previas.hero.texto">
-            Los espacios pendientes de acreditación se intensifican con un plan
-            de trabajo por materia. Buscá tu mesa y presentate con el plan
-            resuelto.
-          </Texto>
+          <Texto id="previas.hero.texto">{respuestasSitio.previas}</Texto>
         }
-      />
+      >
+        <CirculosEncabezado variante="trayectorias" />
+      </Encabezado>
 
       <Dinamico id="avisos">{avisosPublicados}</Dinamico>
 
