@@ -11,8 +11,8 @@ import { espacioDe } from "./exportarGrilla.js";
    - Debajo del plano, como un tablero de turnos: aula, grupo, docente y
      materia de cada clase que está pasando ahora en esa planta. */
 
-export const SEGUNDOS_POR_PISO = 60;
-export const SEGUNDOS_POR_PAGINA = 15; // si la lista no entra, pasa de a páginas
+export const SEGUNDOS_POR_PISO = 10;
+export const SEGUNDOS_POR_PAGINA = 10; // si la lista no entra, pasa de a páginas
 export const FILAS_POR_PAGINA = 10;
 export const FILAS_BAJO_EL_PLANO = 4; // dos columnas de dos, debajo del plano (si hay más, rotan)
 
