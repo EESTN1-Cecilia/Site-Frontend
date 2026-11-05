@@ -288,6 +288,133 @@ export function Enlace({
   );
 }
 
+/* ---------- Ícono: clic para cambiarlo ---------- */
+const opcionesIconos = [
+  ["Ubicación", "ph:map-pin"],
+  ["Correo", "ph:envelope-simple"],
+  ["Teléfono", "ph:phone"],
+  ["Horario", "ph:clock"],
+  ["Soporte", "ph:headset"],
+  ["Escuela", "ph:buildings"],
+  ["Graduación", "ph:graduation-cap"],
+  ["Taller", "ph:wrench"],
+  ["Informática", "ph:cpu"],
+  ["Programación", "ph:code"],
+  ["Inicio", "ph:house"],
+  ["Boletín", "ph:clipboard-text"],
+  ["Previas", "ph:arrows-clockwise"],
+  ["Novedades", "ph:megaphone"],
+  ["Inscripción", "ph:user-plus"],
+  ["Gestión", "ph:squares-four"],
+  ["Instagram", "ph:instagram-logo"],
+  ["Facebook", "ph:facebook-logo"],
+  ["YouTube", "ph:youtube-logo"],
+  ["WhatsApp", "ph:whatsapp-logo"],
+  ["TikTok", "ph:tiktok-logo"],
+  ["X", "ph:x-logo"],
+  ["LinkedIn", "ph:linkedin-logo"],
+  ["GitHub", "ph:github-logo"],
+  ["Sitio web", "ph:globe"],
+  ["Certificado", "ph:seal-check"],
+];
+
+export function Icono({ id, icono = "ph:circle", width = 18, height = 18, className = "", dueno }) {
+  const [fuente, edicion] = useFuente();
+  const [abierto, setAbierto] = useState(false);
+  const [personalizado, setPersonalizado] = useState("");
+  const marca = useMarca(dueno);
+  const actual = siTexto(fuente[id], icono) || icono;
+
+  if (marca) {
+    return (
+      <span className={className} data-icono={id} data-original={icono}>
+        <Icon icon={actual} width={width} height={height} aria-hidden="true" />
+      </span>
+    );
+  }
+
+  if (!edicion?.puede(dueno)) {
+    return <Icon icon={actual} width={width} height={height} className={className} aria-hidden="true" />;
+  }
+
+  const guardar = (nuevo) => {
+    const limpio = (nuevo || "").trim();
+    edicion.fijar(id, !limpio || limpio === icono ? undefined : limpio);
+    setAbierto(false);
+  };
+
+  return (
+    <>
+      <span
+        role="button"
+        tabIndex={0}
+        className={`icono-editable control-edicion ${className}`}
+        title="Hacé clic para cambiar el ícono"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setPersonalizado(actual);
+          setAbierto(true);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            e.stopPropagation();
+            setPersonalizado(actual);
+            setAbierto(true);
+          }
+        }}
+      >
+        <Icon icon={actual} width={width} height={height} aria-hidden="true" />
+      </span>
+      {abierto && (
+        <Ventana
+          chip="ÍCONO"
+          titulo="Cambiar ícono"
+          cerrar={() => setAbierto(false)}
+          pie={
+            <>
+              <button className="boton" onClick={() => guardar(icono)}>
+                <Icon icon="ph:arrow-counter-clockwise" width={16} height={16} aria-hidden="true" />
+                Volver al original
+              </button>
+              <button
+                className="boton boton--primario"
+                onClick={() => guardar(personalizado)}
+              >
+                Usar ícono
+              </button>
+            </>
+          }
+        >
+          <p className="selector__titulo">Elegí un ícono</p>
+          <div className="selector-iconos">
+            {opcionesIconos.map(([nombre, codigo]) => (
+              <button
+                type="button"
+                key={codigo}
+                className={`selector-iconos__item ${actual === codigo ? "selector-iconos__item--activo" : ""}`}
+                onClick={() => guardar(codigo)}
+              >
+                <Icon icon={codigo} width={22} height={22} aria-hidden="true" />
+                <span>{nombre}</span>
+              </button>
+            ))}
+          </div>
+          <label className="campo campo--ancho" style={{ marginTop: 14 }}>
+            <span>O escribí un código de ícono (ej. ph:star, ph:book-open)</span>
+            <input
+              placeholder="ph:…"
+              value={personalizado}
+              onChange={(e) => setPersonalizado(e.target.value)}
+            />
+          </label>
+        </Ventana>
+      )}
+    </>
+  );
+}
+
 /* ---------- Dato con formato (fechas, horas) ---------- */
 export function Dato({ id, valor, tipo = "text", formato = (v) => v, dueno }) {
   const [fuente, edicion] = useFuente();
@@ -347,7 +474,16 @@ export function useLista(lista, base, { duplicable = false } = {}) {
     duplicable,
   });
 
-  return [items, bloque];
+  const edicion = useContext(EdicionTextos);
+  const agregar = (de = base[0]?.id) => {
+    if (!edicion?.puede() || !de) return;
+    const nuevoId = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 4)}`;
+    const extras = siLista(fuente[`extra:${lista}`]);
+    edicion.fijar(`extra:${lista}`, [...extras, { id: nuevoId, de }]);
+    edicion.fijar(`orden:${lista}`, [...ids, nuevoId]);
+  };
+
+  return [items, bloque, agregar];
 }
 
 const fondos = [

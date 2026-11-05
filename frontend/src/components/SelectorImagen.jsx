@@ -5,13 +5,23 @@ import { biblioteca } from "../publicaciones.js";
 import { facade, logo } from "../data.js";
 import { cuadernillos } from "../saberes.js";
 import { esLinkValido } from "../links.js";
+import logoCicloBasico from "../assets/images/Ciclo_Basico.png";
+import logoInformatica from "../assets/images/Informatica.png";
+import logoProgramacion from "../assets/images/Programacion.png";
+import logoPreceDigital from "../assets/images/prece-digital.svg";
+import logoTecnicaAlt from "../assets/images/logo-tecnica1.jpg";
 
 const TOPE = 1.5 * 1024 * 1024;
 
 /* Todas las imágenes que ya tiene el sitio, para elegir sin subir nada. */
 const imagenes = [
+  ["Logo Técnica 1", logo],
+  ["Escudo Técnica 1", logoTecnicaAlt],
+  ["Logo Ciclo Básico", logoCicloBasico],
+  ["Logo Informática", logoInformatica],
+  ["Logo Programación", logoProgramacion],
+  ["Logo Prece Digital", logoPreceDigital],
   ["Fachada de la escuela", facade],
-  ["Logo", logo],
   ...biblioteca,
   ...cuadernillos.map((c) => [c.titulo, c.portada]),
 ];
