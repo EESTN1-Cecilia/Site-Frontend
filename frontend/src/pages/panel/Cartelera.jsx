@@ -6,6 +6,7 @@ import { explicar } from "../../asignaciones.js";
 import { urlPantalla } from "../../cartelera.js";
 import {
   cambiarImagenCartelera,
+  cambiarTemaPantallas,
   crearPantalla,
   moverImagenCartelera,
   obtenerCartelera,
@@ -28,7 +29,14 @@ import {
 const DURACIONES = [8, 10, 15, 20, 30, 45, 60];
 /* Cómo se lee cada nivel (el backend guarda Dirección = 3, Jefatura = 2, EMATP = 1). */
 const PRIORIDAD = { 3: ["1°", "Prioridad principal"], 2: ["2°", "Segunda prioridad"], 1: ["3°", "Tercera prioridad"] };
+const AMBIENTES = { expo: "Expo Técnica", patria: "Fechas Patrias" };
 const hoy = () => new Date().toLocaleDateString("sv-SE"); // AAAA-MM-DD local
+
+const MB = 1024 * 1024;
+const TOPE_IMAGEN = 5 * MB;
+const TOPE_VIDEO = 15 * MB;
+const ACEPTA = "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm";
+const esVideo = (archivo) => !!archivo?.type?.startsWith("video/");
 
 const vacio = { archivo: null, titulo: "", duracion: 10, desde: "", hasta: "", fijada: false };
 
@@ -40,6 +48,7 @@ export default function Cartelera({ ruta }) {
   const [vista, setVista] = useState("");
   const [subiendo, setSubiendo] = useState(false);
   const [nombrePantalla, setNombrePantalla] = useState("");
+  const [recargas, setRecargas] = useState(0);
 
   const cargar = useCallback(async () => {
     try {
@@ -74,8 +83,13 @@ export default function Cartelera({ ruta }) {
 
   const agregar = async (e) => {
     e.preventDefault();
-    if (!form.archivo) return avisar("error", "Elegí una imagen.");
-    if (form.archivo.size > 5 * 1024 * 1024) return avisar("error", "La imagen supera los 5 MB: achicala y volvé a intentar.");
+    if (!form.archivo) return avisar("error", "Elegí una imagen o un video.");
+    if (esVideo(form.archivo) ? form.archivo.size > TOPE_VIDEO : form.archivo.size > TOPE_IMAGEN) {
+      return avisar(
+        "error",
+        esVideo(form.archivo) ? "El video supera los 15 MB: comprimilo o acortalo y volvé a intentar." : "La imagen supera los 5 MB: achicala y volvé a intentar.",
+      );
+    }
     setSubiendo(true);
     await accion(
       (token) => subirImagenCartelera(token, form.archivo, { ...form, archivo: undefined, fijada: form.fijada ? "true" : "" }),
@@ -85,6 +99,15 @@ export default function Cartelera({ ruta }) {
     setForm(vacio);
   };
 
+  /* Pantalla especial de los televisores (vale para todos): Expo Técnica, Fechas Patrias o ninguna. */
+  const tema = datos?.pantallas?.[0]?.tema ?? "";
+  const elegirTema = (nuevo) =>
+    accion(
+      (t) => cambiarTemaPantallas(t, nuevo),
+      nuevo ? `${AMBIENTES[nuevo]} activada en los televisores.` : "Filtro quitado: los televisores vuelven al aspecto normal.",
+    ).then(() => setRecargas((n) => n + 1)); // la vista previa se recarga ya (los televisores, en unos segundos)
+
+  const videoElegido = esVideo(form.archivo);
   const niveles = datos?.niveles ?? {};
   const grupos = useMemo(
     () => [3, 2, 1].map((n) => [n, (datos?.imagenes ?? []).filter((i) => i.nivel === n)]),
@@ -121,22 +144,24 @@ export default function Cartelera({ ruta }) {
       <section className="tarjeta">
         <div className="tarjeta__barra">
           <div>
-            <h2 className="tarjeta__titulo">Agregar una imagen</h2>
+            <h2 className="tarjeta__titulo">Agregar una imagen o un video</h2>
             <p className="tarjeta__bajada">
-              JPG, PNG, WEBP o GIF de hasta 5 MB. Se ve en la mitad derecha del televisor (mejor apaisada, 16:9).
+              Imagen JPG, PNG, WEBP o GIF de hasta 5 MB, o video MP4 (H.264) o WEBM de hasta 15 MB (se ve sin sonido y pasa completo). Se ve en la mitad derecha del televisor (mejor apaisado, 16:9).
               {datos && ` Cargás como ${niveles[datos.nivel]} (${PRIORIDAD[datos.nivel]?.[1].toLowerCase()}).`}
             </p>
           </div>
         </div>
         <form className="cartelera__form" onSubmit={agregar} noValidate>
           <label className={`cartelera__elegir ${vista ? "cartelera__elegir--con-imagen" : ""}`}>
-            {vista ? <img src={vista} alt="Vista previa de la imagen elegida" /> : (
+            {vista ? (
+              videoElegido ? <video src={vista} muted loop autoPlay playsInline aria-label="Vista previa del video elegido" /> : <img src={vista} alt="Vista previa de la imagen elegida" />
+            ) : (
               <span>
                 <Icon icon="ph:image-square" width={34} height={34} aria-hidden="true" />
-                Elegir imagen
+                Elegir imagen o video
               </span>
             )}
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(e) => setForm({ ...form, archivo: e.target.files?.[0] ?? null })} />
+            <input type="file" accept={ACEPTA} onChange={(e) => setForm({ ...form, archivo: e.target.files?.[0] ?? null })} />
           </label>
           <div className="formulario formulario--panel cartelera__campos">
             <label className="campo">
@@ -145,8 +170,8 @@ export default function Cartelera({ ruta }) {
             </label>
             <label className="campo">
               <span>Tiempo en pantalla</span>
-              <select value={form.duracion} onChange={(e) => setForm({ ...form, duracion: Number(e.target.value) })}>
-                {DURACIONES.map((d) => <option key={d} value={d}>{d} segundos</option>)}
+              <select value={videoElegido ? "video" : form.duracion} disabled={videoElegido} onChange={(e) => setForm({ ...form, duracion: Number(e.target.value) })}>
+                {videoElegido ? <option value="video">Lo que dura el video</option> : DURACIONES.map((d) => <option key={d} value={d}>{d} segundos</option>)}
               </select>
             </label>
             <label className="campo">
@@ -191,11 +216,15 @@ export default function Cartelera({ ruta }) {
                     const [clase, texto] = estadoDe(i);
                     return (
                       <li className={`cartelera__item cartelera__item--${clase}`} key={i.id}>
-                        <img className="cartelera__miniatura" src={urlImagenCartelera(i.clave)} alt="" loading="lazy" />
+                        {i.tipo === "video" ? (
+                          <video className="cartelera__miniatura" src={`${urlImagenCartelera(i.clave)}#t=0.1`} preload="metadata" muted playsInline aria-hidden="true" />
+                        ) : (
+                          <img className="cartelera__miniatura" src={urlImagenCartelera(i.clave)} alt="" loading="lazy" />
+                        )}
                         <div className="cartelera__datos">
                           <p className="cartelera__titulo">{i.titulo || "Sin título"}</p>
                           <p className="cartelera__detalle">
-                            {i.duracion} s · {i.autor ?? i.origen}
+                            {i.tipo === "video" ? "Video" : `${i.duracion} s`} · {i.autor ?? i.origen}
                             {(i.desde || i.hasta) && ` · ${i.desde ? `desde ${new Date(`${i.desde}T00:00`).toLocaleDateString("es-AR")}` : ""}${i.hasta ? ` hasta ${new Date(`${i.hasta}T00:00`).toLocaleDateString("es-AR")}` : ""}`}
                           </p>
                           <p className="cartelera__chips">
@@ -291,11 +320,29 @@ export default function Cartelera({ ruta }) {
             </button>
           </form>
 
+          {datos.pantallas.length > 0 && (
+            <div className="cartelera__ambiente">
+              <p className="cartelera__vista-titulo">Pantalla especial</p>
+              <div className="cartelera__ambiente-botones" role="group" aria-label="Pantalla especial de los televisores">
+                <button type="button" className={`boton boton--fino ambiente ambiente--expo ${tema === "expo" ? "ambiente--activo" : ""}`} aria-pressed={tema === "expo"} onClick={() => elegirTema("expo")}>
+                  <Icon icon="ph:gear-six" width={16} height={16} aria-hidden="true" /> Expo Técnica
+                </button>
+                <button type="button" className={`boton boton--fino ambiente ambiente--patria ${tema === "patria" ? "ambiente--activo" : ""}`} aria-pressed={tema === "patria"} onClick={() => elegirTema("patria")}>
+                  <Icon icon="ph:flag-banner" width={16} height={16} aria-hidden="true" /> Fechas Patrias
+                </button>
+                <button type="button" className="boton boton--fino ambiente ambiente--quitar" disabled={!tema} onClick={() => elegirTema("")}>
+                  <Icon icon="ph:x-circle" width={16} height={16} aria-hidden="true" /> Quitar Filtro
+                </button>
+              </div>
+              <p className="cartelera__ambiente-nota">Cambia la pantalla de todos los televisores a la vez. «Quitar Filtro» vuelve al aspecto normal.</p>
+            </div>
+          )}
+
           {datos.pantallas[0] && (
             <div className="cartelera__vista">
               <p className="cartelera__vista-titulo">Vista previa ({datos.pantallas[0].nombre})</p>
               <div className="cartelera__marco">
-                <iframe title="Vista previa del televisor" src={urlPantalla(datos.pantallas[0].token)} />
+                <iframe key={recargas} title="Vista previa del televisor" src={urlPantalla(datos.pantallas[0].token)} />
               </div>
             </div>
           )}

@@ -13,17 +13,19 @@ const c = require('../controllers/cartelera.Controller');
 const cargan = requerirRol(ROLES.DIRECCION, ROLES.JEFATURA_AREA, ROLES.SERVIDOR);
 const administran = requerirRol(ROLES.DIRECCION, ROLES.JEFATURA_AREA);
 
-// La imagen llega en memoria (nunca a disco con nombres del usuario), con
-// tope de tamaño y de campos; el controller revisa que sea una imagen real.
+// El archivo llega en memoria (nunca a disco con nombres del usuario), con
+// tope de tamaño y de campos. El tope de acá es el de los videos (15 MB); el
+// controller revisa que sea una imagen o un video de verdad y aplica el tope
+// de 5 MB a las imágenes.
 const subida = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 6, parts: 7, fieldSize: 1024, fieldNameSize: 50 },
+  limits: { fileSize: 15 * 1024 * 1024, files: 1, fields: 6, parts: 7, fieldSize: 1024, fieldNameSize: 50 },
 });
 const recibirImagen = (req, res, next) =>
   subida.single('archivo')(req, res, (err) => {
-    if (err?.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'La imagen supera los 5 MB' });
-    if (err) return res.status(400).json({ error: 'No se pudo leer la imagen enviada' });
-    if (!req.file) return res.status(400).json({ error: 'Elegí una imagen' });
+    if (err?.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'El archivo supera los 15 MB' });
+    if (err) return res.status(400).json({ error: 'No se pudo leer el archivo enviado' });
+    if (!req.file) return res.status(400).json({ error: 'Elegí una imagen o un video' });
     return next();
   });
 
@@ -37,6 +39,7 @@ router.delete('/:id', autenticar, cargan, c.quitar);
 router.post('/:id/mover', autenticar, cargan, c.mover);
 
 router.post('/pantallas', autenticar, administran, c.crearPantalla);
+router.put('/pantallas/tema', autenticar, administran, c.cambiarTema);
 router.post('/pantallas/:id/renovar', autenticar, administran, c.renovarPantalla);
 router.delete('/pantallas/:id', autenticar, administran, c.quitarPantalla);
 

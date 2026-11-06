@@ -643,6 +643,158 @@
   font-weight: 500;
 }
 
+/* ---------- Pantallas especiales (se eligen en el panel) ----------
+   Expo Técnica y Fechas Patrias: la cabecera es un banner y el reloj sigue en
+   vivo encima. Los colores de estado del plano (libre, ocupado, por
+   finalizar) no cambian nunca. */
+.tv__cabeza--banner {
+  display: block;
+  padding: 0;
+}
+
+.tv__banner {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.tv__cabeza--banner .tv__reloj {
+  position: absolute;
+  justify-items: center;
+  margin: 0;
+  transform: translate(-50%, -50%);
+}
+
+.tv__cabeza--banner .tv__completa {
+  position: absolute;
+  margin: 0;
+}
+
+.tv--expo .tv__marca,
+.tv--patria .tv__marca {
+  border-radius: 50%;
+}
+
+/* Expo Técnica */
+.tv__cabeza--expo {
+  background: #f1f2f6;
+}
+
+.tv__cabeza--expo .tv__reloj {
+  top: 47%;
+  left: 91.3%;
+}
+
+.tv__cabeza--expo .tv__hora {
+  color: #7a0c22;
+  font-size: 3.7vw;
+}
+
+.tv__cabeza--expo .tv__fecha {
+  color: #222;
+  font-size: 1.1vw;
+}
+
+.tv__cabeza--expo .tv__completa {
+  right: 1vw;
+  bottom: 0.8vh;
+}
+
+/* Fechas Patrias: celeste de la bandera, con el Sol de Mayo. La franja de
+   abajo ya viene en el banner. */
+.tv--patria {
+  --bordo-oscuro: #0469cb;
+  grid-template-rows: auto 1fr;
+  background: linear-gradient(#ebf5fd, #d8edfd);
+}
+
+.tv__cabeza--patria {
+  background: #fbfdfd;
+}
+
+.tv__cabeza--patria .tv__reloj {
+  top: 38%;
+  left: 93.7%;
+}
+
+.tv__cabeza--patria .tv__hora {
+  color: #0a62c9;
+  font-size: 3vw;
+}
+
+.tv__cabeza--patria .tv__fecha {
+  color: #1a1a1a;
+  font-size: 0.95vw;
+}
+
+.tv__cabeza--patria .tv__completa {
+  top: 1vh;
+  right: 1vw;
+}
+
+/* NOVEDADES con una línea celeste a cada lado. */
+.tv--patria .tv__seccion {
+  display: flex;
+  align-items: center;
+  gap: 1.2vw;
+  border-bottom: 0;
+  color: #0070da;
+}
+
+.tv--patria .tv__seccion::before,
+.tv--patria .tv__seccion::after {
+  content: "";
+  flex: 1;
+  height: 0.45vh;
+  border-radius: 999px;
+  background: #0899ee;
+}
+
+.tv--patria .tv-carrusel {
+  background: #032852;
+}
+
+.tv--patria .tv-carrusel__pie {
+  background: #012a57;
+}
+
+.tv--patria .tv-carrusel__origen {
+  background: #1297f0;
+  color: #fff;
+}
+
+.tv__adorno {
+  display: block;
+  width: calc(100% - 2vw);
+  height: auto;
+  margin: 0 auto;
+}
+
+.tv--patria .tv-turnos__fila--ocupado {
+  border-left-color: #0389eb;
+  background: linear-gradient(90deg, #eaf3fc, #f3f4f6);
+}
+
+.tv--patria .tv-llamador__fila:nth-child(even) {
+  background: #f1f7fc;
+}
+
+.tv--patria .tv-llamador__columnas {
+  background: #0b3a73;
+}
+
+.tv--patria .tv-llamador__destacada--novedad {
+  animation-name: tv-llama-patria;
+}
+
+@keyframes tv-llama-patria {
+  50% { background: #2a86e0; }
+}
+
+.tv__cabeza {
+  position: relative;
+}
+
 .tv__sin-red {
   position: fixed;
   bottom: 1vh;

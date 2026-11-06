@@ -4,7 +4,7 @@ const { DatoInvalido, falla, esObjeto } = require('../utils/contenido');
 const { ROLES } = require('../utils/roles');
 const { restablecerSemana } = require('./asignaciones.Controller');
 
-// Cartelera digital: imágenes y plano en vivo para los televisores.
+// Cartelera digital: imágenes, videos y plano en vivo para los televisores.
 //
 // Jerarquía (de más a menos prioridad): Dirección > Jefatura de Área > EMATP.
 //   - En la pantalla pasan primero las imágenes de Dirección, después las de
@@ -55,6 +55,29 @@ function tipoDeImagen(buffer) {
   return null;
 }
 
+// Videos MP4 (H.264) y WEBM, también por su contenido. Los .mp4 llevan una caja
+// «ftyp» al principio con su marca; se descartan las marcas de imágenes HEIC/AVIF
+// (que usan la misma caja) y los .mov de iPhone («qt  »).
+const MARCAS_MP4 = new Set(['isom', 'iso2', 'iso3', 'iso4', 'iso5', 'iso6', 'mp41', 'mp42', 'avc1', 'M4V ', 'MSNV', 'dash', 'mmp4']);
+function tipoDeVideo(buffer) {
+  if (!buffer || buffer.length < 16) return null;
+  if (buffer.toString('ascii', 4, 8) === 'ftyp') {
+    const caja = Math.min(buffer.readUInt32BE(0), 64, buffer.length);
+    const marcas = [buffer.toString('latin1', 8, 12)];
+    for (let i = 16; i + 4 <= caja; i += 4) marcas.push(buffer.toString('latin1', i, i + 4));
+    return marcas.some((m) => MARCAS_MP4.has(m)) ? 'video/mp4' : null;
+  }
+  // WEBM: cabecera EBML con el tipo de documento «webm» (Matroska usa «matroska»).
+  if (buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3 && buffer.subarray(0, 64).includes('webm')) {
+    return 'video/webm';
+  }
+  return null;
+}
+
+const tipoDeArchivo = (buffer) => tipoDeImagen(buffer) ?? tipoDeVideo(buffer);
+const esVideo = (mime) => typeof mime === 'string' && mime.startsWith('video/');
+const TOPE_IMAGEN = 5 * 1024 * 1024; // el de los videos (15 MB) lo pone la ruta
+
 // Título, duración, vigencia, activo y fijada (lo común a cargar y cambiar).
 function campos(cuerpo, actual = {}) {
   const c = esObjeto(cuerpo) ? cuerpo : {};
@@ -79,6 +102,7 @@ const publica = (f) => ({
   activo: !!f.activo,
   fijada: !!f.fijada,
   nivel: f.nivel,
+  tipo: esVideo(f.mime) ? 'video' : 'imagen',
   autor: f.autor ?? null,
   origen: NOMBRES[f.nivel],
   created_at: f.created_at,
@@ -86,7 +110,7 @@ const publica = (f) => ({
 
 const leer = () =>
   db.obtenerFilas(
-    `SELECT c.id, c.clave, c.titulo, c.duracion, c.desde, c.hasta, c.activo, c.fijada, c.nivel, c.orden, c.created_at,
+    `SELECT c.id, c.clave, c.titulo, c.mime, c.duracion, c.desde, c.hasta, c.activo, c.fijada, c.nivel, c.orden, c.created_at,
             COALESCE(u.nombre, u.username) AS autor
      FROM cartelera c LEFT JOIN usuarios u ON u.id = c.autor_id
      ORDER BY c.nivel DESC, c.orden, c.id DESC`
@@ -119,14 +143,15 @@ const listar = responder('listar', async (req, res) => {
     imagenes: items.map((i) => ({ ...publica(i), enPantalla: ahora.includes(i.id), puedeCambiar: nivelDe(req) >= i.nivel })),
     nivel: nivelDe(req),
     niveles: NOMBRES,
-    pantallas: gestiona ? await db.obtenerFilas('SELECT id, nombre, token, created_at FROM pantallas ORDER BY id') : null,
+    pantallas: gestiona ? await db.obtenerFilas('SELECT id, nombre, token, tema, created_at FROM pantallas ORDER BY id') : null,
   });
 });
 
 // POST /api/cartelera (multipart: archivo + titulo, duracion, desde, hasta, fijada)
 const crear = responder('crear', async (req, res) => {
-  const mime = tipoDeImagen(req.file?.buffer);
-  if (!mime) falla('El archivo tiene que ser una imagen JPG, PNG, WEBP o GIF');
+  const mime = tipoDeArchivo(req.file?.buffer);
+  if (!mime) falla('El archivo tiene que ser una imagen (JPG, PNG, WEBP o GIF) o un video (MP4 o WEBM)');
+  if (!esVideo(mime) && req.file.buffer.length > TOPE_IMAGEN) falla('La imagen supera los 5 MB (los videos pueden llegar a 15 MB)');
   const total = (await db.obtenerFila('SELECT COUNT(*) AS n FROM cartelera')).n;
   if (total >= MAXIMO) falla(`La cartelera ya tiene ${MAXIMO} imágenes: quitá alguna antes de agregar otra`);
   const c = campos(req.body);
@@ -191,6 +216,21 @@ const imagen = responder('imagen', async (req, res) => {
   if (!fila) throw new NoEncontrado('No existe');
   res.setHeader('Content-Type', fila.mime);
   res.setHeader('Cache-Control', 'private, max-age=86400, immutable');
+  res.setHeader('Accept-Ranges', 'bytes');
+  // Los videos se piden «por pedazos» (Range): sin esto los navegadores, sobre
+  // todo los de los televisores, no pueden empezar a reproducir ni adelantar.
+  const total = fila.datos.length;
+  const pedido = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '');
+  if (pedido && (pedido[1] || pedido[2])) {
+    const desde = pedido[1] === '' ? Math.max(0, total - Number(pedido[2])) : Number(pedido[1]);
+    const hasta = pedido[1] === '' || pedido[2] === '' ? total - 1 : Math.min(Number(pedido[2]), total - 1);
+    if (desde >= total || desde > hasta) {
+      res.setHeader('Content-Range', `bytes */${total}`);
+      return res.status(416).end();
+    }
+    res.setHeader('Content-Range', `bytes ${desde}-${hasta}/${total}`);
+    return res.status(206).send(fila.datos.subarray(desde, hasta + 1));
+  }
   return res.send(fila.datos);
 });
 
@@ -200,15 +240,30 @@ const nuevoToken = () => crypto.randomBytes(24).toString('base64url');
 const crearPantalla = responder('crearPantalla', async (req, res) => {
   const nombre = String((req.body || {}).nombre ?? '').trim();
   if (!nombre || nombre.length > 60) falla('Poné un nombre a la pantalla (hasta 60 caracteres), por ejemplo «Corredor planta baja»');
-  const r = await db.ejecutar('INSERT INTO pantallas (nombre, token) VALUES (?, ?)', nombre, nuevoToken());
-  return res.status(201).json({ pantalla: await db.obtenerFila('SELECT id, nombre, token, created_at FROM pantallas WHERE id = ?', r.lastID) });
+  // El televisor nuevo sale con el mismo ambiente que los demás.
+  const r = await db.ejecutar(
+    "INSERT INTO pantallas (nombre, token, tema) VALUES (?, ?, COALESCE((SELECT tema FROM pantallas ORDER BY id LIMIT 1), ''))",
+    nombre,
+    nuevoToken()
+  );
+  return res.status(201).json({ pantalla: await db.obtenerFila('SELECT id, nombre, token, tema, created_at FROM pantallas WHERE id = ?', r.lastID) });
+});
+
+// Ambiente de los televisores: '' (normal), 'expo' (Expo Técnica) o 'patria'
+// (Fechas Patrias). Vale para todos los televisores a la vez.
+const TEMAS = ['', 'expo', 'patria'];
+const cambiarTema = responder('cambiarTema', async (req, res) => {
+  const tema = String((req.body || {}).tema ?? '');
+  if (!TEMAS.includes(tema)) falla('Ambiente inválido');
+  await db.ejecutar('UPDATE pantallas SET tema = ?', tema);
+  return res.json({ tema });
 });
 
 // Enlace nuevo: el anterior deja de funcionar (por si se filtró).
 const renovarPantalla = responder('renovarPantalla', async (req, res) => {
   const r = await db.ejecutar('UPDATE pantallas SET token = ? WHERE id = ?', nuevoToken(), Number(req.params.id));
   if (!r.changes) throw new NoEncontrado('Esa pantalla no existe');
-  return res.json({ pantalla: await db.obtenerFila('SELECT id, nombre, token, created_at FROM pantallas WHERE id = ?', Number(req.params.id)) });
+  return res.json({ pantalla: await db.obtenerFila('SELECT id, nombre, token, tema, created_at FROM pantallas WHERE id = ?', Number(req.params.id)) });
 });
 
 const quitarPantalla = responder('quitarPantalla', async (req, res) => {
@@ -220,7 +275,7 @@ const quitarPantalla = responder('quitarPantalla', async (req, res) => {
 // GET /api/cartelera/pantalla/:token: todo lo que muestra el televisor.
 // Sólo grillas vigentes y sólo lo necesario para el plano y la lista de clases.
 const pantalla = responder('pantalla', async (req, res) => {
-  const p = await db.obtenerFila('SELECT id, nombre FROM pantallas WHERE token = ?', String(req.params.token));
+  const p = await db.obtenerFila('SELECT id, nombre, tema FROM pantallas WHERE token = ?', String(req.params.token));
   if (!p) throw new NoEncontrado('Este enlace de pantalla no existe o fue renovado');
   await restablecerSemana();
   const [salones, clases, items] = await Promise.all([
@@ -246,11 +301,11 @@ const pantalla = responder('pantalla', async (req, res) => {
     leer(),
   ]);
   return res.json({
-    pantalla: { nombre: p.nombre },
+    pantalla: { nombre: p.nombre, tema: p.tema || '' },
     ahora: new Date().toISOString(),
     salones: salones.map((s) => ({ ...s, habilitado: !!s.habilitado })),
     clases,
-    imagenes: programa(items).map((i) => ({ clave: i.clave, titulo: i.titulo, duracion: i.duracion, origen: NOMBRES[i.nivel], nivel: i.nivel })),
+    imagenes: programa(items).map((i) => ({ clave: i.clave, titulo: i.titulo, duracion: i.duracion, origen: NOMBRES[i.nivel], nivel: i.nivel, tipo: esVideo(i.mime) ? 'video' : 'imagen' })),
   });
 });
 
@@ -262,10 +317,13 @@ module.exports = {
   mover,
   imagen,
   crearPantalla,
+  cambiarTema,
   renovarPantalla,
   quitarPantalla,
   pantalla,
   // Para los tests de la jerarquía.
   programa,
   tipoDeImagen,
+  tipoDeVideo,
+  tipoDeArchivo,
 };

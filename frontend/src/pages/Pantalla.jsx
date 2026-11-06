@@ -1,11 +1,15 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@iconify/react";
 import logo from "../assets/images/logo-tecnica1.jpg";
+import cabeceraExpo from "../assets/images/expo-cabecera.jpg";
+import cabeceraPatria from "../assets/images/patria-cabecera.jpg";
+import adornoPatria from "../assets/images/patria-adorno.jpg";
 import { armarPisos } from "../plano.js";
 import { ESTADOS, estadoEspacio, fechaYHoraLarga } from "../horario.js";
 import {
   FILAS_BAJO_EL_PLANO,
   FILAS_TURNOS,
+  SEGUNDOS_POR_PISO,
   avanceDelMinuto,
   girar,
   recorteDe,
@@ -233,11 +237,14 @@ function Carrusel({ imagenes, ahora }) {
   const actual = lista[indice % Math.max(1, lista.length)];
   const claves = lista.map((i) => i.clave).join("|");
 
-  // Cada imagen dura lo suyo; si cambia la lista, se empieza de nuevo.
+  const siguiente = () => setIndice((i) => (i + 1) % Math.max(1, lista.length));
+
+  // Cada imagen dura lo suyo; si cambia la lista, se empieza de nuevo. Los
+  // videos pasan completos: avanzan solos cuando terminan (onEnded).
   useEffect(() => setIndice(0), [claves]);
   useEffect(() => {
-    if (lista.length < 2) return undefined;
-    const id = setTimeout(() => setIndice((i) => (i + 1) % lista.length), (actual?.duracion ?? 10) * 1000);
+    if (lista.length < 2 || actual?.tipo === "video") return undefined;
+    const id = setTimeout(siguiente, (actual?.duracion ?? 10) * 1000);
     return () => clearTimeout(id);
   }, [indice, claves]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -252,14 +259,35 @@ function Carrusel({ imagenes, ahora }) {
   }
   return (
     <div className="tv-carrusel">
-      {lista.map((i, n) => (
-        <img
-          key={i.clave}
-          className={`tv-carrusel__imagen ${n === indice % lista.length ? "tv-carrusel__imagen--visible" : ""}`}
-          src={urlImagenCartelera(i.clave)}
-          alt={i.titulo}
-        />
-      ))}
+      {lista.map((i, n) => {
+        const visible = n === indice % lista.length;
+        // El video se monta sólo cuando le toca (no se descargan todos de entrada)
+        // y arranca desde el principio. Sin sonido: así el televisor lo reproduce solo.
+        if (i.tipo === "video") {
+          return visible ? (
+            <video
+              key={i.clave}
+              className="tv-carrusel__imagen tv-carrusel__imagen--visible"
+              src={urlImagenCartelera(i.clave)}
+              autoPlay
+              muted
+              playsInline
+              loop={lista.length < 2}
+              onEnded={siguiente}
+              // Si el televisor no puede reproducirlo, pasa al siguiente.
+              onError={() => lista.length > 1 && setTimeout(siguiente, 3000)}
+            />
+          ) : null;
+        }
+        return (
+          <img
+            key={i.clave}
+            className={`tv-carrusel__imagen ${visible ? "tv-carrusel__imagen--visible" : ""}`}
+            src={urlImagenCartelera(i.clave)}
+            alt={i.titulo}
+          />
+        );
+      })}
       {(actual.titulo || lista.length > 1) && (
         <div className="tv-carrusel__pie">
           {actual.titulo && <p className="tv-carrusel__titulo">{actual.titulo}</p>}
@@ -281,6 +309,9 @@ export default function Pantalla({ params }) {
   const ahora = useAhora(desfase);
   const [completa, setCompleta] = useState(false);
   const raiz = useRef(null);
+
+  // Pantalla especial que eligió el panel: "expo" (Expo Técnica), "patria" (Fechas Patrias) o ninguna.
+  const tema = ["expo", "patria"].includes(datos?.pantalla?.tema) ? datos.pantalla.tema : "";
 
   const pisos = useMemo(() => armarPisos(datos?.salones ?? []), [datos]);
   const piso = pisoDelMomento(ahora, pisos);
@@ -305,7 +336,7 @@ export default function Pantalla({ params }) {
     return { situacion, turnos: turnosDe(clases, piso.salones, ahora) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datos, piso.id, minuto]);
-  const pagina = paginaDe(turnos.filas, ahora, FILAS_BAJO_EL_PLANO);
+  const pagina = paginaDe(turnos.filas, ahora, FILAS_BAJO_EL_PLANO, SEGUNDOS_POR_PISO);
   // ¿Este minuto van los turnos (como en una clínica) en lugar del plano?
   const { llamador, faltan } = useMemo(
     () => ({ llamador: turnosProximos(datos?.clases ?? [], ahora), faltan: minutosParaLaProxima(datos?.clases ?? [], ahora) }),
@@ -349,11 +380,16 @@ export default function Pantalla({ params }) {
   }
 
   return (
-    <div className="tv" ref={raiz}>
+    <div className={`tv ${tema ? `tv--${tema}` : ""}`} ref={raiz}>
       {/* Cabecera blanca con el escudo y el reloj (con segundos), y la franja
-          bordó rayada debajo. */}
-      <header className="tv__cabeza">
-        <img className="tv__logo" src={logo} alt="E.E.S. Técnica N° 1 «Cecilia Berdichevsky»" />
+          bordó rayada debajo. En la Expo Técnica y en las Fechas Patrias, la
+          cabecera es un banner (con el escudo) y el reloj queda encima. */}
+      <header className={`tv__cabeza ${tema ? `tv__cabeza--banner tv__cabeza--${tema}` : ""}`}>
+        {tema ? (
+          <img className="tv__banner" src={tema === "expo" ? cabeceraExpo : cabeceraPatria} alt={`${tema === "expo" ? "Expo-Técnica · " : ""}E.E.S. Técnica N° 1 «Cecilia Berdichevsky»`} />
+        ) : (
+          <img className="tv__logo" src={logo} alt="E.E.S. Técnica N° 1 «Cecilia Berdichevsky»" />
+        )}
         {!completa && (
           <button className="tv__completa" onClick={() => raiz.current?.requestFullscreen?.()}>
             <Icon icon="ph:corners-out" width={18} height={18} aria-hidden="true" /> Pantalla completa
@@ -364,7 +400,7 @@ export default function Pantalla({ params }) {
           <span className="tv__fecha">{fechaDelDia(ahora)}</span>
         </p>
       </header>
-      <div className="tv__franja" aria-hidden="true" />
+      {tema !== "patria" && <div className="tv__franja" aria-hidden="true" />}
 
       <main className="tv__cuerpo">
         {enTurnos ? (
@@ -417,6 +453,7 @@ export default function Pantalla({ params }) {
         <section className="tv__mitad tv__mitad--imagenes" aria-labelledby="tv-novedades">
           <h2 className="tv__seccion" id="tv-novedades">Novedades</h2>
           <Carrusel imagenes={datos?.imagenes} ahora={ahora} />
+          {tema === "patria" && <img className="tv__adorno" src={adornoPatria} alt="" />}
         </section>
       </main>
 

@@ -309,6 +309,11 @@ export function crearPantalla(token, nombre) {
   return request("/cartelera/pantallas", { method: "POST", ...conToken(token), body: JSON.stringify({ nombre }) });
 }
 
+/* Ambiente de los televisores: "" (normal), "expo" (Expo Técnica) o "patria" (Fechas Patrias). */
+export function cambiarTemaPantallas(token, tema) {
+  return request("/cartelera/pantallas/tema", { method: "PUT", ...conToken(token), body: JSON.stringify({ tema }) });
+}
+
 export function renovarPantalla(token, id) {
   return request(`/cartelera/pantallas/${encodeURIComponent(id)}/renovar`, { method: "POST", ...conToken(token) });
 }

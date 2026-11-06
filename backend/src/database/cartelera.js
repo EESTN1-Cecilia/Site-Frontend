@@ -32,7 +32,18 @@ const TABLAS = `
   );
 `;
 
+// `tema`: ambiente de la pantalla. '' = normal, 'expo' = Expo Técnica, 'patria' = Fechas Patrias. Se agrega
+// a las bases que ya existen sin tocar lo que tienen.
 const migrar = (db) =>
-  new Promise((resolve, reject) => db.exec(TABLAS, (err) => (err ? reject(err) : resolve())));
+  new Promise((resolve, reject) =>
+    db.exec(TABLAS, (err) => {
+      if (err) return reject(err);
+      return db.all('PRAGMA table_info(pantallas)', (e, columnas) => {
+        if (e) return reject(e);
+        if (columnas.some((c) => c.name === 'tema')) return resolve();
+        return db.run("ALTER TABLE pantallas ADD COLUMN tema TEXT NOT NULL DEFAULT ''", (e2) => (e2 ? reject(e2) : resolve()));
+      });
+    })
+  );
 
 module.exports = { migrar };

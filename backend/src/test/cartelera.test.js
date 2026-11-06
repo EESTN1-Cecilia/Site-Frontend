@@ -15,7 +15,7 @@ if (fs.existsSync(rutaDb)) fs.unlinkSync(rutaDb);
 const app = require('../../app');
 const db = require('../database/db');
 const eventos = require('../utils/eventos');
-const { programa, tipoDeImagen } = require('../controllers/cartelera.Controller');
+const { programa, tipoDeImagen, tipoDeVideo, tipoDeArchivo } = require('../controllers/cartelera.Controller');
 const { OPCIONES } = require('../utils/tokens');
 
 let servidor;
@@ -26,6 +26,18 @@ const generarToken = (idUsuario) =>
 
 // Un PNG de 1×1 de verdad (y un «PNG» que no lo es).
 const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d4944415478da63f8ffff3f0005fe02fea7d6a8b80000000049454e44ae426082', 'hex');
+
+// Cabeceras mínimas de un MP4 (caja «ftyp») y de un WEBM, con relleno hasta `largo`.
+const mp4 = (marca, compatibles = [marca], largo = 64) => {
+  const marcas = compatibles.map((m) => Buffer.from(m, 'latin1'));
+  const caja = Buffer.alloc(16 + marcas.length * 4);
+  caja.writeUInt32BE(caja.length, 0);
+  caja.write('ftyp', 4, 'latin1');
+  caja.write(marca, 8, 'latin1');
+  marcas.forEach((m, i) => m.copy(caja, 16 + i * 4));
+  return Buffer.concat([caja, Buffer.alloc(Math.max(0, largo - caja.length))]);
+};
+const WEBM = Buffer.concat([Buffer.from('1a45dfa3', 'hex'), Buffer.from('4284'), Buffer.from('webm'), Buffer.alloc(40)]);
 
 const pedir = async (metodo, ruta, { cuerpo, token, archivo } = {}) => {
   const opciones = { method: metodo, headers: token ? { Authorization: `Bearer ${token}` } : {} };
@@ -80,6 +92,57 @@ describe('Orden de la cartelera: Dirección > Jefatura de Área > EMATP', () => 
   it('sólo acepta imágenes reales', () => {
     assert.strictEqual(tipoDeImagen(PNG), 'image/png');
     assert.strictEqual(tipoDeImagen(Buffer.from('%PDF-1.4 no es una imagen')), null);
+  });
+
+  it('reconoce videos MP4 y WEBM por su contenido, y no confunde HEIC ni MOV', () => {
+    assert.strictEqual(tipoDeVideo(mp4('isom')), 'video/mp4');
+    assert.strictEqual(tipoDeVideo(mp4('mp42')), 'video/mp4');
+    assert.strictEqual(tipoDeVideo(mp4('heic', ['mif1', 'heic'])), null);
+    assert.strictEqual(tipoDeVideo(mp4('qt  ')), null);
+    assert.strictEqual(tipoDeVideo(WEBM), 'video/webm');
+    assert.strictEqual(tipoDeVideo(Buffer.concat([Buffer.from('1a45dfa3', 'hex'), Buffer.from('matroska'.padEnd(40, ' '))])), null);
+    assert.strictEqual(tipoDeArchivo(PNG), 'image/png');
+    assert.strictEqual(tipoDeArchivo(Buffer.from('%PDF-1.4 no es un video ni una imagen')), null);
+  });
+});
+
+describe('Videos en la cartelera', () => {
+  let clave;
+
+  it('se cargan hasta 15 MB y quedan como video', async () => {
+    const r = await pedir('POST', '/api/cartelera', { token: tokens.direccion, archivo: mp4('isom', [], 14 * 1024 * 1024), cuerpo: { titulo: 'Video del acto' } });
+    assert.strictEqual(r.estado, 201);
+    assert.strictEqual(r.cuerpo.imagen.tipo, 'video');
+    clave = r.cuerpo.imagen.clave;
+    const lista = await pedir('GET', '/api/cartelera', { token: tokens.direccion });
+    assert.strictEqual(lista.cuerpo.imagenes.find((i) => i.clave === clave).tipo, 'video');
+  });
+
+  it('más de 15 MB → 413; una imagen de más de 5 MB → 400', async () => {
+    const video = await pedir('POST', '/api/cartelera', { token: tokens.direccion, archivo: mp4('isom', [], 16 * 1024 * 1024) });
+    assert.strictEqual(video.estado, 413);
+    const grande = Buffer.concat([PNG, Buffer.alloc(6 * 1024 * 1024)]);
+    const imagen = await pedir('POST', '/api/cartelera', { token: tokens.direccion, archivo: grande });
+    assert.strictEqual(imagen.estado, 400);
+    assert.match(imagen.cuerpo.error, /5 MB/);
+  });
+
+  it('se sirve por pedazos (Range) para que el televisor pueda reproducirlo', async () => {
+    const entero = await fetch(`${base}/api/cartelera/imagen/${clave}`);
+    assert.strictEqual(entero.headers.get('content-type'), 'video/mp4');
+    assert.strictEqual(entero.headers.get('accept-ranges'), 'bytes');
+    const total = (await entero.arrayBuffer()).byteLength;
+    const parte = await fetch(`${base}/api/cartelera/imagen/${clave}`, { headers: { Range: 'bytes=0-99' } });
+    assert.strictEqual(parte.status, 206);
+    assert.strictEqual(parte.headers.get('content-range'), `bytes 0-99/${total}`);
+    assert.strictEqual((await parte.arrayBuffer()).byteLength, 100);
+    const final = await fetch(`${base}/api/cartelera/imagen/${clave}`, { headers: { Range: 'bytes=-50' } });
+    assert.strictEqual(final.headers.get('content-range'), `bytes ${total - 50}-${total - 1}/${total}`);
+    const fuera = await fetch(`${base}/api/cartelera/imagen/${clave}`, { headers: { Range: `bytes=${total + 10}-` } });
+    assert.strictEqual(fuera.status, 416);
+    // Se quita para no alterar lo que cuentan las otras pruebas.
+    const id = (await pedir('GET', '/api/cartelera', { token: tokens.direccion })).cuerpo.imagenes.find((i) => i.clave === clave).id;
+    assert.strictEqual((await pedir('DELETE', `/api/cartelera/${id}`, { token: tokens.direccion })).estado, 200);
   });
 });
 

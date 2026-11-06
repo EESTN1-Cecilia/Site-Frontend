@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 import Editable from "./Editable.jsx";
 import SelectorImagen, { Ventana } from "./SelectorImagen.jsx";
 import { useTextos } from "../textos.js";
-import { esLinkValido } from "../links.js";
+import { dominio, esLinkValido } from "../links.js";
 
 /* ---------------------------------------------------------------------
    Piezas editables de las páginas públicas.
@@ -237,7 +237,8 @@ export function Enlace({
       <button
         type="button"
         className="control-edicion enlace-editar"
-        title={valido ? "Cambiar el link" : "Agregar un link"}
+        title={valido ? `Cambiar la URL de redireccionamiento (hoy: ${dominio(url)})` : "Agregar la URL de redireccionamiento"}
+        data-tooltip={valido ? `Lleva a ${dominio(url)}` : "Todavía no tiene URL"}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -246,12 +247,13 @@ export function Enlace({
           setAbierto(true);
         }}
       >
-        <Icon icon={valido ? "ph:link" : "ph:link-break"} width={13} height={13} aria-hidden="true" />
+        <Icon icon={valido ? "ph:link" : "ph:link-break"} width={16} height={16} aria-hidden="true" />
+        <span className="enlace-editar__texto">{valido ? "Cambiar URL" : "Agregar URL"}</span>
       </button>
       {abierto && (
         <Ventana
           chip="LINK"
-          titulo={valido ? "Cambiar el link" : "Agregar un link"}
+          titulo={valido ? "Cambiar la URL de redireccionamiento" : "Agregar la URL de redireccionamiento"}
           cerrar={() => setAbierto(false)}
           pie={
             <>
@@ -272,7 +274,7 @@ export function Enlace({
           }
         >
           <label className="campo campo--ancho">
-            <span>Adónde lleva</span>
+            <span>URL de redireccionamiento (adónde lleva el botón)</span>
             <input
               autoFocus
               type="url"

@@ -28,7 +28,6 @@ export const nombrePerfil = (rol) =>
 export const accesos = {
   "/panel": ["direccion", "secretaria", "preceptor", "jefatura", "server", "docente"],
   "/panel/grilla": ["direccion", "jefatura", "preceptor"],
-  "/panel/curricular": ["direccion", "jefatura", "docente"],
   "/panel/proyectos": ["direccion", "jefatura"],
   "/panel/publicaciones": ["direccion", "secretaria", "jefatura"],
   "/panel/mesas": ["direccion", "jefatura", "server"],
@@ -45,7 +44,6 @@ export const accesos = {
    Dirección edita todo. */
 export const edicion = {
   "/panel/grilla": ["jefatura"],
-  "/panel/curricular": ["jefatura", "docente"],
   "/panel/proyectos": ["jefatura"],
   "/panel/publicaciones": ["secretaria", "jefatura"],
   "/panel/mesas": ["jefatura", "server"],

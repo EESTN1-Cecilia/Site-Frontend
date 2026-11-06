@@ -14,13 +14,7 @@ export const menu = [
   ["General", [["/panel", "ph:chart-donut", "Tablero"]]],
   ["Contenido del sitio", [["/panel/sitio", "ph:browsers", "Sitio público"]]],
   ["Comunicación", [["/panel/cartelera", "ph:television-simple", "Cartelera digital"]]],
-  [
-    "Jefatura de Área",
-    [
-      ["/panel/grilla", "ph:grid-four", "Espacios y horarios"],
-      ["/panel/curricular", "ph:tree-structure", "Seguimiento curricular"],
-    ],
-  ],
+  ["Jefatura de Área", [["/panel/grilla", "ph:grid-four", "Espacios y horarios"]]],
   ["Server", [["/panel/server", "ph:desktop-tower", "Inventario y reservas"]]],
   [
     "Dirección",
