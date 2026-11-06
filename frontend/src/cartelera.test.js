@@ -70,6 +70,15 @@ describe("Televisor: tablero de turnos de una planta", () => {
     assert.deepStrictEqual([a.paginas, a.filas.length, b.filas.length], [2, FILAS_POR_PAGINA, 2]);
   });
 
+  it("dentro de cada planta pasan todas las páginas (no queda siempre la misma)", () => {
+    const filas = Array.from({ length: 5 }, (_, i) => ({ id: i }));
+    // Plantas de 10 s: en todas, la primera mitad muestra la página 1 y la segunda la 2.
+    for (const s of [0, 10, 20, 30]) {
+      assert.strictEqual(paginaDe(filas, lunes(8, 0, s), 4, 10).pagina, 1);
+      assert.strictEqual(paginaDe(filas, lunes(8, 0, s + 6), 4, 10).pagina, 2);
+    }
+  });
+
   it("el enlace del televisor lleva su clave", () => {
     assert.strictEqual(urlPantalla("abc_123", { origin: "http://escuela", pathname: "/" }), "http://escuela/#/tv?p=abc_123");
   });

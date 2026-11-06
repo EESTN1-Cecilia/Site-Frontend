@@ -18,7 +18,6 @@ import Novedades from "./src/pages/Novedades.jsx";
 import Inscripcion from "./src/pages/Inscripcion.jsx";
 import Tablero from "./src/pages/panel/Tablero.jsx";
 import Grilla from "./src/pages/panel/Grilla.jsx";
-import Curricular from "./src/pages/panel/Curricular.jsx";
 import ProyectosPanel from "./src/pages/panel/ProyectosPanel.jsx";
 import Publicaciones from "./src/pages/panel/Publicaciones.jsx";
 import Mesas from "./src/pages/panel/Mesas.jsx";
@@ -50,7 +49,6 @@ const paginas = {
   "/inscripcion": Inscripcion,
   "/panel": Tablero,
   "/panel/grilla": Grilla,
-  "/panel/curricular": Curricular,
   "/panel/proyectos": ProyectosPanel,
   "/panel/publicaciones": Publicaciones,
   "/panel/mesas": Mesas,

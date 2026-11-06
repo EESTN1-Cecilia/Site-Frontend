@@ -84,9 +84,19 @@ export function turnosDe(clases, salonesDelPiso, fecha) {
 }
 
 /* Si la lista no entra, se muestra de a páginas que rotan solas. */
-export function paginaDe(filas, fecha, porPagina = FILAS_POR_PAGINA) {
+export function paginaDe(filas, fecha, porPagina = FILAS_POR_PAGINA, ventana = 0) {
   const paginas = Math.max(1, Math.ceil(filas.length / porPagina));
-  const n = Math.floor(fecha.getTime() / (SEGUNDOS_POR_PAGINA * 1000)) % paginas;
+  let n;
+  if (ventana > 0) {
+    // Todas las páginas pasan dentro de cada ventana (p. ej. cada vez que toca
+    // una planta), repartiendo el tiempo en partes iguales. Si el ritmo de las
+    // páginas coincidiera con el de las plantas, una planta mostraría siempre
+    // la misma página y los docentes de las otras nunca se verían.
+    const ms = ventana * 1000;
+    n = Math.min(paginas - 1, Math.floor(((fecha.getTime() % ms) / ms) * paginas));
+  } else {
+    n = Math.floor(fecha.getTime() / (SEGUNDOS_POR_PAGINA * 1000)) % paginas;
+  }
   return { filas: filas.slice(n * porPagina, (n + 1) * porPagina), pagina: n + 1, paginas };
 }
 
