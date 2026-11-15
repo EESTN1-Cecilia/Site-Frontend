@@ -23,15 +23,6 @@ import { usePublicaciones } from "../publicaciones.js";
 const MESAS = "/panel/mesas";
 const PUBLICACIONES = "/panel/publicaciones";
 
-const fecha = (iso) =>
-  !iso
-    ? "A confirmar"
-    : new Date(`${iso}T00:00:00`).toLocaleDateString("es-AR", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-      });
-
 /* Aviso publicado para esta página, o el borrador que Dirección está mirando. */
 function Aviso({ pub }) {
   const bloques = pub.bloques || [];
@@ -82,12 +73,11 @@ const DINAMICO_DE_FILTRO = { busqueda: "buscador", anios: "anios", carpeta: "car
 const columnas = [
   ["materia", "Materia"],
   ["anio", "Año"],
-  ["fecha", "Fecha"],
-  ["hora", "Hora"],
-  ["aula", "Aula"],
-  ["docente", "Docente"],
-  ["drive", "Drive"],
+  ["drive", "Trabajo"],
 ];
+
+/* Cuántas materias se ven en "Todos" antes de tocar "Ver más". */
+const MATERIAS_VISIBLES = 8;
 
 /* Botones de año. De 5° a 7° hay uno por orientación. */
 const OPCIONES_ANIO = [
@@ -116,6 +106,7 @@ const aniosDeMesa = (texto = "") => {
 export default function Previas({ params }) {
   const [busqueda, setBusqueda] = useState("");
   const [anio, setAnio] = useState("Todos");
+  const [verTodas, setVerTodas] = useState(false);
   const publicaciones = usePublicaciones();
 
   const enVistaPrevia = publicaciones.find(
@@ -142,6 +133,10 @@ export default function Previas({ params }) {
             /* Sin orientación es de las dos: se ve en ambos botones. */
             (!opcion.orientacion || !m.orientacion || m.orientacion === opcion.orientacion))),
     );
+
+  /* En "Todos" (sin buscar) se muestran las primeras materias y un botón para ver el resto. */
+  const limitar = anio === "Todos" && !busqueda.trim() && filtradas.length > MATERIAS_VISIBLES;
+  const visibles = limitar && !verTodas ? filtradas.slice(0, MATERIAS_VISIBLES) : filtradas;
 
   const plano = usePlano();
   const columna = (clave) =>
@@ -255,7 +250,7 @@ export default function Previas({ params }) {
             </tr>
           </thead>
           <tbody>
-            {filtradas.map((mesa) => {
+            {visibles.map((mesa) => {
               const clave = (campo) => `mesa:${mesa.id}:${campo}`;
 
               return (
@@ -269,18 +264,6 @@ export default function Previas({ params }) {
                     <Texto id={clave("anio")} dueno={MESAS}>{mesa.anio}</Texto>
                     {mesa.orientacion && <span className="orientacion">{mesa.orientacion}</span>}
                   </td>
-                  <td data-label={columna("fecha")} className="capitalizar">
-                    <Dato id={clave("fecha")} dueno={MESAS} tipo="date" valor={mesa.fecha} formato={fecha} />
-                  </td>
-                  <td data-label={columna("hora")}>
-                    <Dato id={clave("hora")} dueno={MESAS} tipo="time" valor={mesa.hora} />
-                  </td>
-                  <td data-label={columna("aula")}>
-                    <Texto id={clave("aula")} dueno={MESAS}>{mesa.aula}</Texto>
-                  </td>
-                  <td data-label={columna("docente")}>
-                    <Texto id={clave("docente")} dueno={MESAS}>{mesa.docente}</Texto>
-                  </td>
                   <td data-label={columna("drive")}>
                     <Enlace
                       id={clave("drive")}
@@ -290,12 +273,12 @@ export default function Previas({ params }) {
                       aria-label={`Drive de ${mesa.materia}`}
                       vacio={
                         <span className="sin-link">
-                          <Texto id="previas.cronograma.sinDrive">Sin cargar</Texto>
+                          <Texto id="previas.cronograma.sinDrive">Sin trabajo</Texto>
                         </span>
                       }
                     >
                       <Icon icon="ph:google-drive-logo" width={15} height={15} aria-hidden="true" />
-                      <Texto id="previas.cronograma.abrir">Abrir</Texto>
+                      <Texto id="previas.cronograma.abrir">Abrir Trabajo</Texto>
                     </Enlace>
                   </td>
                 </tr>
@@ -304,6 +287,18 @@ export default function Previas({ params }) {
           </tbody>
         </table>
       </Bloque>
+      {limitar && (
+        <div className="ver-mas">
+          <button
+            type="button"
+            className="boton boton--fino"
+            aria-expanded={verTodas}
+            onClick={() => setVerTodas((abierto) => !abierto)}
+          >
+            {verTodas ? "Ver menos" : `Ver más (${filtradas.length - MATERIAS_VISIBLES})`}
+          </button>
+        </div>
+      )}
       <Caso visible={filtradas.length === 0} cuando="cuando ninguna mesa coincide con la búsqueda o el año elegido">
         <p className="vacio">
           <Texto id="previas.cronograma.vacio">No hay mesas con esos filtros.</Texto>

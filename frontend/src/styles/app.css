@@ -992,53 +992,115 @@ img {
 /* ---------- Footer ---------- */
 .footer {
   background: var(--bordo-oscuro);
-  padding: clamp(44px, 7vw, 64px) 0;
+  padding: clamp(48px, 7vw, 72px) 0 clamp(28px, 4vw, 36px);
   margin-top: 20px;
 }
 
 .footer__grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: clamp(28px, 5vw, 56px);
-  padding-bottom: clamp(28px, 4vw, 44px);
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: clamp(32px, 5vw, 64px);
+  padding-bottom: clamp(32px, 4vw, 48px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .footer__marca {
-  max-width: 40ch;
+  max-width: 30ch;
+}
+
+/* Marca corta arriba del nombre, como firma de la escuela. */
+.footer__marca::before {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 3px;
+  margin-bottom: 18px;
+  border-radius: 2px;
+  background: var(--rojo-suave);
 }
 
 .footer__titulo {
   color: var(--blanco);
-  font-size: clamp(20px, 2.4vw, 24px);
+  font-size: clamp(22px, 2.6vw, 28px);
   font-weight: 700;
-}
-
-.footer__bajada {
-  color: var(--rojo-claro);
-  font-size: 14px;
-  margin-top: 10px;
-  line-height: 1.55;
+  line-height: 1.2;
 }
 
 .footer__heading {
   color: var(--rojo-claro);
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 1.6px;
-  margin-bottom: 14px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  margin-bottom: 16px;
+}
+
+.footer__heading--redes {
+  margin-top: 28px;
 }
 
 .footer__link {
   display: block;
   text-align: left;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.8);
   font-size: 15px;
-  margin-bottom: 9px;
+  padding: 5px 0;
+  transition: color 160ms, transform 160ms;
 }
 
 .footer__link:hover {
   color: var(--blanco);
+  transform: translateX(3px);
+}
+
+.footer__link:focus-visible,
+.footer__mapa:focus-visible,
+.red:focus-visible {
+  outline: 2px solid var(--blanco);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.footer__direccion {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.footer__mapa {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  color: var(--blanco);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 200ms, border-color 200ms;
+}
+
+.footer__mapa:hover {
+  background: var(--rojo-secundario);
+  border-color: var(--rojo-secundario);
+}
+
+@media (max-width: 900px) {
+  .footer__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .footer__marca {
+    grid-column: 1 / -1;
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer__link:hover {
+    transform: none;
+  }
 }
 
 .redes {
@@ -1065,9 +1127,9 @@ img {
 }
 
 .copyright {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 12px;
-  margin-top: 26px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  margin-top: 24px;
 }
 
 /* ---------- Volver arriba ---------- */
@@ -1248,13 +1310,6 @@ img {
 .asistente-sitio :focus-visible {
   outline: 2px solid var(--rojo-suave);
   outline-offset: 2px;
-}
-
-@media (width < 768px) {
-  .robot-tecnica,
-  .asistente-sitio {
-    display: none;
-  }
 }
 
 .robot-tecnica svg {
@@ -1483,5 +1538,96 @@ img {
 
   .descripcion {
     max-width: 100%;
+  }
+}
+
+/* ---------- Asistente más chico en celulares ---------- */
+@media (max-width: 560px) {
+  .robot-tecnica {
+    left: max(10px, env(safe-area-inset-left));
+    bottom: calc(max(10px, env(safe-area-inset-bottom)) + 12px);
+    width: 40px;
+  }
+
+  .asistente-sitio {
+    left: max(10px, env(safe-area-inset-left));
+    bottom: 76px;
+    width: min(264px, calc(100vw - 20px));
+    max-height: calc(100dvh - 92px);
+    border-radius: 18px;
+  }
+
+  .asistente-sitio::after {
+    left: 16px;
+    width: 12px;
+    height: 12px;
+    bottom: -7px;
+  }
+
+  .asistente-sitio header {
+    gap: 8px;
+    padding: 4px 6px 4px 10px;
+    border-radius: 17px 17px 0 0;
+  }
+
+  .asistente-sitio h2 {
+    font-size: 0.875rem;
+  }
+
+  .asistente-sitio__identidad {
+    gap: 8px;
+  }
+
+  .asistente-sitio__icono {
+    width: 30px;
+    height: 30px;
+  }
+
+  .asistente-sitio__subtitulo {
+    font-size: 0.6875rem;
+  }
+
+  .asistente-sitio header button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .asistente-sitio__contenido {
+    padding: 10px;
+    font-size: 0.8125rem;
+    max-height: calc(100dvh - 150px);
+  }
+
+  .asistente-sitio__bienvenida {
+    padding: 8px 10px;
+  }
+
+  .asistente-sitio__conversacion {
+    max-height: min(26dvh, 160px);
+  }
+
+  .asistente-sitio__respuesta {
+    padding: 9px 10px;
+  }
+
+  .asistente-sitio__consulta {
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .asistente-sitio__consulta input {
+    min-height: 40px;
+    padding: 6px 10px;
+  }
+
+  .asistente-sitio__consulta button {
+    width: 40px;
+  }
+
+  .volver-arriba {
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    bottom: calc(14px + 12px);
   }
 }

@@ -87,52 +87,55 @@ export const areas = {
     chip: "4° A 7° AÑO",
     imagen: informaticaImage,
     resumen:
-      "La orientación mira el equipo por dentro: hardware, redes, sistemas digitales y automatización. Mucho laboratorio, mucho fierro y mucho Arduino.",
+      "La orientación mira el equipo por dentro: hardware, redes, sistemas digitales y automatización. Mucho laboratorio, mucho fierro, mucho Arduino y Raspberry Pi.",
     herramientas: [
       [
         "4° año",
         "Fundamentos",
         [
-          "Sistemas digitales: lógica y compuertas",
-          "Armado y diagnóstico de PC",
-          "Linux: consola y permisos",
-          "Inglés técnico",
+          "Programación en QBasic: algoritmos, if/else y bucles",
+          "Electrónica: Ley de Ohm, diodos y transistores",
+          "Hardware: arquitectura de PC y microcontroladores",
+          "Sistemas operativos: comandos y diagnóstico",
+          "Aplicaciones: planillas, bases de datos y ABM simple",
         ],
       ],
       [
         "5° año",
         "Redes y control",
         [
-          "Cableado estructurado",
-          "TCP/IP y direccionamiento",
-          "Arduino y sensores",
-          "Bases de datos: SQL",
+          "Sistemas digitales: lógica combinacional y códigos",
+          "Teleinformática: transmisión, medios y codificación",
+          "Redes y servidores: TCP/IP y Linux cliente-servidor",
+          "Programación en QBasic: subrutinas, arreglos y ordenamiento",
+          "Control de actuadores: edificios inteligentes y riego",
         ],
       ],
       [
         "6° y 7° año",
         "Integración",
         [
-          "Ruteo y configuración de equipos",
-          "Automatización y robótica",
-          "Servidores y servicios",
-          "Prácticas profesionalizantes",
+          "Circuitos secuenciales: flip-flops, contadores y memorias",
+          "Estructuras de datos, archivos y scripting en shell",
+          "Ruteo, TCP/UDP y administración de redes",
+          "Web: HTML, CSS, JavaScript, PHP y MySQL",
+          "Bases de datos, seguridad y proyecto de sistemas",
         ],
       ],
     ],
     proyectos: [
       {
-        id: "brazo-robotico",
-        titulo: "Brazo robótico con servos",
-        anio: "6° año",
+        id: "semaforo-arduino",
+        titulo: "Semáforo inteligente con Arduino",
+        anio: "4° año",
         equipo: null,
         resumen:
-          "Brazo articulado impreso y montado sobre base giratoria, controlado por servomotores desde una placa Arduino. Se controla por potenciómetros y por secuencias grabadas.",
-        stack: ["Arduino", "C/C++", "Servomotores", "Impresión 3D"],
+          "Cruce con dos semáforos y pulsador peatonal armado en protoboard y controlado por una placa Arduino UNO. Primer proyecto que une programación estructurada y electrónica básica.",
+        stack: ["Arduino UNO", "QBasic", "LED y resistencias", "Pulsador", "Protoboard"],
         aprendizajes: [
-          "Control de servos y consumo de corriente",
-          "Prueba y error sobre el prototipo físico",
-          "Documentar el esquema de conexión",
+          "Laboratorio de Programación: estructuras if/else y bucles aplicados a un problema real",
+          "Tecnologías Electrónicas: calcular la resistencia de cada LED con la Ley de Ohm",
+          "Laboratorio de Hardware: qué es un microcontrolador y cómo se programa",
         ],
         repo: null,
         docs: [],
@@ -149,6 +152,104 @@ export const areas = {
           "Leer una hoja de datos",
           "Convertir señal en unidades reales",
           "Ordenar el cableado para poder depurarlo",
+        ],
+        repo: null,
+        docs: [],
+      },
+      {
+        id: "riego-automatico",
+        titulo: "Riego automático con sensor de humedad",
+        anio: "5° año",
+        equipo: null,
+        resumen:
+          "Sistema de riego para la huerta de la escuela: un sensor mide la humedad del suelo y una placa Arduino activa una bomba mediante un relé cuando hace falta. Muestra el estado en un display y registra los riegos.",
+        stack: ["Arduino", "Sensor de humedad de suelo", "Módulo relé", "Bomba de agua", "Reloj RTC"],
+        aprendizajes: [
+          "Laboratorio de Aplicaciones: software de control para manejo de actuadores (sistemas de riego)",
+          "Tecnologías Electrónicas: el transistor y el relé como llaves de conmutación",
+          "Calibrar un sensor analógico y definir umbrales de funcionamiento",
+        ],
+        repo: null,
+        docs: [],
+      },
+      {
+        id: "conversor-binario",
+        titulo: "Conversor binario a display de 7 segmentos",
+        anio: "5° año",
+        equipo: null,
+        resumen:
+          "Circuito con compuertas lógicas y decodificador que convierte un número binario de 4 bits en un dígito visible. Se verifica el resultado con una placa Arduino que genera las entradas y compara las salidas.",
+        stack: ["Compuertas lógicas", "Decodificador 7447", "Display de 7 segmentos", "Arduino", "Simulador de circuitos"],
+        aprendizajes: [
+          "Sistemas Digitales: sistemas de numeración, funciones lógicas y conversores de código",
+          "Simplificar una función lógica y llevarla a un circuito real",
+          "Probar un circuito con una tabla de verdad automática",
+        ],
+        repo: null,
+        docs: [],
+      },
+      {
+        id: "servidor-raspberry",
+        titulo: "Servidor de red con Raspberry Pi",
+        anio: "5° año",
+        equipo: null,
+        resumen:
+          "Una Raspberry Pi hace de servidor del laboratorio: entrega direcciones por DHCP, resuelve nombres con DNS, comparte archivos y guarda copias de seguridad automáticas. Se arma sobre una red local con cableado UTP.",
+        stack: ["Raspberry Pi 4", "Linux", "DHCP y DNS", "Samba", "rsync", "Cable UTP"],
+        aprendizajes: [
+          "Laboratorio de Sistemas Operativos: modelo cliente-servidor y copias de seguridad",
+          "Teleinformática: medios de transmisión y armado de cables UTP",
+          "Laboratorio de Hardware: direccionamiento IP y análisis de tráfico",
+        ],
+        repo: null,
+        docs: [],
+      },
+      {
+        id: "brazo-robotico",
+        titulo: "Brazo robótico con servos",
+        anio: "6° año",
+        equipo: null,
+        resumen:
+          "Brazo articulado impreso y montado sobre base giratoria, controlado por servomotores desde una placa Arduino. Se controla por potenciómetros y por secuencias grabadas.",
+        stack: ["Arduino", "QBasic", "Servomotores", "Impresión 3D"],
+        aprendizajes: [
+          "Control de servos y consumo de corriente",
+          "Prueba y error sobre el prototipo físico",
+          "Documentar el esquema de conexión",
+          "Laboratorio de Programación: estructuras de datos para guardar las secuencias de movimiento",
+        ],
+        repo: null,
+        docs: [],
+      },
+      {
+        id: "estacion-meteorologica",
+        titulo: "Estación meteorológica con panel web",
+        anio: "6° año",
+        equipo: null,
+        resumen:
+          "Una placa ESP32 o Arduino mide temperatura, humedad y presión y envía los datos por WiFi a una Raspberry Pi, que los guarda en una base de datos y los muestra en una página web con gráficos.",
+        stack: ["ESP32 / Arduino", "DHT22 y BMP280", "Raspberry Pi", "Apache", "PHP y MySQL", "HTML, CSS y JavaScript", "Scripts de shell"],
+        aprendizajes: [
+          "Laboratorio de Aplicaciones: HTML, CSS, JavaScript y PHP con MySQL",
+          "Laboratorio de Hardware: protocolos TCP/UDP y envío de datos por la red",
+          "Laboratorio de Sistemas Operativos: automatizar tareas con scripts de shell",
+        ],
+        repo: null,
+        docs: [],
+      },
+      {
+        id: "control-acceso-rfid",
+        titulo: "Control de acceso con tarjetas RFID",
+        anio: "7° año",
+        equipo: null,
+        resumen:
+          "Cerradura que se abre con una tarjeta RFID: un lector conectado a Arduino o ESP32 consulta a un servidor Raspberry Pi, que valida el usuario en una base de datos y registra cada ingreso. Incluye un panel para altas, bajas y consulta de registros.",
+        stack: ["Arduino / ESP32", "Lector RFID RC522", "Cerradura eléctrica con relé", "Raspberry Pi", "MySQL", "Python o PHP"],
+        aprendizajes: [
+          "Proyecto, Diseño e Implementación de Sistemas: del relevamiento a la puesta en marcha",
+          "Bases de Datos: modelo entidad-relación, consultas SQL y permisos",
+          "Seguridad Informática: autenticación, registro de accesos y copias de seguridad",
+          "Modelos y Sistemas: diagrama de flujo de datos del sistema completo",
         ],
         repo: null,
         docs: [],
@@ -287,6 +388,20 @@ const sanear = (datos) =>
     : {};
 
 let porArea = { ...semilla(), ...sanear(leerLocal(CLAVE)) };
+
+/* Los proyectos de Informática se renovaron según los contenidos del diseño
+   curricular. Una sola vez se reemplazan los de ejemplo viejos que pudo dejar
+   guardados este navegador, sin tocar los que cargó gestión. */
+const CLAVE_INFORMATICA = "tec1-proyectos-informatica-3";
+if (!leerLocal(CLAVE_INFORMATICA)) {
+  guardarLocal(CLAVE_INFORMATICA, true);
+  const nuevos = semilla().informatica;
+  const propios = (porArea.informatica || []).filter(
+    (p) => !["brazo-robotico", "sensor-distancia"].includes(p.id) && !nuevos.some((n) => n.id === p.id),
+  );
+  porArea = { ...porArea, informatica: [...nuevos, ...propios] };
+  guardarLocal(CLAVE, porArea);
+}
 const oyentes = new Set();
 
 const persistir = () => {

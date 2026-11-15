@@ -55,6 +55,49 @@ function temasDeConsulta(consulta) {
   return temas.filter((tema) => tema.palabras.some((palabra) => palabras.includes(` ${palabra} `)));
 }
 
+/* Saludos: se contestan con un saludo (según cómo saludó la persona) y, si no preguntó nada más,
+   con los temas que se pueden consultar. */
+const SUGERENCIA = "¿En qué te puedo ayudar? Podés consultarme por «horarios», «vacantes», «boletín», «previas» o «novedades».";
+
+function saludoDe(consulta, hayTemas) {
+  const texto = ` ${consulta.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/[^a-z0-9]+/g, " ").trim()} `;
+  const tiene = (patron) => patron.test(texto);
+
+  const saluda =
+    tiene(/\s(hola+|holi+)\s/) ||
+    tiene(/^\s(ola|buenas|buen dia|buenos dias|hello|hi|hey|saludos)\s/);
+  const pregunta = tiene(/\s(como estas|como andas|como va|como te va|como te encuentras|que tal|todo ?bien|todo ok)\s/);
+  const agradece = tiene(/\s(gracias|muchas gracias|mil gracias|te agradezco|agradezco|muy amable)\s/);
+  const celebra = tiene(/\s(genial|buenisimo|excelente|perfecto|barbaro|bárbaro|espectacular|joya|de diez)\s/);
+  const despide = tiene(/\s(chau|chao|adios|hasta luego|hasta pronto|nos vemos|buen fin de semana)\s/);
+  const quien = tiene(/\s(quien sos|quien eres|como te llamas|que sos|que haces|para que servis)\s/);
+
+  const partes = [];
+  if (saluda) {
+    partes.push(
+      texto.includes(" buenos dias") || texto.includes(" buen dia")
+        ? "¡Buen día!"
+        : texto.includes(" buenas tardes")
+          ? "¡Buenas tardes!"
+          : texto.includes(" buenas noches")
+            ? "¡Buenas noches!"
+            : "¡Hola!",
+    );
+  }
+  if (pregunta) partes.push("¡Todo bien, gracias por preguntar!");
+  if (agradece) partes.push("¡De nada! Me alegra poder ayudarte.");
+  else if (celebra) partes.push("¡Me alegra mucho!");
+  if (quien) partes.push("Soy el asistente virtual de Técnica 1: te cuento dónde encontrar horarios, vacantes, boletín, previas y novedades.");
+  if (despide) partes.push("¡Hasta luego! Que tengas un lindo día.");
+  if (partes.length === 0) return null;
+
+  if (!hayTemas) {
+    if ((despide && !saluda && !pregunta) || quien) return partes.join(" ");
+    partes.push(agradece || celebra ? "Si necesitás algo más, avisame." : SUGERENCIA);
+  }
+  return partes.join(" ");
+}
+
 export default function AsistenteSitio({ alCerrar, alPensar }) {
   const [consulta, setConsulta] = useState("");
   const [conversacion, setConversacion] = useState([]);
@@ -73,7 +116,8 @@ export default function AsistenteSitio({ alCerrar, alPensar }) {
 
     const espera = window.setTimeout(() => {
       const resultados = temasDeConsulta(pendiente);
-      setConversacion((previa) => [...previa, { pregunta: pendiente, resultados }]);
+      const saludo = saludoDe(pendiente, resultados.length > 0);
+      setConversacion((previa) => [...previa, { pregunta: pendiente, resultados, saludo }]);
       setPendiente("");
       alPensar(false);
     }, 650);
@@ -114,9 +158,14 @@ export default function AsistenteSitio({ alCerrar, alPensar }) {
       <div className="asistente-sitio__contenido">
         <div ref={registro} className="asistente-sitio__conversacion" role="log" aria-label="Conversación">
           <p className="asistente-sitio__bienvenida">¡Hola! Soy el asistente de Técnica 1. ¿Qué querés saber sobre la escuela?</p>
-          {conversacion.map(({ pregunta, resultados }, indice) => (
+          {conversacion.map(({ pregunta, resultados, saludo }, indice) => (
             <div key={indice} className="asistente-sitio__turno">
               <p className="asistente-sitio__pregunta">{pregunta}</p>
+              {saludo && (
+                <div className="asistente-sitio__respuesta">
+                  <p>{saludo}</p>
+                </div>
+              )}
               {resultados.map((tema) => (
                 <div key={tema.id} className="asistente-sitio__respuesta">
                   <strong>{tema.titulo}</strong>
@@ -130,7 +179,7 @@ export default function AsistenteSitio({ alCerrar, alPensar }) {
                   )}
                 </div>
               ))}
-              {resultados.length === 0 && (
+              {resultados.length === 0 && !saludo && (
                 <div className="asistente-sitio__respuesta">
                   <p>No encontré un tema relacionado. Probá con «horarios», «vacantes», «boletín», «previas» o «novedades».</p>
                 </div>

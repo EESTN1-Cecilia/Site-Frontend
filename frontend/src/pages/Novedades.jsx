@@ -62,20 +62,16 @@ function Nota({ novedad, destacada, onAbrir }) {
           {novedad.titulo}
         </Texto>
       </h3>
-      {destacada ? (
-        <Bloques pub={novedad} bloques={cuerpo} />
-      ) : (
-        <>
-          {resumen && (
-            <p className="nota__texto">
-              <Texto id={clave(`bloque:${resumen.id}`)} dueno={PUBLICACIONES}>
-                {resumen.texto}
-              </Texto>
-            </p>
-          )}
-          <Bloques pub={novedad} bloques={links} />
-        </>
+      {/* Tanto la nota destacada como las demás muestran sólo el resumen:
+          el artículo completo se abre con "Leer más". */}
+      {resumen && (
+        <p className="nota__texto">
+          <Texto id={clave(`bloque:${resumen.id}`)} dueno={PUBLICACIONES}>
+            {resumen.texto}
+          </Texto>
+        </p>
       )}
+      <Bloques pub={novedad} bloques={links} />
       <button
         type="button"
         className="nota__link"

@@ -11,6 +11,10 @@ import imagenCicloBasico from "./assets/images/ciclo-basico-taller.jpg";
 import imagenInformatica from "./assets/images/informatica-robotica.jpg";
 import imagenProgramacion from "./assets/images/programacion-proyectos.jpg";
 import portadaInstitucional from "./assets/images/portada-institucional.webp";
+import mirtpZuriStand from "./assets/images/mirtp-zuri-stand.webp";
+import mirtpZuriRobot from "./assets/images/mirtp-zuri-robot.webp";
+import mirtpAirsenseEquipo from "./assets/images/mirtp-airsense-equipo.webp";
+import mirtpAirsenseDispositivo from "./assets/images/mirtp-airsense-dispositivo.webp";
 
 /* Imágenes ya cargadas en el sitio, para elegir sin subir nada. */
 export const biblioteca = [
@@ -111,6 +115,31 @@ const FOTO = "Foto: El Diario Sur";
 /* Un bloque con id terminado en "-soloNota" se ve dentro de la nota abierta y no en la tarjeta. */
 
 const deLaPrensa = [
+  {
+    id: "n12",
+    titulo: "Mi RTP Región 5",
+    categoria: "Proyectos",
+    fecha: "2026-11-15",
+    bloques: [
+      { tipo: "imagen", url: mirtpZuriStand, epigrafe: "El equipo de ZURI junto a su stand en Mi RTP Región 5." },
+      { tipo: "parrafo", texto: "Estudiantes de la Técnica N.º 1 presentaron ZURI, un robot acompañante para niños con autismo, y AIRSENSE, un dispositivo que monitorea la calidad ambiental en las aulas." },
+      { tipo: "parrafo", texto: "Los dos proyectos combinan programación, electrónica, robótica e innovación para dar respuesta a problemáticas sociales y ambientales." },
+      { tipo: "titulo", texto: "ZURI: un robot acompañante para niños con autismo" },
+      { tipo: "parrafo", texto: "ZURI, “Más que un juguete, un acompañante”, fue desarrollado por las estudiantes Valentina López, Michelle Zamora y Aylen Montiel, de 6.° año 1.ª división, con la tutoría de los docentes Marcos Correia y Pablo Gareis." },
+      { tipo: "parrafo", texto: "Es un robot con apariencia de oso de peluche, pensado para acompañar a niños con Trastorno del Espectro Autista (TEA) en sus actividades cotidianas. Ayuda a organizar rutinas y a ganar autonomía con pictogramas, recordatorios, estímulos visuales y sonoros e interacciones adaptadas a cada usuario." },
+      { tipo: "imagen", url: mirtpZuriRobot, epigrafe: "El prototipo de ZURI: pantalla con expresiones, orejas de fieltro y carcasa impresa en 3D." },
+      { tipo: "parrafo", texto: "Integra una Raspberry Pi 5, pantalla táctil, sensores, luces LED, micrófono, parlante y piezas fabricadas con impresión 3D. Todavía está en etapa de prototipado y busca ser una herramienta de apoyo para los niños y sus familias." },
+      { tipo: "titulo", texto: "AIRSENSE: tecnología para monitorear la calidad ambiental" },
+      { tipo: "imagen", url: mirtpAirsenseEquipo, epigrafe: "El equipo de AIRSENSE en su stand." },
+      { tipo: "parrafo", texto: "AIRSENSE fue desarrollado por los estudiantes Benjamín Novel, Martín Clemente, Gustavo Estévez y Nicolás Gutiérrez. Es un dispositivo portátil que mide la temperatura, la humedad y el ruido de espacios cerrados, sobre todo aulas, y estima la calidad del aire. Los resultados se ven en una pantalla OLED." },
+      { tipo: "parrafo", texto: "Funciona con sensores conectados a un microcontrolador ESP32, tiene batería recargable, una carcasa diseñada e impresa en 3D y un sistema de visualización de datos hecho en Python. Entre las próximas mejoras está la transmisión de datos por WiFi." },
+      { tipo: "imagen", url: mirtpAirsenseDispositivo, epigrafe: "El dispositivo AIRSENSE y su sitio web, presentado en la muestra." },
+      { tipo: "parrafo", texto: "En las primeras pruebas en espacios escolares, los estudiantes detectaron momentos en que la temperatura y el ruido superaban los valores de referencia de su investigación. La idea es que AIRSENSE sea una herramienta accesible para identificar condiciones desfavorables y promover aulas más saludables." },
+      { tipo: "titulo", texto: "Educación técnica, innovación y compromiso social" },
+      { tipo: "destacado", texto: "ZURI usa la robótica para favorecer la inclusión; AIRSENSE aplica la electrónica y la programación al cuidado del ambiente y el bienestar de las personas." },
+      { tipo: "parrafo", texto: "La participación en Mi RTP Región 5 muestra cómo la educación técnica transforma lo que se aprende en el aula en soluciones concretas. Ambos proyectos ponen en valor el trabajo colaborativo, la investigación, el diseño tecnológico y la capacidad de los estudiantes para crear propuestas a partir de necesidades reales de la comunidad." },
+    ],
+  },
   {
     id: "n7",
     titulo: "Avanzan las obras de mejora en la Escuela Técnica N°1",
@@ -265,7 +294,7 @@ const sanear = (datos) =>
 /* Las notas de la prensa se ponen una sola vez (y de nuevo si se corrige su
    texto: sube el número de versión) en la lista que ya guardó este navegador;
    si después se borran, no vuelven. */
-const CLAVE_PRENSA = "tec1-publicaciones-prensa-3";
+const CLAVE_PRENSA = "tec1-publicaciones-prensa-6";
 
 const conNotasDeLaPrensa = (guardada) => {
   if (leerLocal(CLAVE_PRENSA)) return guardada;

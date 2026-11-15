@@ -391,8 +391,15 @@
 }
 
 .sin-link {
-  color: var(--gris-medio);
+  color: var(--bordo-oscuro);
   font-size: 13px;
+  font-weight: 600;
+}
+
+.ver-mas {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 .capitalizar::first-letter {
@@ -1974,17 +1981,17 @@ main > .pagina-libre {
 .reserva-hermanos__sello {
   display: grid;
   place-items: center;
-  width: clamp(96px, 19vw, 224px);
+  width: clamp(110px, 21vw, 250px);
   aspect-ratio: 1;
-  padding: 16px;
-  border: 1px solid var(--rojo-suave);
-  border-radius: 50%;
 }
 
+/* El emblema ya trae su propio contorno y el nombre debajo: va sin recorte circular. */
 .reserva-hermanos__sello img {
   display: block;
   width: 100%;
-  border-radius: 50%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 18px #00000040);
 }
 
 @media (max-width: 640px) {
