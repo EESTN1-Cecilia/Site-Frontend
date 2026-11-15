@@ -102,6 +102,11 @@ export function Menu({ ruta, usuario, inscripcionAbierta, menuAbierto, setMenuAb
   );
 }
 
+/* Link a Google Maps con la dirección del colegio (no depende del texto editable). */
+const MAPA = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+  "Güemes 2051, Esteban Echeverría, Buenos Aires, Argentina",
+)}`;
+
 export function Pie({ usuario, inscripcionAbierta, redes }) {
   const edicion = useEdicionTextos();
   const editando = !!edicion?.puede();
@@ -116,13 +121,8 @@ export function Pie({ usuario, inscripcionAbierta, redes }) {
             <p className="footer__titulo">
               <Texto id="inicio.pie.titulo">Técnica 1 Cecilia Berdichevsky</Texto>
             </p>
-            <p className="footer__bajada">
-              <Texto id="inicio.pie.direccion">
-                Güemes 2051 · Esteban Echeverría · Provincia de Buenos Aires.
-              </Texto>
-            </p>
           </div>
-          <nav>
+          <nav aria-label="Navegación del pie de página">
             <p className="footer__heading">
               <Texto id="inicio.pie.navegacion">NAVEGACIÓN</Texto>
             </p>
@@ -138,31 +138,44 @@ export function Pie({ usuario, inscripcionAbierta, redes }) {
                 </button>
               ))}
           </nav>
-          {redesConLink.length > 0 && (
-            <div>
-              <p className="footer__heading">
-                <Texto id="inicio.pie.redes">REDES</Texto>
-              </p>
-              <div className="redes">
-                {redesConLink.map((r) => {
-                  const [nombre, icono] = redesSociales[r.red];
-                  return (
-                    <a
-                      className="red"
-                      key={r.id}
-                      href={r.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={nombre}
-                      title={nombre}
-                    >
-                      <Icon icon={icono} width={18} height={18} aria-hidden="true" />
-                    </a>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <div className="footer__contacto">
+            <p className="footer__heading">UBICACIÓN</p>
+            <p className="footer__direccion">
+              <Texto id="inicio.pie.direccion">
+                Güemes 2051 · Esteban Echeverría · Provincia de Buenos Aires.
+              </Texto>
+            </p>
+            <a className="footer__mapa" href={MAPA} target="_blank" rel="noopener noreferrer">
+              <Icon icon="ph:map-pin" width={16} height={16} aria-hidden="true" />
+              Cómo llegar
+              <Icon icon="ph:arrow-up-right" width={14} height={14} aria-hidden="true" />
+            </a>
+            {redesConLink.length > 0 && (
+              <>
+                <p className="footer__heading footer__heading--redes">
+                  <Texto id="inicio.pie.redes">REDES</Texto>
+                </p>
+                <div className="redes">
+                  {redesConLink.map((r) => {
+                    const [nombre, icono] = redesSociales[r.red];
+                    return (
+                      <a
+                        className="red"
+                        key={r.id}
+                        href={r.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={nombre}
+                        title={nombre}
+                      >
+                        <Icon icon={icono} width={18} height={18} aria-hidden="true" />
+                      </a>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
         </div>
         <p className="copyright">
           © {new Date().getFullYear()}{" "}

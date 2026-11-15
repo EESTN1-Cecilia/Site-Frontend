@@ -19,37 +19,21 @@ export default function CirculosEncabezado({ variante = "inscripcion" }) {
       </defs>
       {variante === "evaluacion" && (
         <>
-          <g fill="none" stroke="var(--rojo-suave)" strokeWidth=".65">
-            <circle cx="169" cy="85" r="46" />
-            <circle cx="258" cy="52" r="38" strokeDasharray="2 3" />
-            <circle cx="113" cy="110" r="19" />
-            <circle cx="223" cy="12" r="17" />
-            <circle cx="306" cy="78" r="10" strokeDasharray="1 2" />
+          <circle cx="196" cy="126" r="52" fill={`url(#${disco})`} />
+          <g fill="none" stroke="var(--rojo-suave)" strokeWidth=".7">
+            <circle cx="188" cy="131" r="58" />
+            <circle cx="106" cy="30" r="40" />
+            <circle cx="276" cy="82" r="20" />
+            <circle cx="290" cy="124" r="10" strokeDasharray="2 2" />
           </g>
-          <circle cx="291" cy="122" r="21" fill={`url(#${rayas})`} />
-          <circle cx="123" cy="34" r="5" fill={`url(#${disco})`} />
-          <circle cx="225" cy="108" r="4" fill="var(--rojo-suave)" />
-          <circle cx="205" cy="129" r="6" fill={`url(#${disco})`} />
-          <circle cx="300" cy="27" r="3" fill="var(--rojo-suave)" />
-          <g stroke="var(--rojo-claro)" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round">
-            <g transform="translate(169 85) rotate(-23)">
-              <path d="M-33 2 16-15 36-5 29 12-21 26-36 17Z" fill="var(--bordo-oscuro)" />
-              <circle cx="-19" cy="20" r="10" fill="var(--bordo-oscuro)" />
-              <circle cx="18" cy="12" r="9" fill="var(--bordo-oscuro)" />
-              <circle cx="-19" cy="20" r="5" fill="var(--rojo-suave)" />
-              <circle cx="18" cy="12" r="4" fill="var(--rojo-suave)" />
-              <path d="M-36 0-19-18 23-21 39-9 25 1-21 15Z" fill={`url(#${disco})`} />
-              <path d="m20-20 19 11-9 13-11-5 6-7-12-9z" fill="var(--rojo-secundario)" />
-              <path d="m-15-10 21-6 8 5-20 7z" fill="var(--bordo-oscuro)" />
-              <path d="m-10-10 7 4m-1-6 7 4m-1-6 7 4M-20 4q8 3 14-7m14-9q8-6 15 0" fill="none" />
-            </g>
-            <g transform="translate(258 52)">
-              <path d="M-12-7 4 9l-7 24h16l-6-4 5-21L0-10Z" fill={`url(#${disco})`} />
-              <path d="M-19 32h35v6h-35zM-24-8l9-16 22 9-4 17z" fill={`url(#${disco})`} />
-              <path d="M-24-8 3 2l-4 6-23-10z" fill="var(--bordo-oscuro)" />
-              <path d="m-21 3-3 5m11-2-3 5m11-2-3 5" fill="none" />
-            </g>
-          </g>
+          <circle cx="285" cy="10" r="28" fill={`url(#${rayas})`} />
+          <circle cx="271" cy="87" r="13" fill={`url(#${disco})`} />
+          <circle cx="146" cy="62" r="8" fill={`url(#${disco})`} />
+          <circle cx="226" cy="44" r="5" fill={`url(#${disco})`} />
+          <circle cx="67" cy="39" r="4" fill="var(--rojo-suave)" />
+          <circle cx="138" cy="14" r="3.5" fill="var(--rojo-suave)" />
+          <circle cx="245" cy="90" r="2.5" fill="var(--rojo-claro)" />
+          <circle cx="306" cy="52" r="2" fill="var(--rojo-suave)" />
         </>
       )}
       {variante === "trayectorias" && (

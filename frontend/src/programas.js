@@ -5,13 +5,17 @@ import { guardarProgramasEnServidor } from "./services/api.js";
 
 /* Programas hechos por alumnos que cualquiera puede usar.
    Se muestran al final de la portada y se cargan desde gestión. */
+const URL_DIAGRAMTEC = "https://diagramtec-frontend.vercel.app/";
+/* Link que tenía antes: si quedó guardado en el navegador o en el servidor, se actualiza. */
+const URL_DIAGRAMTEC_ANTERIOR = "https://diagramtec.com";
+
 const semilla = () => [
   {
     id: "diagramtec",
     nombre: "DiagramTec",
     descripcion:
       "Plataforma para crear, editar y compartir diagramas de flujo de datos con un editor visual. Pensada para que estudiantes y docentes practiquen el modelado de datos.",
-    url: "https://diagramtec.com",
+    url: URL_DIAGRAMTEC,
     logo: "",
     autores:
       "Maite Vázquez, Santiago Alvarez, Leandro Pereyra, Joaquín Villalva y Nayla",
@@ -62,6 +66,9 @@ const sanear = (datos) =>
         ...campos(p, CAMPOS),
         enDesarrollo: booleano(p.enDesarrollo),
       }))
+        .map((p) =>
+          p.id === "diagramtec" && p.url === URL_DIAGRAMTEC_ANTERIOR ? { ...p, url: URL_DIAGRAMTEC } : p,
+        )
     : semilla();
 
 let lista = sanear(leerLocal(CLAVE));

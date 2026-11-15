@@ -11,7 +11,7 @@ import Texto, {
 import ZonaLibre from "../components/ZonaLibre.jsx";
 import { Dinamico, PaginaEditable, usePaginaGuardada } from "../components/PaginaEditable.jsx";
 import { pasosInscripcion, requisitos } from "../contenido.js";
-import { logo } from "../data.js";
+import emblema from "../assets/images/emblema-tecnica.webp";
 import { useAjustes } from "../ajustes.js";
 
 const secciones = [
@@ -75,7 +75,7 @@ export default function Inscripcion() {
         )}
       </div>
       <div className="reserva-hermanos__sello">
-        <Imagen id="inscripcion.reserva.logo" src={logo} alt="" />
+        <Imagen id="inscripcion.reserva.logo" src={emblema} alt="" />
       </div>
     </article>
   );

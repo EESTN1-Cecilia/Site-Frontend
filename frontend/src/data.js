@@ -10,20 +10,83 @@ export const courses = [
   {
     title: "Ciclo Básico",
     eyebrow: "1° a 3° año",
-    /* De 1° a 3° el plan de trabajo es el mismo para todas las divisiones:
-       una sola entrada por año en vez de una por división. */
+    /* Una entrada por división (1° 1, 1° 2, 1° 3, 1° 4 y 1° 6; igual en 2° y 3°).
+       El link de cada plan de trabajo va en lugar de null. */
     items: [
-      ["1° año", null],
-      ["2° año", null],
-      ["3° año", null],
+      [
+        "1° 1",
+        "https://drive.google.com/drive/folders/12DHSnKH7oGeJ9qdV6J1BUJcOvRIABKD4",
+      ],
+      [
+        "1° 2",
+        "https://drive.google.com/drive/folders/1JMlKnBlDDyOHyNU4A013LtEWP9IPkYQ8",
+      ],
+      [
+        "1° 3",
+        "https://drive.google.com/drive/folders/1Z1k7gJldMA0U1UaNGMlYkwZnQ6GeAqds",
+      ],
+      [
+        "1° 4",
+        "https://drive.google.com/drive/folders/1RdZlcG3O096F4_gdh-fEbklRovj-4IK9",
+      ],
+      [
+        "1° 6",
+        "https://drive.google.com/drive/folders/17qeYaYdqgYi1lNthrGSmUIK_Hh_w_Jng",
+      ],
+      [
+        "2° 1",
+        "https://drive.google.com/drive/folders/1xpvHryJ4TMxyyb0f3rmMk0AoAXrJA_Mh",
+      ],
+      [
+        "2° 2",
+        "https://drive.google.com/drive/folders/1qQKe4JvKI-EHNujfcQd8X6JiqfcU2VYG",
+      ],
+      [
+        "2° 3",
+        "https://drive.google.com/drive/folders/1WcoQQzk1BG9s1hzvg91JBG4SKXRj6NCB",
+      ],
+      [
+        "2° 4",
+        "https://drive.google.com/drive/folders/1cU7uKXUlwuUJNiVgFTO0uvKrPnQ9_nal",
+      ],
+      [
+        "2° 6",
+        "https://drive.google.com/drive/folders/11SFuRVJBo3FsKcEUqscfudkTg57AgqZ0",
+      ],
+      [
+        "3° 1",
+        "https://drive.google.com/drive/folders/1spzKq2BA1XStvFAVMADdxj9hSR8bDk6P",
+      ],
+      [
+        "3° 2",
+        "https://drive.google.com/drive/folders/1OSo-QUXhJY-vAUPjCqhprJUdkBahVAFK",
+      ],
+      [
+        "3° 3",
+        "https://drive.google.com/drive/folders/1RCTxeb2zlccDwoCp-5gLaH7yqmNb-ul_",
+      ],
+      [
+        "3° 4",
+        "https://drive.google.com/drive/folders/1jcOXhvDRh4Oa8Ak9oiMbOJGd7D0MbtlD",
+      ],
+      [
+        "3° 6",
+        "https://drive.google.com/drive/folders/1ekod6AXga5ImRl3ZIbo16AT7GAJTbwfN",
+      ],
     ],
   },
   {
     title: "Técnico en Informática",
     eyebrow: "4° a 7° año",
     items: [
-      /* 4° año es común a Informática y Programación: una sola entrada. */
-      ["4° año", null],
+      [
+        "4° 1",
+        "https://drive.google.com/drive/folders/1CKysjDN4lGXj5lJIeJ9cDGdVXHkMyjs9",
+      ],
+      [
+        "4° 2",
+        "https://drive.google.com/drive/folders/1B7Vcp0IiZb9h6nNvHd24UnRxhvj3PXTI",
+      ],
       [
         "5° 1",
         "https://drive.google.com/open?id=19xM0WlPkiSBTMm0-aAtTwKArlbdz9Yyt",
@@ -46,8 +109,14 @@ export const courses = [
     title: "Técnico en Programación",
     eyebrow: "4° a 7° año",
     items: [
-      /* 4° año es común a Informática y Programación: una sola entrada. */
-      ["4° año", null],
+      [
+        "4° 3",
+        "https://drive.google.com/drive/folders/1Jl9Pi6OnvZ_VbodjMU7nVnsM0YH5GVlb",
+      ],
+      [
+        "4° 4",
+        "https://drive.google.com/drive/folders/17REZckk050tcF0S3qo_R38Pb9aMevrS4",
+      ],
       [
         "5° 3",
         "https://drive.google.com/open?id=1q7G4lYawhuHzVK8xBpy0LKTT7aR_B17Y",
@@ -56,15 +125,21 @@ export const courses = [
         "5° 4",
         "https://drive.google.com/drive/u/0/folders/1o2H_yQysfTQ_GN6cohCtdBsVUz6PykPk",
       ],
-      ["6° 2", null],
+      [
+        "6° 2",
+        "https://drive.google.com/drive/folders/1tOlyvb26FMbHhGfASMzsw819LkyFg6P0",
+      ],
       [
         "6° 3",
         "https://drive.google.com/open?id=1cz_ElIXBju2IUpCLYaIqUO_JAj7q3Meo",
       ],
-      ["6° 4", null],
       [
         "7° 2",
         "https://drive.google.com/open?id=1sKJ_3ubg7zur3zL7BDSLJqc4E251q5pH",
+      ],
+      [
+        "7° 3",
+        "https://drive.google.com/drive/folders/1J22GLkRHc_cMjmHZSAXVhGgRr_CQqFxn",
       ],
     ],
   },
