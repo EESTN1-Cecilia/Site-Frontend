@@ -1,8 +1,5 @@
 # PROJECT_CONTEXT
 
-
-
-
 Sitio de la escuela técnica + panel de gestión.
 
 ## Arquitectura
