@@ -1,0 +1,76 @@
+name: Desplegar en el servidor
+
+# Corre en el runner instalado en server-tec1 (etiqueta "servidor-tec1").
+#  - Push a main        -> publica el frontend en prueba.eestn1.com
+#  - Ejecución manual   -> elegir "produccion" para eestn1.com (frontend + API)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      destino:
+        description: Dónde desplegar
+        type: choice
+        options: [prueba, produccion]
+        default: prueba
+
+concurrency:
+  group: deploy-servidor
+  cancel-in-progress: false
+
+env:
+  SITIOS: /srv/sitios
+  NODE_IMAGE: node:22.23.5-trixie-slim
+  DESTINO: ${{ inputs.destino || 'prueba' }}
+
+jobs:
+  desplegar:
+    runs-on: [self-hosted, servidor-tec1]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compilar frontend (en contenedor, como en el LEEME del servidor)
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" \
+            -e HOME=/tmp -e VITE_API_URL=/api \
+            -v "$PWD/frontend":/src -w /src "$NODE_IMAGE" \
+            sh -c 'npm ci && npm run build'
+          test -f frontend/dist/index.html
+
+      - name: Publicar frontend en prueba
+        if: env.DESTINO == 'prueba'
+        run: rsync -a --delete frontend/dist/ "$SITIOS/prueba/html/"
+
+      - name: Publicar frontend en producción
+        if: env.DESTINO == 'produccion'
+        run: rsync -a --delete frontend/dist/ "$SITIOS/tecnica1/html/"
+
+      - name: Actualizar código del backend (conserva Dockerfile, api.env y data/)
+        if: env.DESTINO == 'produccion'
+        run: |
+          rsync -a --delete \
+            --exclude 'node_modules/' --exclude 'data/' --exclude '.env' \
+            --exclude 'Dockerfile' --exclude '.dockerignore' \
+            backend/ "$SITIOS/tecnica1/api/"
+
+      - name: Reconstruir y reiniciar la API
+        if: env.DESTINO == 'produccion'
+        working-directory: /srv/sitios/tecnica1
+        run: |
+          docker compose build tecnica1-api
+          docker compose up -d
+          # nginx resuelve la dirección de la API al arrancar: se reinicia para que la reencuentre
+          docker compose restart tecnica1
+
+      - name: Verificar que la API responde
+        if: env.DESTINO == 'produccion'
+        working-directory: /srv/sitios/tecnica1
+        run: |
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if docker compose exec -T tecnica1 wget -qO- http://tecnica1-api:3000/api/health; then exit 0; fi
+            sleep 3
+          done
+          echo "La API no respondió después del reinicio" >&2
+          docker compose logs --tail 50 tecnica1-api
+          exit 1
