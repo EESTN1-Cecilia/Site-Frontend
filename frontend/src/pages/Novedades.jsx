@@ -41,8 +41,8 @@ function Nota({ novedad, destacada, onAbrir }) {
       }`}
     >
       {portada && (
-        <div className="nota__foto nota__foto--abre" onClick={() => onAbrir(novedad.id)}>
-          <Imagen id={clave(`bloque:${portada.id}`)} dueno={PUBLICACIONES} src={portada.url} />
+        <div className={`nota__foto nota__foto--abre ${portada.tarjeta ? "nota__foto--marco" : ""}`} onClick={() => onAbrir(novedad.id)}>
+          <Imagen id={clave(`bloque:${portada.id}`)} dueno={PUBLICACIONES} src={portada.tarjeta || portada.url} />
           {novedad.borrador && <span className="nota__sello">SIN PUBLICAR</span>}
         </div>
       )}
