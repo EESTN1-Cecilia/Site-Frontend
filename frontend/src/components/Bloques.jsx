@@ -28,7 +28,7 @@ export default function Bloques({ pub, bloques = [] }) {
 
     if (bloque.tipo === "imagen") {
       return (
-        <figure className="nota__figura" key={bloque.id}>
+        <figure className={`nota__figura ${bloque.marco ? "nota__figura--marco" : ""}`} key={bloque.id}>
           <Imagen id={id} dueno={DUENO} src={bloque.url} alt={bloque.epigrafe || ""} />
           {bloque.epigrafe && <figcaption>{bloque.epigrafe}</figcaption>}
         </figure>

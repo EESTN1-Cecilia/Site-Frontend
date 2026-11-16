@@ -595,3 +595,9 @@
     transition: none;
   }
 }
+
+/* Portada armada con marco: se muestra entera, sin recortar los costados. */
+.nota-modal__portada.nota-modal__portada--marco img {
+  aspect-ratio: 3 / 1;
+  max-height: none;
+}

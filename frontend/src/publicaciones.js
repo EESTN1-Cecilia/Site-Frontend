@@ -11,7 +11,8 @@ import imagenCicloBasico from "./assets/images/ciclo-basico-taller.jpg";
 import imagenInformatica from "./assets/images/informatica-robotica.jpg";
 import imagenProgramacion from "./assets/images/programacion-proyectos.jpg";
 import portadaInstitucional from "./assets/images/portada-institucional.webp";
-import mirtpZuriStand from "./assets/images/mirtp-zuri-stand.webp";
+import mirtpZuriEquipo from "./assets/images/mirtp-zuri-equipo.webp";
+import mirtpCollage from "./assets/images/mirtp-collage.webp";
 import mirtpZuriRobot from "./assets/images/mirtp-zuri-robot.webp";
 import mirtpAirsenseEquipo from "./assets/images/mirtp-airsense-equipo.webp";
 import mirtpAirsenseDispositivo from "./assets/images/mirtp-airsense-dispositivo.webp";
@@ -117,13 +118,13 @@ const FOTO = "Foto: El Diario Sur";
 const deLaPrensa = [
   {
     id: "n12",
-    titulo: "Mi RTP Región 5",
+    titulo: "Mi ETP Región 5",
     categoria: "Proyectos",
     fecha: "2026-11-15",
     bloques: [
-      { tipo: "imagen", url: mirtpZuriStand, epigrafe: "El equipo de ZURI junto a su stand en Mi RTP Región 5." },
+      { tipo: "imagen", url: mirtpZuriEquipo, tarjeta: mirtpCollage, epigrafe: "El equipo de ZURI junto a su stand en Mi ETP Región 5." },
       { tipo: "parrafo", texto: "Estudiantes de la Técnica N.º 1 presentaron ZURI, un robot acompañante para niños con autismo, y AIRSENSE, un dispositivo que monitorea la calidad ambiental en las aulas." },
-      { tipo: "parrafo", texto: "Los dos proyectos combinan programación, electrónica, robótica e innovación para dar respuesta a problemáticas sociales y ambientales." },
+      { tipo: "parrafo", texto: "Los dos proyectos combinan programación, informática, robótica e innovación para dar respuesta a problemáticas sociales y ambientales." },
       { tipo: "titulo", texto: "ZURI: un robot acompañante para niños con autismo" },
       { tipo: "parrafo", texto: "ZURI, “Más que un juguete, un acompañante”, fue desarrollado por las estudiantes Valentina López, Michelle Zamora y Aylen Montiel, de 6.° año 1.ª división, con la tutoría de los docentes Marcos Correia y Pablo Gareis." },
       { tipo: "parrafo", texto: "Es un robot con apariencia de oso de peluche, pensado para acompañar a niños con Trastorno del Espectro Autista (TEA) en sus actividades cotidianas. Ayuda a organizar rutinas y a ganar autonomía con pictogramas, recordatorios, estímulos visuales y sonoros e interacciones adaptadas a cada usuario." },
@@ -136,8 +137,8 @@ const deLaPrensa = [
       { tipo: "imagen", url: mirtpAirsenseDispositivo, epigrafe: "El dispositivo AIRSENSE y su sitio web, presentado en la muestra." },
       { tipo: "parrafo", texto: "En las primeras pruebas en espacios escolares, los estudiantes detectaron momentos en que la temperatura y el ruido superaban los valores de referencia de su investigación. La idea es que AIRSENSE sea una herramienta accesible para identificar condiciones desfavorables y promover aulas más saludables." },
       { tipo: "titulo", texto: "Educación técnica, innovación y compromiso social" },
-      { tipo: "destacado", texto: "ZURI usa la robótica para favorecer la inclusión; AIRSENSE aplica la electrónica y la programación al cuidado del ambiente y el bienestar de las personas." },
-      { tipo: "parrafo", texto: "La participación en Mi RTP Región 5 muestra cómo la educación técnica transforma lo que se aprende en el aula en soluciones concretas. Ambos proyectos ponen en valor el trabajo colaborativo, la investigación, el diseño tecnológico y la capacidad de los estudiantes para crear propuestas a partir de necesidades reales de la comunidad." },
+      { tipo: "destacado", texto: "ZURI usa la robótica para favorecer la inclusión; AIRSENSE aplica la informática y la programación al cuidado del ambiente y el bienestar de las personas." },
+      { tipo: "parrafo", texto: "La participación en Mi ETP Región 5 muestra cómo la educación técnica transforma lo que se aprende en el aula en soluciones concretas. Ambos proyectos ponen en valor el trabajo colaborativo, la investigación, el diseño tecnológico y la capacidad de los estudiantes para crear propuestas a partir de necesidades reales de la comunidad." },
     ],
   },
   {
@@ -294,7 +295,7 @@ const sanear = (datos) =>
 /* Las notas de la prensa se ponen una sola vez (y de nuevo si se corrige su
    texto: sube el número de versión) en la lista que ya guardó este navegador;
    si después se borran, no vuelven. */
-const CLAVE_PRENSA = "tec1-publicaciones-prensa-6";
+const CLAVE_PRENSA = "tec1-publicaciones-prensa-12";
 
 const conNotasDeLaPrensa = (guardada) => {
   if (leerLocal(CLAVE_PRENSA)) return guardada;

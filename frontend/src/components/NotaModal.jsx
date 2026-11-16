@@ -195,7 +195,7 @@ export default function NotaModal({ novedad, lista, fecha, onCambiar, onCerrar }
             </header>
 
             {portada && (
-              <figure className="nota-modal__portada">
+              <figure className={`nota-modal__portada ${portada.marco ? "nota-modal__portada--marco" : ""}`}>
                 <div className="nota-modal__portada-marco">
                   <Imagen id={clave(`bloque:${portada.id}`)} dueno={DUENO} src={portada.url} alt={portada.epigrafe || ""} />
                   {novedad.borrador && <span className="nota__sello">SIN PUBLICAR</span>}

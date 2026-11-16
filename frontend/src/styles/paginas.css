@@ -2003,3 +2003,29 @@ main > .pagina-libre {
     grid-row: 1;
   }
 }
+
+/* Portada armada con un marco de varias fotos: se muestra entera (3:1). */
+.nota .nota__foto.nota__foto--marco img {
+  aspect-ratio: 3 / 1;
+}
+
+.nota__figura.nota__figura--marco img {
+  aspect-ratio: 3 / 1;
+}
+
+/* Botón "Abrir Trabajo" del cronograma de previas. */
+.tabla td .boton--fino {
+  padding: 9px 18px;
+  background: var(--bordo-oscuro);
+  border-color: var(--bordo-oscuro);
+  color: var(--blanco);
+  font-weight: 600;
+  box-shadow: 0 8px 18px -12px rgba(92, 15, 15, 0.9);
+  transition: background-color 180ms, transform 180ms, box-shadow 180ms;
+}
+
+.tabla td .boton--fino:hover {
+  background: var(--rojo-institucional);
+  border-color: var(--rojo-institucional);
+  transform: translateY(-1px);
+}
