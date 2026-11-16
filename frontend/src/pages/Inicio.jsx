@@ -86,10 +86,10 @@ const atajos = [
 ];
 
 const puntos = [
-  { id: "p1", titulo: "Conocimiento", texto: "Aprender para comprender." },
-  { id: "p2", titulo: "Práctica", texto: "Aprender haciendo." },
-  { id: "p3", titulo: "Innovación", texto: "Imaginar nuevas soluciones." },
-  { id: "p4", titulo: "Comunidad", texto: "Construir juntos." },
+  { id: "p1", icono: "ph:books", titulo: "Conocimiento", texto: "Aprender para comprender." },
+  { id: "p2", icono: "ph:hammer", titulo: "Práctica", texto: "Aprender haciendo." },
+  { id: "p3", icono: "ph:lightbulb", titulo: "Innovación", texto: "Imaginar nuevas soluciones." },
+  { id: "p4", icono: "ph:handshake", titulo: "Comunidad", texto: "Construir juntos." },
 ];
 
 const propuestas = proposals.map(([title, text, image], i) => ({
@@ -167,7 +167,7 @@ export default function Inicio({ params }) {
       <>
         <div className="centrado">
           <p className="chip">
-            <Texto id="inicio.escuela.chip">NUESTRA ESCUELA</Texto>
+            <Texto id="inicio.escuela.chip">Nuestra escuela</Texto>
           </p>
           <h2 className="titulo">
             <Texto id="inicio.escuela.titulo">Una escuela para quienes</Texto>{" "}
@@ -193,7 +193,7 @@ export default function Inicio({ params }) {
         <div className="encabezado">
           <div>
             <p className="chip">
-              <Texto id="inicio.propuestas.chip">FORMACIÓN</Texto>
+              <Texto id="inicio.propuestas.chip">Formación</Texto>
             </p>
             <h2 className="titulo">
               <Texto id="inicio.propuestas.titulo">Nuestras</Texto>{" "}
@@ -249,7 +249,7 @@ export default function Inicio({ params }) {
         <div>
           <p className="chip chip--logo">
             <Imagen id="inicio.identidad.logo" src={logo} alt="" />
-            <Texto id="inicio.identidad.chip">IDENTIDAD INSTITUCIONAL</Texto>
+            <Texto id="inicio.identidad.chip">Identidad institucional</Texto>
           </p>
           <h2 className="titulo">
             <Texto id="inicio.identidad.titulo">Técnica, creatividad y</Texto>{" "}
@@ -269,7 +269,8 @@ export default function Inicio({ params }) {
         <div className="puntos">
           {listaPuntos.map((punto, i) => (
             <Bloque key={punto.id} {...bloquePunto(punto)} como="article" className={`punto${puntoActivo === i ? " punto--activo" : ""}`}>
-              <span className="punto__numero" aria-current={puntoActivo === i ? "step" : undefined}>{String(i + 1).padStart(2, "0")}</span>
+              <span className="punto__numero"><Icon icon={punto.icono || "ph:star"} width={26} height={26} aria-hidden="true" />
+              </span>
               <div>
                 <h3 className="punto__titulo">
                   <Texto id={`inicio.puntos.${punto.id}.titulo`}>{punto.titulo}</Texto>
@@ -289,7 +290,7 @@ export default function Inicio({ params }) {
         <div className="encabezado encabezado--barra">
           <div>
             <p className="chip">
-              <Texto id="inicio.programas.chip">HECHO EN LA TEC</Texto>
+              <Texto id="inicio.programas.chip">Hecho en la Tec</Texto>
             </p>
             <h2 className="titulo">
               <Texto id="inicio.programas.titulo">Programas de la</Texto>{" "}
@@ -412,7 +413,7 @@ export default function Inicio({ params }) {
     const acciones = piezas.find((pieza) => pieza.id === "acciones");
     const seccion = (id) => seccionDe(listaSecciones.find((s) => s.id === id) ?? secciones.find((s) => s.id === id));
     return (
-      <main>
+      <main className="inicio">
         <PaginaEditable
           clave="inicio.pagina"
           pagina={guardada}
@@ -430,7 +431,7 @@ export default function Inicio({ params }) {
   }
 
   return (
-    <main>
+    <main className="inicio">
       <section className="hero">
         <div className="hero__card">
           <Imagen id="inicio.hero.foto" className="hero__img" src={facade} alt="Fachada de la escuela" />

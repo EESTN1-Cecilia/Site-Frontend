@@ -5,6 +5,7 @@ Sitio web de la E.E.S. Técnica N°1 "Cecilia Berdichevsky" (Esteban Echeverría
 - **Sitio público**: lo que ven alumnos y familias (portada, evaluación de saberes, intensificación y previas, novedades, inscripción y proyectos de cada orientación).
 - **Sistema de gestión** (`/panel`): lo usa el personal para cargar contenido, editar las páginas del sitio y administrar cuentas. Cada rol ve y edita solo lo que le corresponde.
 
+
 ```
 frontend/   React 19 + Vite. Sitio público y sistema de gestión.
 backend/    Node.js + Express + SQLite. Login (JWT), permisos por rol, contenido del sitio y subida de PDF a Google Drive.
