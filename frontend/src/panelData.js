@@ -141,7 +141,7 @@ export const curricular = [
         anio: "7° año",
         materias: [
           {
-            nombre: "Desarrollo de Software",
+            nombre: "Modelos y Sistemas II",
             profesor: "Prof. Nadia Quiroga",
             horario: "Martes 5°/6° · Jueves 3°/4°",
             aula: "Laboratorio 1",

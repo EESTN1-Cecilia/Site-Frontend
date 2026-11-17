@@ -66,7 +66,7 @@ export default function Inscripcion() {
               }
             >
               <Icon icon="ph:info" width={18} height={18} aria-hidden="true" />
-              <Texto id="inscripcion.reserva.accion">Abrir formulario de reserva</Texto>
+              <Texto id="inscripcion.reserva.accion">Abrir formulario de inscripción</Texto>
               <Icon icon="ph:arrow-up-right" width={18} height={18} aria-hidden="true" />
             </Enlace>
           </>

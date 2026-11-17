@@ -1631,3 +1631,33 @@ img {
     bottom: calc(14px + 12px);
   }
 }
+
+/* ---------- Robot y volver arriba: chicos en pantalla normal, grandes en responsive ---------- */
+.robot-tecnica {
+  width: clamp(40px, 4vw, 56px);
+}
+
+.volver-arriba {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  border: 2px solid var(--blanco);
+}
+
+@media (max-width: 1040px) {
+  .robot-tecnica {
+    width: clamp(60px, 15vw, 84px);
+  }
+
+  .robot-tecnica svg {
+    filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff)
+      drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);
+  }
+
+  .volver-arriba {
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    border: 1px solid var(--blanco);
+  }
+}

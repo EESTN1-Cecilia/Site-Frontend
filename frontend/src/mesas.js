@@ -153,9 +153,10 @@ const semilla = () => ({
     ["7p-emprendimientos-productivos-y-desarrollo-local", "Emprendimientos Productivos y Desarrollo Local", "7°", "", "", "", "", "Programación", ""],
     ["7p-evaluacion-de-proyectos", "Evaluación de Proyectos", "7°", "", "", "", "", "Programación", D + "1NKfC-03iOp1zg7Nemp8rRhCUS0srR8F8"],
     ["7p-organizacion-y-metodos", "Organización y Métodos", "7°", "2026-12-05", "09:00", "Aula 5", "Prof. H. Barreto", "Programación", D + "1qcG7Z9A_j661sBICtpEdappHDvZ-ibNX"],
-    ["7p-p-d-i-s-c", "P.D.I.S.C.", "7°", "", "", "", "", "Programación", D + "1HhGiOtO8ok_XUDMCHb8hrBwJTtg7IRbq"],
-    ["7p-p-i-s-w-d", "P.I.S.W.D.", "7°", "", "", "", "", "Programación", ""],
-    ["7p-d-i-s-p-m", "D.I.S.P.M.", "7°", "", "", "", "", "Programación", D + "1O00QjdilrGkn-NgNqVgeINsJSu6WI9oP"],
+    ["7p-p-d-i-s-c", "PDISC", "7°", "", "", "", "", "Programación", D + "1HhGiOtO8ok_XUDMCHb8hrBwJTtg7IRbq"],
+    ["7p-p-i-s-w-d", "PISWD", "7°", "", "", "", "", "Programación", ""],
+    ["7p-pdspw", "PDSPW", "7°", "", "", "", "", "Programación", ""],
+    ["7p-d-i-s-p-m", "Aplicaciones Móviles", "7°", "", "", "", "", "Programación", D + "1O00QjdilrGkn-NgNqVgeINsJSu6WI9oP"],
     /* Carpetas de Drive con archivo que no estaban en la lista de materias. */
     ["x1-equivalencias-de-taller", "Equivalencias de Taller", "1°", "", "", "", "", "", D + "1qhd-UYWJWClkm6CrKMy8eKl6MFsLdZ81"],
     ["x2-equivalencias-de-taller", "Equivalencias de Taller", "2°", "", "", "", "", "", D + "1Us3HrVXn9trSBEhRLCzzYFqZbCZzUFxG"],
@@ -165,7 +166,7 @@ const semilla = () => ({
     ["m5", "Sistemas Digitales", "4°", "2026-12-03", "09:00", "Laboratorio 1", "Prof. M. Vega", "", ""],
     ["m6", "Base de Datos", "5°", "2026-12-03", "11:00", "Aula 12", "Prof. Ramírez", "Programación", D + "1DS2Q3kfYcUH8kBbnnmyIdugEjhdrC9IL"],
     ["m8", "Redes", "6°", "2026-12-04", "11:00", "Laboratorio 2", "Prof. D. Suárez", "Informática", ""],
-    ["m10", "Desarrollo de Software", "7°", "2026-12-05", "11:00", "Laboratorio 1", "Prof. N. Quiroga", "Programación", ""],
+    ["m10", "Modelos y Sistemas II", "7°", "2026-12-05", "11:00", "Laboratorio 1", "Prof. N. Quiroga", "Programación", ""],
 
   ].map(([id, materia, anio, fecha, hora, aula, docente, orientacion = "", drive = ""]) => ({
     id,
