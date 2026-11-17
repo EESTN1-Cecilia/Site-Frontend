@@ -162,7 +162,6 @@ const semilla = () => ({
     ["x2-equivalencias-de-taller", "Equivalencias de Taller", "2°", "", "", "", "", "", D + "1Us3HrVXn9trSBEhRLCzzYFqZbCZzUFxG"],
     ["x3-equivalencias-de-taller", "Equivalencias de Taller", "3°", "", "", "", "", "", D + "1AswdX0O-8UK4AAzcaLmhRQ-pVnun0rgD"],
     ["x6i-sistemas-de-gestion", "Sistemas de Gestión", "6°", "", "", "", "", "Informática", D + "1rIXez00FHbb9O9WS2L-iog70l9VG5xNW"],
-    ["x7p-imrsc", "IMRSC", "7°", "", "", "", "", "Programación", D + "1gT5hXrHKmQKBjGLQBqZUyn14UqtgY15w"],
     ["m5", "Sistemas Digitales", "4°", "2026-12-03", "09:00", "Laboratorio 1", "Prof. M. Vega", "", ""],
     ["m6", "Base de Datos", "5°", "2026-12-03", "11:00", "Aula 12", "Prof. Ramírez", "Programación", D + "1DS2Q3kfYcUH8kBbnnmyIdugEjhdrC9IL"],
     ["m8", "Redes", "6°", "2026-12-04", "11:00", "Laboratorio 2", "Prof. D. Suárez", "Informática", ""],
@@ -208,6 +207,9 @@ export const ORIENTACIONES = ["Informática", "Programación"];
 const CAMPOS = ["materia", "anio", "orientacion", "fecha", "hora", "aula", "docente", "drive"];
 const CAMPOS_SUBCARPETA = ["nombre", "link"];
 
+/* Materias que ya no van: se sacan también de lo que haya guardado el sitio. */
+const MESAS_RETIRADAS = ["x7p-imrsc"];
+
 /* Sin la forma esperada vale el cronograma original. */
 const sanear = (datos) =>
   esObjeto(datos) && Array.isArray(datos.mesas)
@@ -216,7 +218,9 @@ const sanear = (datos) =>
         subcarpetas: Array.isArray(datos.subcarpetas)
           ? conId(datos.subcarpetas).map((s) => ({ id: s.id, ...campos(s, CAMPOS_SUBCARPETA) }))
           : semilla().subcarpetas,
-        mesas: conId(datos.mesas).map((m) => ({ id: m.id, ...campos(m, CAMPOS) })),
+        mesas: conId(datos.mesas)
+          .filter((m) => !MESAS_RETIRADAS.includes(m.id))
+          .map((m) => ({ id: m.id, ...campos(m, CAMPOS) })),
       }
     : semilla();
 
