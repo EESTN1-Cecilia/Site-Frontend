@@ -8,6 +8,7 @@ import { guardarProgramasEnServidor } from "./services/api.js";
 const URL_DIAGRAMTEC = "https://diagramtec-frontend.vercel.app/";
 /* Link que tenía antes: si quedó guardado en el navegador o en el servidor, se actualiza. */
 const URL_DIAGRAMTEC_ANTERIOR = "https://diagramtec.com";
+const URL_VOLTA = "https://tecnica1estebanecheverria2020-dev.github.io/Volta/";
 
 const semilla = () => [
   {
@@ -37,7 +38,7 @@ const semilla = () => [
     nombre: "Volta",
     descripcion:
       "Aplicación web para armar y probar circuitos tecnológicos de forma digital, sin gastar materiales físicos. Incluye calculadora de resistencias en serie y en paralelo, calculadora de la Ley de Ohm y un bloc de notas para anotar los avances, que se puede descargar junto con el circuito.",
-    url: "",
+    url: URL_VOLTA,
     logo: "",
     autores: "Sebastián Lopez",
     enDesarrollo: true,
@@ -69,6 +70,8 @@ const sanear = (datos) =>
         .map((p) =>
           p.id === "diagramtec" && p.url === URL_DIAGRAMTEC_ANTERIOR ? { ...p, url: URL_DIAGRAMTEC } : p,
         )
+        /* Volta ya tiene su página: si estaba guardado sin link, se completa. */
+        .map((p) => (p.id === "volta" && !p.url ? { ...p, url: URL_VOLTA } : p))
     : semilla();
 
 let lista = sanear(leerLocal(CLAVE));

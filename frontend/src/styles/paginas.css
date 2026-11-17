@@ -2029,3 +2029,149 @@ main > .pagina-libre {
   border-color: var(--rojo-institucional);
   transform: translateY(-1px);
 }
+
+/* ---------- Previas: ver como lista o como tarjetas (como en Drive) ---------- */
+.vista-toggle {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0;
+  margin-bottom: 12px;
+}
+
+.vista-toggle__boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 40px;
+  border: 1px solid var(--gris-claro);
+  background: var(--blanco);
+  color: var(--gris-oscuro);
+  cursor: pointer;
+  transition: background-color 160ms, color 160ms;
+}
+
+.vista-toggle__boton:first-child {
+  border-radius: 20px 0 0 20px;
+}
+
+.vista-toggle__boton:last-child {
+  border-radius: 0 20px 20px 0;
+  border-left: 0;
+}
+
+.vista-toggle__boton:hover {
+  background: var(--tarjeta);
+}
+
+.vista-toggle__boton--activo,
+.vista-toggle__boton--activo:hover {
+  background: var(--rojo-claro);
+  color: var(--bordo-oscuro);
+}
+
+.vista-toggle__boton:focus-visible {
+  outline: 2px solid var(--rojo-suave);
+  outline-offset: 2px;
+}
+
+/* Tarjetas: en cualquier ancho, en cuadrícula. */
+.tabla-scroll--tarjetas {
+  overflow-x: visible;
+}
+
+.tabla-scroll--tarjetas .tabla,
+.tabla-scroll--tarjetas .tabla thead,
+.tabla-scroll--tarjetas .tabla tbody,
+.tabla-scroll--tarjetas .tabla tr,
+.tabla-scroll--tarjetas .tabla td {
+  display: block;
+  width: 100%;
+}
+
+.tabla-scroll--tarjetas .tabla {
+  background: transparent;
+}
+
+.tabla-scroll--tarjetas .tabla thead {
+  display: none;
+}
+
+.tabla-scroll--tarjetas .tabla tbody {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.tabla-scroll--tarjetas .tabla tr {
+  margin: 0;
+  border: 1px solid var(--gris-claro);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--blanco);
+}
+
+.tabla-scroll--tarjetas .tabla td {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--gris-claro);
+  text-align: right;
+}
+
+.tabla-scroll--tarjetas .tabla td:last-child {
+  border-bottom: 0;
+}
+
+.tabla-scroll--tarjetas .tabla td::before {
+  content: attr(data-label);
+  color: var(--gris-medio);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+/* Lista en el celular: vuelve a ser tabla, más compacta. */
+@media (max-width: 760px) {
+  .tabla-scroll--lista .tabla {
+    display: table;
+    font-size: 14px;
+  }
+
+  .tabla-scroll--lista .tabla thead {
+    display: table-header-group;
+  }
+
+  .tabla-scroll--lista .tabla tbody {
+    display: table-row-group;
+  }
+
+  .tabla-scroll--lista .tabla tr {
+    display: table-row;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .tabla-scroll--lista .tabla th,
+  .tabla-scroll--lista .tabla td {
+    display: table-cell;
+    width: auto;
+    padding: 10px 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--gris-claro);
+  }
+
+  .tabla-scroll--lista .tabla td::before {
+    content: none;
+  }
+
+  .tabla-scroll--lista .tabla td .boton--fino {
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+}

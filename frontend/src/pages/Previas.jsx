@@ -107,6 +107,26 @@ export default function Previas({ params }) {
   const [busqueda, setBusqueda] = useState("");
   const [anio, setAnio] = useState("Todos");
   const [verTodas, setVerTodas] = useState(false);
+  /* Como en Drive: lista o tarjetas. Por defecto, tarjetas en el celular y lista en pantallas grandes. */
+  const [vista, setVista] = useState(() => {
+    try {
+      const guardada = localStorage.getItem("previas.vista");
+      if (guardada === "lista" || guardada === "tarjetas") return guardada;
+    } catch {
+      /* sin almacenamiento: se usa el valor por defecto */
+    }
+    return typeof window !== "undefined" && window.matchMedia?.("(max-width: 760px)").matches
+      ? "tarjetas"
+      : "lista";
+  });
+  const elegirVista = (nueva) => {
+    setVista(nueva);
+    try {
+      localStorage.setItem("previas.vista", nueva);
+    } catch {
+      /* no pasa nada si no se puede guardar */
+    }
+  };
   const publicaciones = usePublicaciones();
 
   const enVistaPrevia = publicaciones.find(
@@ -238,7 +258,29 @@ export default function Previas({ params }) {
 
   const tablaDeMesas = (
     <>
-      <Bloque id="previas.cronograma.tabla" className="tabla-scroll">
+      <div className="vista-toggle" role="group" aria-label="Forma de ver las materias">
+        <button
+          type="button"
+          className={`vista-toggle__boton ${vista === "lista" ? "vista-toggle__boton--activo" : ""}`}
+          aria-pressed={vista === "lista"}
+          aria-label="Ver como lista"
+          title="Lista"
+          onClick={() => elegirVista("lista")}
+        >
+          <Icon icon="ph:list" width={20} height={20} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className={`vista-toggle__boton ${vista === "tarjetas" ? "vista-toggle__boton--activo" : ""}`}
+          aria-pressed={vista === "tarjetas"}
+          aria-label="Ver como tarjetas"
+          title="Tarjetas"
+          onClick={() => elegirVista("tarjetas")}
+        >
+          <Icon icon="ph:squares-four" width={20} height={20} aria-hidden="true" />
+        </button>
+      </div>
+      <Bloque id="previas.cronograma.tabla" className={`tabla-scroll tabla-scroll--${vista}`}>
         <table className="tabla">
           <thead>
             <tr>

@@ -36,6 +36,7 @@ import { Menu, Pie } from "./src/components/Marco.jsx";
 import "./src/styles/app.css";
 import "./src/styles/paginas.css";
 import "./src/styles/panel.css";
+import "./src/styles/flotantes.css";
 
 const paginas = {
   "/": Inicio,
