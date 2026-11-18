@@ -9,10 +9,23 @@ import ZonaLibre from "../components/ZonaLibre.jsx";
 import { Dinamico, IrA, PaginaEditable, usePaginaGuardada } from "../components/PaginaEditable.jsx";
 import { criterios, periodos, valoraciones } from "../contenido.js";
 import { cuadernillos } from "../saberes.js";
+import { PERFILES } from "../animaciones/escenasScroll.js";
+import ModalRobot from "../components/ModalRobot.jsx";
+import RobotScroll from "../components/RobotScroll.jsx";
+import { LamparaScroll, SensorScroll } from "../components/EscenasCuadernillos.jsx";
 import { logo } from "../data.js";
+
+/* Escena 3D de cada cuadernillo (botón «Ver con animaciones»). */
+const ESCENAS_3D = {
+  "primer-ano.pdf": { Escena: LamparaScroll, titulo: "Lámpara articulada en 3D" },
+  "segundo-ano.pdf": { Escena: SensorScroll, titulo: "Sensor de proximidad en 3D" },
+  "tercer-ano.pdf": { Escena: RobotScroll, titulo: "Robot en 3D" },
+};
 
 /* Visor del cuadernillo: se cierra con Esc y bloquea el scroll de atrás. */
 function Visor({ doc, cerrar }) {
+  const [animando, setAnimando] = useState(false);
+
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && cerrar();
 
@@ -25,6 +38,7 @@ function Visor({ doc, cerrar }) {
   }, [cerrar]);
 
   return (
+    <>
     <div className="modal" role="dialog" aria-modal="true" onClick={cerrar}>
       <div className="modal__caja visor" onClick={(e) => e.stopPropagation()}>
         <div className="modal__barra">
@@ -33,6 +47,12 @@ function Visor({ doc, cerrar }) {
             <h2 className="modal__titulo">{doc.titulo}</h2>
           </div>
           <div className="visor__acciones">
+            {(PERFILES[doc.archivo] || ESCENAS_3D[doc.archivo]) && (
+              <button className="boton" onClick={() => setAnimando(true)}>
+                <Icon icon="ph:film-strip" width={16} height={16} aria-hidden="true" />
+                <span className="visor__texto">Ver con animaciones</span>
+              </button>
+            )}
             <a className="boton" href={doc.pdf} target="_blank" rel="noopener noreferrer">
               <Icon icon="ph:arrow-square-out" width={16} height={16} aria-hidden="true" />
               <span className="visor__texto">Abrir en pestaña</span>
@@ -49,6 +69,8 @@ function Visor({ doc, cerrar }) {
         <VisorPdf url={doc.pdf} archivo={doc.archivo} />
       </div>
     </div>
+      {animando && <ModalRobot cerrar={() => setAnimando(false)} {...(ESCENAS_3D[doc.archivo] ?? {})} />}
+    </>
   );
 }
 

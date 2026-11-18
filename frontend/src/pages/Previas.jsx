@@ -307,10 +307,12 @@ export default function Previas({ params }) {
                     {mesa.orientacion && <span className="orientacion">{mesa.orientacion}</span>}
                   </td>
                   <td data-label={columna("drive")}>
+                    {/* Mientras la materia no tenga su carpeta, el botón lleva a "Todos los trabajos";
+                        al cargar su link desde gestión pasa a abrir esa carpeta. */}
                     <Enlace
                       id={clave("drive")}
                       dueno={MESAS}
-                      href={mesa.drive}
+                      href={mesa.drive || carpeta}
                       className="boton boton--fino"
                       aria-label={`Drive de ${mesa.materia}`}
                       vacio={

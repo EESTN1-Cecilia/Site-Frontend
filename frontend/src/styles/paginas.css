@@ -1190,6 +1190,9 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
+  /* Las animaciones con scroll mueven bloques de lado: nunca debe aparecer
+     una barra horizontal. */
+  overflow-x: hidden;
   background: #f2eceb;
 }
 
@@ -1207,6 +1210,40 @@
   border-radius: 4px;
   background: var(--blanco);
   box-shadow: 0 4px 14px rgba(31, 10, 10, 0.12);
+}
+
+/* Páginas con animación de scroll (ver animaciones/escenasScroll.js): la
+   página se arma con bandas apiladas que se mueven por separado. En reposo
+   se ve igual que el canvas original. */
+.visor-pdf__escena {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.visor-pdf__bandas {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  border-radius: 4px;
+  background: var(--blanco);
+  box-shadow: 0 4px 14px rgba(31, 10, 10, 0.12);
+}
+
+.visor-pdf__banda {
+  display: block;
+  flex: none;
+  width: 100%;
+  height: auto;
+  backface-visibility: hidden;
+}
+
+.visor-animado {
+  display: flex;
+  height: min(82vh, 900px);
+  overflow: hidden;
+  border: 1px solid var(--borde, #e7dcdb);
+  border-radius: 22px;
 }
 
 .visor-pdf__estado {

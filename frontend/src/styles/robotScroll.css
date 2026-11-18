@@ -1,0 +1,458 @@
+/* Robot 3D controlado por el scroll (ver components/RobotScroll.jsx).
+   La sección es alta y el escenario queda fijo (sticky) mientras se avanza. */
+.rs {
+  position: relative;
+  height: 650vh;
+  background: radial-gradient(120% 90% at 70% 40%, #3a1414 0%, #1a0d0d 55%, #120808 100%);
+  color: #fff;
+}
+
+.rs--quieto {
+  height: auto;
+}
+
+.rs__fijo {
+  position: sticky;
+  top: 0;
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) 1fr;
+  align-items: center;
+  gap: 8px;
+  height: 100vh;
+  padding: 84px clamp(16px, 4vw, 56px) 24px;
+  overflow: hidden;
+}
+
+.rs--quieto .rs__fijo {
+  position: relative;
+  height: min(100vh, 760px);
+}
+
+.rs__panel {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 12px;
+  align-content: center;
+}
+
+.rs__chip {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #f2b8b8;
+}
+
+.rs__titulo {
+  margin: 0;
+  font-size: clamp(26px, 3.2vw, 40px);
+  line-height: 1.1;
+}
+
+.rs__texto {
+  margin: 0;
+  max-width: 36ch;
+  font-size: 16px;
+  line-height: 1.55;
+  color: #f1e3e3;
+}
+
+.rs__puntos {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rs__punto {
+  width: 22px;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.22);
+  transition: background 0.25s, width 0.25s;
+}
+
+.rs__punto--activo {
+  width: 40px;
+  background: #ff6b6b;
+}
+
+.rs__ayuda {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #cdb4b4;
+}
+
+.rs__lista {
+  display: grid;
+  gap: 10px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  list-style: none;
+  color: #f1e3e3;
+}
+
+/* ---------- escena 3D ---------- */
+.rs-escenario {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  perspective: 1500px;
+  perspective-origin: 50% 35%;
+}
+
+.rs-mundo,
+.rs-robot,
+.rs-pieza,
+.rs-caja,
+.rs-rueda,
+.rs-cil,
+.rs-giro {
+  transform-style: preserve-3d;
+}
+
+.rs-mundo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  will-change: transform;
+}
+
+.rs-robot,
+.rs-pieza,
+.rs-rueda,
+.rs-cil,
+.rs-giro {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+}
+
+.rs-robot {
+  will-change: transform;
+}
+
+.rs-pieza {
+  will-change: transform;
+}
+
+.rs-rueda {
+  left: 0;
+  top: 0;
+}
+
+.rs-caja {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+}
+
+.rs-cara {
+  position: absolute;
+  display: block;
+  backface-visibility: hidden;
+  background: var(--c);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28);
+  transition: opacity 0.3s, filter 0.3s;
+}
+
+.rs-f,
+.rs-t {
+  width: var(--w);
+  height: var(--h);
+  left: calc(var(--w) / -2);
+  top: calc(var(--h) / -2);
+}
+
+.rs-r,
+.rs-l {
+  width: var(--d);
+  height: var(--h);
+  left: calc(var(--d) / -2);
+  top: calc(var(--h) / -2);
+}
+
+.rs-u,
+.rs-d {
+  width: var(--w);
+  height: var(--d);
+  left: calc(var(--w) / -2);
+  top: calc(var(--d) / -2);
+}
+
+.rs-f {
+  transform: translateZ(calc(var(--d) / 2));
+}
+
+.rs-t {
+  transform: translateZ(calc(var(--d) / -2)) rotateY(180deg);
+  background: color-mix(in srgb, var(--c) 70%, #000);
+}
+
+.rs-r {
+  transform: rotateY(90deg) translateZ(calc(var(--w) / 2));
+  background: color-mix(in srgb, var(--c) 76%, #000);
+}
+
+.rs-l {
+  transform: rotateY(-90deg) translateZ(calc(var(--w) / 2));
+  background: color-mix(in srgb, var(--c) 62%, #000);
+}
+
+.rs-u {
+  transform: rotateX(90deg) translateZ(calc(var(--h) / 2));
+  background: color-mix(in srgb, var(--c) 80%, #fff);
+}
+
+.rs-d {
+  transform: rotateX(-90deg) translateZ(calc(var(--h) / 2));
+  background: color-mix(in srgb, var(--c) 50%, #000);
+}
+
+/* Rueda: cubierta de 16 lados con dibujo y dos tapas con el aro amarillo de 5 rayos. */
+.rs-lado {
+  background: repeating-linear-gradient(115deg, #2b2b30 0 5px, #4a4a52 5px 9px);
+}
+
+.rs-disco {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #8b8b90 0 8%, #f2c51d 9% 20%, transparent 21%),
+    radial-gradient(circle, transparent 0 62%, #f2c51d 63% 76%, #303036 77% 100%),
+    repeating-conic-gradient(from 18deg, #f2c51d 0 18deg, #26262b 18deg 72deg);
+}
+
+/* Cilindros (pilas, motor) */
+.rs-cilindro {
+  background: var(--c);
+}
+
+.rs-cilindro:nth-child(odd) {
+  background: color-mix(in srgb, var(--c) 80%, #000);
+}
+
+.rs-tapa {
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--c) 65%, #fff);
+}
+
+/* Piezas impresas en 3D: se notan las capas del filamento. */
+.rs-imp .rs-cara {
+  background-image: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.1) 0 1px, transparent 1px 3px);
+}
+
+/* Etiqueta impresa sobre la placa */
+.rs-u {
+  display: grid;
+  place-items: center;
+  font: 700 15px/1 "Segoe UI", sans-serif;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Piezas que no son la del momento: quedan en segundo plano. */
+.rs-apagada .rs-cara,
+.rs-apagada .rs-cilindro,
+.rs-apagada .rs-lado,
+.rs-apagada .rs-disco,
+.rs-apagada .rs-tapa {
+  opacity: 0.3;
+  filter: grayscale(0.6) brightness(0.85);
+}
+
+.rs-activa .rs-cara {
+  filter: brightness(1.12) saturate(1.1);
+}
+
+.rs-suelo {
+  position: absolute;
+  left: -900px;
+  top: -520px;
+  width: 1800px;
+  height: 1040px;
+  transform: translateY(55px) rotateX(90deg);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px) 0 0 / 60px 60px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.09) 1px, transparent 1px) 0 0 / 60px 60px;
+  -webkit-mask-image: radial-gradient(closest-side, #000 25%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 25%, transparent 100%);
+}
+
+.rs-sombra {
+  position: absolute;
+  left: -190px;
+  top: -130px;
+  width: 380px;
+  height: 260px;
+  border-radius: 50%;
+  transform: translateY(55.5px) rotateX(90deg);
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), transparent);
+}
+
+/* Celulares y tablets: el texto pasa abajo y el robot ocupa el ancho. */
+@media (max-width: 860px) {
+  .rs__fijo {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+    padding-top: 72px;
+  }
+
+  .rs__panel {
+    order: 2;
+    padding-bottom: 8px;
+  }
+
+  .rs__texto {
+    font-size: 14px;
+  }
+
+  .rs-escenario {
+    order: 1;
+  }
+}
+
+/* ---------- Modal: ventana con sólo el robot, arriba del visor y con el sitio difuminado ---------- */
+.rs-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 3vw, 32px);
+  background: rgba(18, 7, 7, 0.45);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.rs-modal__marco {
+  --alto-modal: min(86vh, 820px);
+  position: relative;
+  width: min(1100px, 100%);
+  height: var(--alto-modal);
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: radial-gradient(120% 90% at 70% 40%, #3a1414 0%, #1a0d0d 55%, #120808 100%);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+
+.rs-modal__caja {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.rs-modal__caja::-webkit-scrollbar {
+  display: none;
+}
+
+.rs--modal {
+  height: calc(var(--alto-modal) * 6.5);
+  background: transparent;
+}
+
+.rs--modal .rs__fijo {
+  height: var(--alto-modal);
+  padding: 32px clamp(16px, 3vw, 40px) 24px;
+}
+
+.rs-modal__cerrar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+}
+
+.rs-modal__cerrar:hover,
+.rs-modal__cerrar:focus-visible {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* Carteles (tooltips) que acompañan a la pieza que se está mostrando */
+.rs-ancla {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.rs-cartel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  gap: 2px;
+  max-width: 190px;
+  padding: 7px 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(20, 8, 8, 0.82);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  line-height: 1.25;
+  color: #f1e3e3;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.rs-cartel strong {
+  font-size: 13px;
+  color: #fff;
+}
+
+.rs-cartel::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 10px;
+  height: 10px;
+  transform: translateX(-50%) rotate(45deg);
+  border-right: 1px solid rgba(255, 255, 255, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(20, 8, 8, 0.92);
+}
+
+.rs-apagada .rs-cara,
+.rs-apagada .rs-cilindro,
+.rs-apagada .rs-lado,
+.rs-apagada .rs-disco,
+.rs-apagada .rs-tapa {
+  opacity: 0.12;
+}
+
+.rs-escenario {
+  cursor: grab;
+  touch-action: pan-y;
+}
+
+.rs-escenario.rs-agarrado {
+  cursor: grabbing;
+}

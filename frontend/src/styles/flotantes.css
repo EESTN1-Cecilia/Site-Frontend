@@ -46,3 +46,13 @@
     width: 40px;
   }
 }
+
+/* Asistente: separación entre globos de mensaje.
+   (La regla ".asistente-sitio__contenido p" ponía margin 0 y pegaba los globos.) */
+.asistente-sitio__contenido .asistente-sitio__turno {
+  margin-top: 16px;
+}
+
+.asistente-sitio__contenido .asistente-sitio__respuesta {
+  margin-top: 12px;
+}
