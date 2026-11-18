@@ -22,24 +22,24 @@ function saludoDe(consulta, hayTemas) {
   if (saluda) {
     partes.push(
       texto.includes(" buenos dias") || texto.includes(" buen dia")
-        ? "¡Buen día!"
+        ? "Buen día."
         : texto.includes(" buenas tardes")
-          ? "¡Buenas tardes!"
+          ? "Buenas tardes."
           : texto.includes(" buenas noches")
-            ? "¡Buenas noches!"
-            : "¡Hola! 😊",
+            ? "Buenas noches."
+            : "Hola.",
     );
   }
-  if (pregunta) partes.push("¡Todo bien, gracias por preguntar! Qué lindo que te intereses por saber cómo estoy. 💛");
-  if (agradece) partes.push("¡De nada, es un placer ayudarte! 💛");
-  else if (celebra) partes.push("¡Me pone muy contento! 😊");
+  if (pregunta) partes.push("Muy bien, gracias por preguntar.");
+  if (agradece) partes.push("De nada.");
+  else if (celebra) partes.push("Me alegra.");
   if (quien) partes.push("Soy el asistente virtual de Técnica 1: te cuento cómo contactar a la escuela, los horarios, las carreras, la inscripción, el boletín, las previas y las novedades.");
-  if (despide) partes.push("¡Hasta luego! Que tengas un día hermoso. 🌷");
+  if (despide) partes.push("Hasta luego. Que tengas un buen día.");
   if (partes.length === 0) return null;
 
   if (!hayTemas) {
     if ((despide && !saluda && !pregunta) || quien) return partes.join(" ");
-    partes.push(agradece || celebra ? "Si necesitás algo más, acá estoy para ayudarte. 😊" : SUGERENCIA);
+    partes.push(agradece || celebra ? "Si necesitás algo más, quedo a disposición." : SUGERENCIA);
   }
   return partes.join(" ");
 }
@@ -103,7 +103,7 @@ export default function AsistenteSitio({ alCerrar, alPensar }) {
       </header>
       <div className="asistente-sitio__contenido">
         <div ref={registro} className="asistente-sitio__conversacion" role="log" aria-label="Conversación">
-          <p className="asistente-sitio__bienvenida">¡Hola! Soy el asistente de Técnica 1 y estoy acá para ayudarte con mucho cariño. 😊 ¿Qué querés saber sobre la escuela?</p>
+          <p className="asistente-sitio__bienvenida">Hola. Soy el asistente de Técnica 1. ¿Qué querés saber sobre la escuela?</p>
           {conversacion.map(({ pregunta, resultados, saludo }, indice) => (
             <div key={indice} className="asistente-sitio__turno">
               <p className="asistente-sitio__pregunta">{pregunta}</p>
@@ -135,11 +135,11 @@ export default function AsistenteSitio({ alCerrar, alPensar }) {
                 </div>
               ))}
               {resultados.length > 0 && (
-                <p className="asistente-sitio__respuesta">¿Te ayudo con algo más? 😊</p>
+                <p className="asistente-sitio__respuesta">¿Te ayudo con algo más?</p>
               )}
               {resultados.length === 0 && !saludo && (
                 <div className="asistente-sitio__respuesta">
-                  <p>Uy, todavía no sé cómo responderte eso, ¡perdoname! 🙈 Probá con «contacto», «horarios», «carreras», «inscripción», «boletín», «previas» o «novedades», o escribinos a eest1estebanecheverria@abc.gob.ar y te ayudamos con mucho gusto.</p>
+                  <p>No tengo una respuesta para esa consulta. Probá con «contacto», «horarios», «carreras», «inscripción», «boletín», «previas» o «novedades», o escribinos a eest1estebanecheverria@abc.gob.ar y te ayudamos.</p>
                 </div>
               )}
             </div>
@@ -147,7 +147,7 @@ export default function AsistenteSitio({ alCerrar, alPensar }) {
           {pendiente && (
             <div className="asistente-sitio__turno">
               <p className="asistente-sitio__pregunta">{pendiente}</p>
-              <p className="asistente-sitio__respuesta">Un ratito, ya lo busco para vos… 💛</p>
+              <p className="asistente-sitio__respuesta">Buscando la información…</p>
             </div>
           )}
         </div>

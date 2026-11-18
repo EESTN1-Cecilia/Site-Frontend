@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@iconify/react";
+import { PERFILES, crearEscenas } from "../animaciones/escenasScroll.js";
 
 /* Dibuja el PDF con PDF.js en lugar de usar el visor del navegador:
    Brave, Android e iOS no muestran PDFs dentro de un iframe.
    La librería se descarga recién cuando se abre el visor. */
-export default function VisorPdf({ url, archivo }) {
+export default function VisorPdf({ url, archivo, soloPaginas }) {
   const contenedor = useRef(null);
   const [estado, setEstado] = useState("cargando");
 
@@ -12,6 +13,10 @@ export default function VisorPdf({ url, archivo }) {
     const caja = contenedor.current;
     let cancelado = false;
     let documento;
+    /* Algunas páginas del cuadernillo se animan con el scroll del visor. */
+    const escenas = PERFILES[archivo]
+      ? crearEscenas(caja.closest(".visor-pdf"), PERFILES[archivo])
+      : null;
 
     (async () => {
       try {
@@ -25,7 +30,11 @@ export default function VisorPdf({ url, archivo }) {
         const densidad = window.devicePixelRatio || 1;
         const ancho = (caja.clientWidth || 800) - 32;
 
-        for (let n = 1; n <= documento.numPages; n++) {
+        const lista = soloPaginas
+          ? soloPaginas.filter((n) => n >= 1 && n <= documento.numPages)
+          : Array.from({ length: documento.numPages }, (_, i) => i + 1);
+
+        for (const n of lista) {
           const pagina = await documento.getPage(n);
           if (cancelado) return;
 
@@ -46,7 +55,10 @@ export default function VisorPdf({ url, archivo }) {
             viewport: vista,
           }).promise;
 
-          if (n === 1 && !cancelado) setEstado("listo");
+          if (cancelado) return;
+          escenas?.preparar(n, lienzo);
+
+          setEstado("listo");
         }
       } catch {
         if (!cancelado) setEstado("error");
@@ -55,10 +67,11 @@ export default function VisorPdf({ url, archivo }) {
 
     return () => {
       cancelado = true;
+      escenas?.destruir();
       documento?.destroy();
       caja.replaceChildren();
     };
-  }, [url]);
+  }, [url, archivo, soloPaginas]);
 
   return (
     <div className="visor-pdf">
