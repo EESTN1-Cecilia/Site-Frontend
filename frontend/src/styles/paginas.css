@@ -1177,6 +1177,26 @@
   .visor__acciones .boton {
     padding: 11px 14px;
   }
+
+  /* En el celular el título ocupa todo el ancho y las acciones van debajo. */
+  .visor .modal__barra {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .visor .modal__barra > div:first-child {
+    flex: 1 1 100%;
+  }
+
+  .visor .modal__titulo {
+    font-size: clamp(1.15rem, 5.2vw, 1.5rem);
+    line-height: 1.2;
+  }
+
+  .visor__acciones {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
 }
 
 /* El chip del año nunca se parte en varias líneas. */

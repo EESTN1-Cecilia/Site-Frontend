@@ -155,20 +155,33 @@ export default function EscenaScroll({ config, scroller = null }) {
     let arrastre = null;
     let focoActual = -2;
     let escala = 1;
+    /* El avance se amortigua: la escena persigue al scroll en vez de saltar con cada evento. */
+    let suavizado = null;
+    let ultimoT = 0;
 
     const medir = () => {
       const r = escenario.getBoundingClientRect();
       escala = lim(Math.min(r.width / 900, r.height / 780), 0.35, 1);
     };
 
-    const actualizar = () => {
+    const actualizar = (t) => {
       cuadro = 0;
       const r = sec.getBoundingClientRect();
       /* Dentro de un modal el que se desplaza es el contenedor, no la ventana. */
       const arriba = scroller ? scroller.getBoundingClientRect().top : 0;
       const alto = scroller ? scroller.clientHeight : window.innerHeight;
       const recorrido = r.height - alto;
-      const P = reducido ? 0.74 : recorrido > 0 ? lim(-(r.top - arriba) / recorrido) : 0;
+      const objetivo = reducido ? 0.74 : recorrido > 0 ? lim(-(r.top - arriba) / recorrido) : 0;
+      const ahora = typeof t === "number" ? t : performance.now();
+      if (suavizado === null || reducido) {
+        suavizado = objetivo;
+      } else {
+        const dt = Math.min(ahora - ultimoT, 64);
+        suavizado += (objetivo - suavizado) * (1 - Math.exp(-dt / 110));
+        if (Math.abs(objetivo - suavizado) < 0.0004) suavizado = objetivo;
+      }
+      ultimoT = ahora;
+      const P = suavizado;
 
       const desarme = 1 - suave((P - REARMA) / 0.08);
       const ry = -32 + 360 * lim(P / 0.9) + giroMano;
@@ -241,6 +254,8 @@ export default function EscenaScroll({ config, scroller = null }) {
         }
         setFoco(nuevoFoco);
       }
+
+      if (suavizado !== objetivo) pedir();
     };
 
     const pedir = () => {
