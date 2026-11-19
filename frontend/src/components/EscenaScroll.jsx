@@ -158,6 +158,10 @@ export default function EscenaScroll({ config, scroller = null }) {
     /* El avance se amortigua: la escena persigue al scroll en vez de saltar con cada evento. */
     let suavizado = null;
     let ultimoT = 0;
+    /* Cuadros extra al terminar de moverse, para que el cartel quede en su lugar exacto. */
+    let reposo = 0;
+    let ultimaSombra = "";
+    let ultimoSuelo = "";
 
     const medir = () => {
       const r = escenario.getBoundingClientRect();
@@ -170,6 +174,10 @@ export default function EscenaScroll({ config, scroller = null }) {
       /* Dentro de un modal el que se desplaza es el contenedor, no la ventana. */
       const arriba = scroller ? scroller.getBoundingClientRect().top : 0;
       const alto = scroller ? scroller.clientHeight : window.innerHeight;
+      /* Todas las lecturas de posición van juntas y antes de escribir estilos. */
+      const re = escenario.getBoundingClientRect();
+      const piezaFoco = focoActual >= 0 && focoActual < N ? lista.find((p) => p.j === focoActual) : null;
+      const rectAncla = piezaFoco ? piezaFoco.ancla.getBoundingClientRect() : null;
       const recorrido = r.height - alto;
       const objetivo = reducido ? 0.74 : recorrido > 0 ? lim(-(r.top - arriba) / recorrido) : 0;
       const ahora = typeof t === "number" ? t : performance.now();
@@ -205,8 +213,16 @@ export default function EscenaScroll({ config, scroller = null }) {
           p.el.style.transform = t;
         }
       }
-      sombra.style.opacity = String((1 - 0.55 * abierto).toFixed(2));
-      suelo.style.opacity = String((1 - 0.6 * abierto).toFixed(2));
+      const oSombra = (1 - 0.55 * abierto).toFixed(2);
+      const oSuelo = (1 - 0.6 * abierto).toFixed(2);
+      if (oSombra !== ultimaSombra) {
+        ultimaSombra = oSombra;
+        sombra.style.opacity = oSombra;
+      }
+      if (oSuelo !== ultimoSuelo) {
+        ultimoSuelo = oSuelo;
+        suelo.style.opacity = oSuelo;
+      }
 
       /* La cámara sigue a la pieza que se explica, da una vista general y vuelve al modelo armado. */
       const f = (P - INICIO) / PASO;
@@ -234,12 +250,14 @@ export default function EscenaScroll({ config, scroller = null }) {
       mundo.style.transform = `scale(${zoom.toFixed(3)}) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) translate3d(${(-eje[0]).toFixed(1)}px, ${(-eje[1]).toFixed(1)}px, ${(-eje[2]).toFixed(1)}px)`;
 
       /* Cartel: sigue a la pieza activa (proyectada en pantalla). */
-      const re = escenario.getBoundingClientRect();
       const activa = nuevoFoco >= 0 && nuevoFoco < N ? lista.find((p) => p.j === nuevoFoco) : null;
       if (!activa || activa.e < 0.55) {
         cartel.style.opacity = "0";
+      } else if (!rectAncla || activa.j !== focoActual) {
+        /* Recién cambió la pieza: la posición se lee en el próximo cuadro. */
+        reposo = 2;
       } else {
-        const a = activa.ancla.getBoundingClientRect();
+        const a = rectAncla;
         const x = lim(a.left - re.left, 70, re.width - 70);
         const y = lim(a.top - re.top, 56, re.height - 12);
         cartel.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px) translate(-50%, -100%)`;
@@ -255,7 +273,13 @@ export default function EscenaScroll({ config, scroller = null }) {
         setFoco(nuevoFoco);
       }
 
-      if (suavizado !== objetivo) pedir();
+      if (suavizado !== objetivo) {
+        reposo = 2;
+        pedir();
+      } else if (reposo > 0) {
+        reposo -= 1;
+        pedir();
+      }
     };
 
     const pedir = () => {
