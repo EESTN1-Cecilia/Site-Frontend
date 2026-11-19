@@ -5,9 +5,9 @@ import { guardarProgramasEnServidor } from "./services/api.js";
 
 /* Programas hechos por alumnos que cualquiera puede usar.
    Se muestran al final de la portada y se cargan desde gestión. */
-const URL_DIAGRAMTEC = "https://diagramtec-frontend.vercel.app/";
+const URL_DIAGRAMTEC = "https://diagramtec.qd.je/";
 /* Link que tenía antes: si quedó guardado en el navegador o en el servidor, se actualiza. */
-const URL_DIAGRAMTEC_ANTERIOR = "https://diagramtec.com";
+const URLS_DIAGRAMTEC_ANTERIORES = ["https://diagramtec.com", "https://diagramtec-frontend.vercel.app/", "https://diagramtec-frontend.vercel.app"];
 const URL_VOLTA = "https://tecnica1estebanecheverria2020-dev.github.io/Volta/";
 const AUTORES_VOLTA_ANTERIORES = ["Sebastián Lopez", "Diaz Jeremias"];
 const AUTOR_VOLTA = "Jeremias Diaz";
@@ -70,7 +70,7 @@ const sanear = (datos) =>
         enDesarrollo: booleano(p.enDesarrollo),
       }))
         .map((p) =>
-          p.id === "diagramtec" && p.url === URL_DIAGRAMTEC_ANTERIOR ? { ...p, url: URL_DIAGRAMTEC } : p,
+          p.id === "diagramtec" && URLS_DIAGRAMTEC_ANTERIORES.includes(p.url) ? { ...p, url: URL_DIAGRAMTEC } : p,
         )
         /* Volta ya tiene su página: si estaba guardado sin link, se completa. */
         .map((p) => (p.id === "volta" && !p.url ? { ...p, url: URL_VOLTA } : p))

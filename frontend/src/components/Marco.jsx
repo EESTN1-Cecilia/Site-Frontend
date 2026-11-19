@@ -31,20 +31,32 @@ export function Menu({ ruta, usuario, inscripcionAbierta, menuAbierto, setMenuAb
   /* Al editar se muestra también lo que depende del caso (inscripción cerrada). */
   const editando = !!edicion?.puede();
 
+  const enlaceNav = (destino, label, icon) => (
+    <button
+      key={destino}
+      className={`nav__link ${ruta === destino ? "nav__link--activo" : ""}`}
+      onClick={() => ir(destino)}
+    >
+      <Icon icon={icon} width={16} height={16} aria-hidden="true" />
+      <Texto id={`inicio.menu.${nombreDe(destino)}`}>{label}</Texto>
+    </button>
+  );
+
   const enlaces = (
     <>
       {navItems
-        .filter(([destino]) => destino !== "/panel" || verPanel(usuario) || editando)
-        .map(([destino, label, icon]) => (
-          <button
-            key={destino}
-            className={`nav__link ${ruta === destino ? "nav__link--activo" : ""}`}
-            onClick={() => ir(destino)}
-          >
-            <Icon icon={icon} width={16} height={16} aria-hidden="true" />
-            <Texto id={`inicio.menu.${nombreDe(destino)}`}>{label}</Texto>
-          </button>
-        ))}
+        .filter(([destino]) => destino !== "/panel")
+        .map(([destino, label, icon]) => enlaceNav(destino, label, icon))}
+      {(inscripcionAbierta || editando) && (
+        <button className="nav__link" onClick={() => ir("/inscripcion")}>
+          <Icon icon="ph:user-plus" width={16} height={16} aria-hidden="true" />
+          <Texto id="inicio.menu.inscripcion">Inscripción</Texto>
+        </button>
+      )}
+      {(verPanel(usuario) || editando) &&
+        navItems
+          .filter(([destino]) => destino === "/panel")
+          .map(([destino, label, icon]) => enlaceNav(destino, label, icon))}
       {usuario ? (
         <div className="sesion">
           <span className="sesion__datos">
@@ -58,12 +70,6 @@ export function Menu({ ruta, usuario, inscripcionAbierta, menuAbierto, setMenuAb
         </div>
       ) : (
         <>
-          {(inscripcionAbierta || editando) && (
-            <button className="nav__link" onClick={() => ir("/inscripcion")}>
-              <Icon icon="ph:user-plus" width={16} height={16} aria-hidden="true" />
-              <Texto id="inicio.menu.inscripcion">Inscripción</Texto>
-            </button>
-          )}
           <button className="cta" onClick={() => ir("/login")}>
             <Texto id="inicio.menu.ingresar">Ingresar</Texto>
             <Icon icon="ph:sign-in" width={15} height={15} aria-hidden="true" />
@@ -75,7 +81,7 @@ export function Menu({ ruta, usuario, inscripcionAbierta, menuAbierto, setMenuAb
 
   return (
     <header className={`header ${vista ? "header--vista" : ""}`}>
-      <nav className="nav contenedor">
+      <nav className={`nav contenedor ${usuario ? "nav--sesion" : ""}`}>
         <button className="marca" onClick={() => ir("/")}>
           <Imagen id="inicio.menu.logo" className="marca__logo" src={logo} alt="Logo Técnica 1" />
           <span>

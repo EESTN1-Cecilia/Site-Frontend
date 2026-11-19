@@ -6048,3 +6048,48 @@
     flex: 1 1 auto;
   }
 }
+
+/* Ver / ocultar contraseña. */
+.clave-campo {
+  position: relative;
+  display: block;
+}
+
+.campo > .clave-campo {
+  color: inherit;
+  font-size: inherit;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.campo .clave-campo input {
+  width: 100%;
+  padding-right: 48px;
+}
+
+.clave-campo__ojo {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gris-medio);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.clave-campo__ojo:hover {
+  color: var(--bordo-oscuro);
+}
+
+.clave-campo__ojo:focus-visible {
+  outline: 2px solid var(--bordo-oscuro);
+  outline-offset: 1px;
+}

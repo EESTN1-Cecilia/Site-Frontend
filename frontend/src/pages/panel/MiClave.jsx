@@ -14,6 +14,24 @@ import { cambiarMiClave, obtenerUsuario } from "../../services/api.js";
 
 const LARGO_MINIMO = 8;
 
+/* Campo de contraseña con botón para mostrarla u ocultarla. */
+function CampoClave({ visible, alternar, ...props }) {
+  return (
+    <span className="clave-campo">
+      <input type={visible ? "text" : "password"} {...props} />
+      <button
+        type="button"
+        className="clave-campo__ojo"
+        onClick={alternar}
+        aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
+        aria-pressed={visible}
+      >
+        <Icon icon={visible ? "ph:eye-slash" : "ph:eye"} width={20} height={20} aria-hidden="true" />
+      </button>
+    </span>
+  );
+}
+
 const textoError = (error) =>
   error?.sinConexion
     ? "El servidor no responde. Probá de nuevo en un momento."
@@ -28,6 +46,7 @@ export default function MiClave({ ruta }) {
   const [entiendo, setEntiendo] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [aviso, setAviso] = useState(null);
+  const [ver, setVer] = useState(false);
 
   useEffect(() => {
     let vigente = true;
@@ -140,8 +159,9 @@ export default function MiClave({ ruta }) {
 
             <label className="campo">
               <span>Contraseña actual</span>
-              <input
-                type="password"
+              <CampoClave
+                visible={ver}
+                alternar={() => setVer((v) => !v)}
                 value={actual}
                 onChange={(e) => setActual(e.target.value)}
                 autoComplete="current-password"
@@ -151,8 +171,9 @@ export default function MiClave({ ruta }) {
 
             <label className={`campo ${errorNueva ? "campo--error" : ""}`}>
               <span>Contraseña nueva</span>
-              <input
-                type="password"
+              <CampoClave
+                visible={ver}
+                alternar={() => setVer((v) => !v)}
                 value={nueva}
                 onChange={(e) => setNueva(e.target.value)}
                 autoComplete="new-password"
@@ -165,8 +186,9 @@ export default function MiClave({ ruta }) {
 
             <label className={`campo ${errorRepetida ? "campo--error" : ""}`}>
               <span>Repetí la contraseña nueva</span>
-              <input
-                type="password"
+              <CampoClave
+                visible={ver}
+                alternar={() => setVer((v) => !v)}
                 value={repetida}
                 onChange={(e) => setRepetida(e.target.value)}
                 autoComplete="new-password"
