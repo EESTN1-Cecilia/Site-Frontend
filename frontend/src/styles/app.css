@@ -1661,3 +1661,19 @@ img {
     border: 1px solid var(--blanco);
   }
 }
+
+/* Con sesión iniciada el menú suma "Gestión" y los datos del usuario: el encabezado
+   se corre hacia los bordes y compacta un poco los enlaces para que todo entre. */
+.nav--sesion {
+  max-width: calc(var(--ancho) + var(--margen) * 2 + 160px);
+  padding: 0 var(--margen);
+  gap: 20px;
+}
+
+.nav--sesion .nav__links {
+  gap: 2px;
+}
+
+.nav--sesion .nav__link {
+  padding: 10px 9px;
+}
