@@ -45,6 +45,12 @@ export function Menu({ ruta, usuario, inscripcionAbierta, menuAbierto, setMenuAb
             <Texto id={`inicio.menu.${nombreDe(destino)}`}>{label}</Texto>
           </button>
         ))}
+      {(inscripcionAbierta || editando) && (
+        <button className="nav__link" onClick={() => ir("/inscripcion")}>
+          <Icon icon="ph:user-plus" width={16} height={16} aria-hidden="true" />
+          <Texto id="inicio.menu.inscripcion">Inscripción</Texto>
+        </button>
+      )}
       {usuario ? (
         <div className="sesion">
           <span className="sesion__datos">
@@ -58,12 +64,6 @@ export function Menu({ ruta, usuario, inscripcionAbierta, menuAbierto, setMenuAb
         </div>
       ) : (
         <>
-          {(inscripcionAbierta || editando) && (
-            <button className="nav__link" onClick={() => ir("/inscripcion")}>
-              <Icon icon="ph:user-plus" width={16} height={16} aria-hidden="true" />
-              <Texto id="inicio.menu.inscripcion">Inscripción</Texto>
-            </button>
-          )}
           <button className="cta" onClick={() => ir("/login")}>
             <Texto id="inicio.menu.ingresar">Ingresar</Texto>
             <Icon icon="ph:sign-in" width={15} height={15} aria-hidden="true" />

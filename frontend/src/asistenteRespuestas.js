@@ -384,7 +384,7 @@ export const temas = [
     respuesta:
       "En la portada, sección «Hecho en la Tec», hay programas creados por estudiantes:\n• DiagramTec: plataforma para crear, editar y compartir diagramas de flujo de datos.\n• Volta: aplicación web para armar y probar circuitos de forma digital (en desarrollo).\n• ServerDesk: aplicación de la sala server para prestar y devolver netbooks y CPU (en desarrollo).",
     enlaces: [
-      { href: "https://diagramtec-frontend.vercel.app/", etiqueta: "Abrir DiagramTec" },
+      { href: "https://diagramtec.qd.je/", etiqueta: "Abrir DiagramTec" },
       { href: "https://tecnica1estebanecheverria2020-dev.github.io/Volta/", etiqueta: "Abrir Volta" },
     ],
     palabras: ["programa", "programas", "hecho en la tec", "diagramtec", "diagram tec", "serverdesk", "server desk", "volta", "aplicacion web", "proyectos de alumnos", "lo que hacen los alumnos", "diagramas", "circuitos", "simulador"],
