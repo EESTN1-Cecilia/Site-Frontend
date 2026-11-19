@@ -21,7 +21,7 @@ const semilla = () => [
     url: URL_DIAGRAMTEC,
     logo: "",
     autores:
-      "Maite Vázquez, Santiago Alvarez, Leandro Pereyra, Joaquín Villalva y Nayla",
+      "Maite Vázquez, Santiago Alvarez, Leandro Pereyra, Joaquín Villalva y Nayla Gomez",
     enDesarrollo: false,
   },
   {

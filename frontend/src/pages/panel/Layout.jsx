@@ -11,14 +11,23 @@ import {
 import { paginasEditables } from "./SitioPagina.jsx";
 
 export const menu = [
-  ["General", [["/panel", "ph:chart-donut", "Tablero"]]],
+  [
+    "General",
+    [
+      ["/panel", "ph:chart-donut", "Tablero"],
+      ["/panel/cuenta", "ph:key", "Mi contraseña"],
+    ],
+  ],
   ["Contenido del sitio", [["/panel/sitio", "ph:browsers", "Sitio público"]]],
   ["Comunicación", [["/panel/cartelera", "ph:television-simple", "Cartelera digital"]]],
   ["Jefatura de Área", [["/panel/grilla", "ph:grid-four", "Espacios y horarios"]]],
   ["Server", [["/panel/server", "ph:desktop-tower", "Inventario y reservas"]]],
   [
     "Dirección",
-    [["/panel/direccion", "ph:shield-check", "Permisos y publicación"]],
+    [
+      ["/panel/direccion", "ph:shield-check", "Permisos y publicación"],
+      ["/panel/usuarios", "ph:users-three", "Usuarios y contraseñas"],
+    ],
   ],
 ];
 

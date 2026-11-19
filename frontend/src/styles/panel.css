@@ -5925,3 +5925,126 @@
   border-color: #7a1c34;
   background: #ecd3da;
 }
+
+/* ---------- Usuarios y contraseñas ---------- */
+.usuarios {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.usuario {
+  border-radius: 14px;
+  border: 1px solid var(--gris-claro);
+  background: var(--blanco);
+}
+
+.usuario__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.usuario__datos {
+  min-width: 0;
+}
+
+.usuario__nombre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--bordo-oscuro);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.usuario__detalle {
+  margin-top: 2px;
+  color: var(--gris-medio);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.usuario__etiquetas {
+  margin-top: 8px;
+}
+
+.usuario .acciones-fila {
+  margin-top: 0;
+}
+
+.usuario__form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--gris-claro);
+}
+
+.usuario__form .campo {
+  flex: 1 1 240px;
+}
+
+.usuario__nota {
+  flex-basis: 100%;
+  color: var(--gris-medio);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.usuarios__aviso {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.usuarios__clave {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.usuarios__clave code {
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: var(--blanco);
+  color: var(--bordo-oscuro);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  user-select: all;
+}
+
+.mi-clave {
+  display: grid;
+  gap: 16px;
+  max-width: 440px;
+  margin-top: 14px;
+}
+
+.mi-clave .tarjeta__bajada {
+  margin-top: 0;
+}
+
+.mi-clave .acciones-fila {
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .usuario .acciones-fila {
+    width: 100%;
+  }
+
+  .usuario .acciones-fila .boton {
+    flex: 1 1 auto;
+  }
+}
