@@ -36,15 +36,55 @@ export default function Inscripcion() {
     { duplicable: true },
   );
 
+  const ingresantes = (
+    <article className="reserva-hermanos">
+      <div className="reserva-hermanos__contenido">
+        <p className="reserva-hermanos__etiqueta">
+          <Texto id="inscripcion.ingresantes.ciclo">Ciclo lectivo 2027</Texto>
+        </p>
+        <h3 className="reserva-hermanos__titulo">
+          <Texto id="inscripcion.ingresantes.titulo">Inscripción 2027 ingresantes a primer año</Texto>
+        </h3>
+        <p className="reserva-hermanos__texto">
+          <Texto id="inscripcion.ingresantes.descripcion">
+            Toda la información para solicitar vacante en primer año, en el siguiente enlace.
+          </Texto>
+        </p>
+        <p className="reserva-hermanos__fecha">
+          <Icon icon="ph:calendar-blank" width={20} height={20} aria-hidden="true" />
+          <Texto id="inscripcion.ingresantes.fecha">Solicitud del 30/11 al 11/12, hasta las 17:00 hs</Texto>
+        </p>
+        <Enlace
+          id="inscripcion.ingresantes.info"
+          href="https://drive.google.com/drive/folders/1RaQd4OknhDECUkwmiB0IfPeA0R3lO2O2?usp=sharing"
+          className="pill reserva-hermanos__enlace"
+          target="_blank"
+          vacio={
+            <p className="reserva-hermanos__texto">
+              <Texto id="inscripcion.ingresantes.pendiente">El enlace todavía no está publicado.</Texto>
+            </p>
+          }
+        >
+          <Icon icon="ph:info" width={18} height={18} aria-hidden="true" />
+          <Texto id="inscripcion.ingresantes.accion">Abrir info</Texto>
+          <Icon icon="ph:arrow-up-right" width={18} height={18} aria-hidden="true" />
+        </Enlace>
+      </div>
+      <div className="reserva-hermanos__sello">
+        <Imagen id="inscripcion.ingresantes.logo" src={emblema} alt="" />
+      </div>
+    </article>
+  );
+
   const formulario = (
     <article className="reserva-hermanos">
       <div className="reserva-hermanos__contenido">
         <p className="reserva-hermanos__etiqueta">
           <Texto id="inscripcion.reserva.ciclo">Ciclo lectivo 2027</Texto>
         </p>
-        <h2 className="reserva-hermanos__titulo">
+        <h3 className="reserva-hermanos__titulo">
           <Texto id="inscripcion.reserva.titulo">Reserva de vacante para hermanos</Texto>
-        </h2>
+        </h3>
         {inscripcionAbierta ? (
           <>
             <p className="reserva-hermanos__texto">
@@ -66,7 +106,7 @@ export default function Inscripcion() {
               }
             >
               <Icon icon="ph:info" width={18} height={18} aria-hidden="true" />
-              <Texto id="inscripcion.reserva.accion">Abrir formulario de inscripción</Texto>
+              <Texto id="inscripcion.reserva.accion">Abrir formulario de reserva</Texto>
               <Icon icon="ph:arrow-up-right" width={18} height={18} aria-hidden="true" />
             </Enlace>
           </>
@@ -147,7 +187,22 @@ export default function Inscripcion() {
       </div>
     ),
 
-    formulario: <Dinamico id="formulario">{formulario}</Dinamico>,
+    formulario: (
+      <div className="reserva-par">
+        <div className="reserva-par__col">
+          <h2 className="reserva-par__titulo">
+            <Texto id="inscripcion.par.ingresantes">Ingresantes a primer año</Texto>
+          </h2>
+          <Dinamico id="ingresantes">{ingresantes}</Dinamico>
+        </div>
+        <div className="reserva-par__col">
+          <h2 className="reserva-par__titulo">
+            <Texto id="inscripcion.par.hermanos">Hermanos de estudiantes</Texto>
+          </h2>
+          <Dinamico id="formulario">{formulario}</Dinamico>
+        </div>
+      </div>
+    ),
   };
 
   /* Parte automática: el encabezado dice "abierta" o "cerrada" según el ajuste. */
@@ -179,7 +234,7 @@ export default function Inscripcion() {
   if (guardada)
     return (
       <main>
-        <PaginaEditable clave="inscripcion.pagina" pagina={guardada} dinamicos={{ encabezado, formulario }} />
+        <PaginaEditable clave="inscripcion.pagina" pagina={guardada} dinamicos={{ encabezado, ingresantes, formulario }} />
       </main>
     );
 
