@@ -2051,6 +2051,12 @@ main > .pagina-libre {
   filter: drop-shadow(0 6px 18px #00000040);
 }
 
+/* Dos carteles seguidos (ingresantes y hermanos): separados entre sí. */
+.reserva-hermanos + .reserva-hermanos,
+.inscripcion-reserva > * + * {
+  margin-top: clamp(16px, 2vw, 28px);
+}
+
 @media (max-width: 640px) {
   .reserva-hermanos {
     grid-template-columns: minmax(0, 1fr);
@@ -2230,5 +2236,54 @@ main > .pagina-libre {
   .tabla-scroll--lista .tabla td .boton--fino {
     padding: 7px 12px;
     font-size: 13px;
+  }
+}
+
+/* Ingresantes y hermanos uno arriba del otro, cada uno con su título. */
+.reserva-par {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(28px, 4vw, 48px);
+}
+
+.reserva-par__col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.reserva-par__titulo {
+  margin: 0;
+  color: var(--bordo-oscuro);
+  font-size: clamp(1.25rem, 2.2vw, 1.625rem);
+  letter-spacing: -0.02em;
+}
+
+/* Mini animación del emblema: flota suave y se agranda un poco al pasar el mouse. */
+.reserva-hermanos__sello img {
+  animation: emblema-flota 4.5s ease-in-out infinite;
+  transition: transform 0.3s ease;
+}
+
+.reserva-hermanos__sello:hover img {
+  transform: scale(1.06) rotate(-2deg);
+}
+
+@keyframes emblema-flota {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reserva-hermanos__sello img {
+    animation: none;
+    transition: none;
   }
 }

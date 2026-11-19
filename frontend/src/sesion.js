@@ -36,6 +36,9 @@ export const accesos = {
   "/panel/sitio/pagina": ["direccion", "secretaria", "jefatura", "server"],
   "/panel/server": ["direccion", "server"],
   "/panel/direccion": ["direccion"],
+  "/panel/usuarios": ["direccion"],
+  /* Cada cuenta con acceso al panel cambia su propia contraseña. */
+  "/panel/cuenta": ["direccion", "jefatura", "server"],
   "/panel/cartelera": ["direccion", "jefatura", "server"],
 };
 
@@ -53,6 +56,7 @@ export const edicion = {
   "/panel/sitio/pagina": ["secretaria", "jefatura", "server"],
   "/panel/server": ["server"],
   "/panel/direccion": [],
+  "/panel/usuarios": [],
   /* Cada uno carga en su nivel (Dirección > Jefatura > EMATP): lo decide el backend. */
   "/panel/cartelera": ["jefatura", "server"],
 };

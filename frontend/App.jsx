@@ -29,6 +29,8 @@ import { limpiarError, useConexion } from "./src/conexion.js";
 import { sincronizarContenido } from "./src/sincronizar.js";
 import Server from "./src/pages/panel/Server.jsx";
 import Direccion from "./src/pages/panel/Direccion.jsx";
+import Usuarios from "./src/pages/panel/Usuarios.jsx";
+import MiClave from "./src/pages/panel/MiClave.jsx";
 import Cartelera from "./src/pages/panel/Cartelera.jsx";
 import Pantalla from "./src/pages/Pantalla.jsx";
 import LimiteDeError from "./src/components/LimiteDeError.jsx";
@@ -58,6 +60,8 @@ const paginas = {
   "/panel/sitio/pagina": SitioPagina,
   "/panel/server": Server,
   "/panel/direccion": Direccion,
+  "/panel/usuarios": Usuarios,
+  "/panel/cuenta": MiClave,
   "/panel/cartelera": Cartelera,
 };
 

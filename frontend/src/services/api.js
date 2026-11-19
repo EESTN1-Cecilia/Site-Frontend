@@ -333,3 +333,36 @@ export const urlImagenCartelera = (clave) => `${API_URL}/cartelera/imagen/${enco
 export function obtenerResumenDireccion(token) {
   return request("/direccion/resumen", conToken(token));
 }
+
+/* ---------- Usuarios y contraseñas ----------
+   Lo de Dirección (lista, restablecer, permitir cambio) y el cambio de la
+   propia contraseña, que puede hacer cualquier cuenta con sesión. */
+export function listarUsuarios(token) {
+  return request("/usuarios", conToken(token));
+}
+
+export function listarAreasUsuarios(token) {
+  return request("/usuarios/areas", conToken(token));
+}
+
+export function restablecerClaveUsuario(token, id, nuevaPassword) {
+  return request(
+    `/usuarios/${encodeURIComponent(id)}/password`,
+    conToken(token, { method: "PUT", body: JSON.stringify({ nueva_password: nuevaPassword }) }),
+  );
+}
+
+export function permitirCambioClave(token, id) {
+  return request(`/usuarios/permitir-cambio/${encodeURIComponent(id)}`, conToken(token, { method: "PUT" }));
+}
+
+/* Devuelve un token nuevo: el anterior deja de valer al cambiar la clave. */
+export function cambiarMiClave(token, actual, nueva) {
+  return request(
+    "/auth/password",
+    conToken(token, {
+      method: "PUT",
+      body: JSON.stringify({ password_actual: actual, nueva_password: nueva }),
+    }),
+  );
+}

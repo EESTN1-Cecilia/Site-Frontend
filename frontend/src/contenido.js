@@ -105,10 +105,6 @@ export const pasosInscripcion = [
     "Cargás los datos del estudiante y del adulto responsable.",
   ],
   [
-    "Recibís un turno",
-    "Secretaría te contacta por mail o teléfono con día y hora.",
-  ],
-  [
     "Presentás la documentación",
     "En la escuela, con los originales y las fotocopias.",
   ],
