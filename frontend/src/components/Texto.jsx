@@ -49,7 +49,7 @@ const siTexto = (valor, original) => (typeof valor === "string" ? valor : origin
 const siLista = (valor) => (Array.isArray(valor) ? valor : []);
 
 /* ---------- Texto ---------- */
-export default function Texto({ id, children, clase, dueno }) {
+export default function Texto({ id, children, clase, dueno, ayuda }) {
   const [fuente, edicion] = useFuente();
   const marca = useMarca(dueno);
   const valor = siTexto(fuente[id], children);
@@ -68,6 +68,7 @@ export default function Texto({ id, children, clase, dueno }) {
       clase={clase}
       valor={valor}
       detener
+      ayuda={ayuda}
       alCambiar={(nuevo) => edicion.cambiar(id, nuevo, children)}
     />
   );
@@ -186,6 +187,7 @@ export function Enlace({
   ocultarVacio = false,
   vacio,
   dueno,
+  ayuda,
   children,
   ...resto
 }) {
@@ -237,7 +239,9 @@ export function Enlace({
       <button
         type="button"
         className="control-edicion enlace-editar"
-        title={valido ? `Cambiar la URL de redireccionamiento (hoy: ${dominio(url)})` : "Agregar la URL de redireccionamiento"}
+        title={`${ayuda ? `${ayuda}. ` : ""}${
+          valido ? `Cambiar la URL de redireccionamiento (hoy: ${dominio(url)})` : "Agregar la URL de redireccionamiento"
+        }`}
         data-tooltip={valido ? `Lleva a ${dominio(url)}` : "Todavía no tiene URL"}
         onClick={(e) => {
           e.preventDefault();
