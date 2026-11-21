@@ -10,6 +10,7 @@ export default function Editable({
   activo = true,
   vacio = "—",
   detener = false,
+  ayuda,
 }) {
   if (!activo) {
     return <Etiqueta className={clase}>{valor || vacio}</Etiqueta>;
@@ -21,7 +22,7 @@ export default function Editable({
       contentEditable
       suppressContentEditableWarning
       spellCheck={false}
-      title="Hacé clic para editar"
+      title={ayuda || "Hacé clic para editar"}
       onClick={
         detener
           ? (e) => {

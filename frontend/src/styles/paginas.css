@@ -2305,3 +2305,208 @@ main > .pagina-libre {
   flex: none;
   color: var(--rojo-institucional);
 }
+
+/* ---------- Inscripción: carteles de ingresantes y de hermanos ---------- */
+.inscripcion-cartel {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  overflow: hidden;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 82% 28%, rgba(255, 255, 255, 0.16), transparent 42%),
+    linear-gradient(125deg, var(--bordo-oscuro), var(--rojo-institucional));
+  color: var(--blanco);
+  box-shadow: 0 18px 40px -26px rgba(92, 15, 15, 0.9);
+}
+
+.inscripcion-cartel__cuerpo {
+  padding: clamp(24px, 4vw, 44px) clamp(20px, 4vw, 44px) clamp(28px, 4vw, 44px) clamp(24px, 4vw, 48px);
+}
+
+.inscripcion-cartel__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--blanco);
+  color: var(--bordo-oscuro);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.inscripcion-cartel__titulo {
+  display: flex;
+  flex-direction: column;
+  margin: 20px 0 0;
+  font-size: clamp(1.875rem, 4.4vw, 3.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+
+.inscripcion-cartel__subtitulo {
+  font-size: 0.62em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.inscripcion-cartel__texto {
+  max-width: 46ch;
+  margin: 20px 0 0;
+  padding-left: 16px;
+  border-left: 3px solid var(--rojo-suave);
+  line-height: 1.55;
+}
+
+.inscripcion-cartel__icono {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  width: clamp(130px, 20vw, 230px);
+  aspect-ratio: 1;
+  margin-right: clamp(20px, 5vw, 64px);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02) 70%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  color: var(--blanco);
+}
+
+.inscripcion-cartel__icono > svg:first-child {
+  width: 58%;
+  height: 58%;
+}
+
+.inscripcion-cartel__insignia {
+  position: absolute;
+  right: 20%;
+  bottom: 18%;
+  width: 26%;
+  height: 26%;
+  color: var(--blanco);
+  background: var(--rojo-institucional);
+  border-radius: 50%;
+}
+
+.inscripcion-cartel__pie {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 20px;
+  padding: 34px clamp(20px, 4vw, 44px) 20px;
+  border-top-left-radius: 50% 40px;
+  background: var(--blanco);
+  color: var(--bordo-oscuro);
+}
+
+.inscripcion-cartel__fecha {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.inscripcion-cartel__fecha svg {
+  flex: none;
+  color: var(--rojo-institucional);
+}
+
+.inscripcion-cartel__separador {
+  width: 2px;
+  height: 20px;
+  border-radius: 1px;
+  background: var(--rojo-institucional);
+}
+
+.inscripcion-cartel__boton {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+  white-space: nowrap;
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: linear-gradient(125deg, var(--bordo-oscuro), var(--rojo-institucional));
+  color: var(--blanco);
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 10px 22px -14px rgba(92, 15, 15, 0.95);
+  transition: filter 160ms, transform 160ms;
+}
+
+.inscripcion-cartel__boton:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+}
+
+.inscripcion-cartel__boton:focus-visible {
+  outline: 2px solid var(--bordo-oscuro);
+  outline-offset: 3px;
+}
+
+.inscripcion-cartel__pendiente {
+  margin: 0;
+  color: var(--gris-medio);
+}
+
+@media (max-width: 640px) {
+  .inscripcion-cartel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inscripcion-cartel__icono {
+    grid-row: 1;
+    width: 110px;
+    margin: 24px auto 0;
+  }
+
+  .inscripcion-cartel__pie {
+    flex-wrap: wrap;
+    padding-top: 28px;
+    border-top-left-radius: 50% 28px;
+  }
+
+  .inscripcion-cartel__fecha {
+    flex-basis: 100%;
+  }
+
+  .inscripcion-cartel__boton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Inscripción: los dos carteles uno al lado del otro, cada uno con su título. */
+.reserva-par__titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.reserva-par__titulo::before {
+  content: "";
+  flex: none;
+  width: 0.28em;
+  height: 0.95em;
+  border-radius: 2px;
+  background: var(--rojo-institucional);
+  transform: skewX(-20deg);
+}

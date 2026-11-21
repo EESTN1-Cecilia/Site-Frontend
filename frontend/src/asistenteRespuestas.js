@@ -260,6 +260,99 @@ export const temas = [
     peso: 3,
   },
 
+  /* ---------- Fechas de fin de año 2026 (cartelera de la escuela) ---------- */
+  {
+    id: "calendario-diciembre",
+    titulo: "Fechas de fin de año 2026",
+    respuesta:
+      "Fechas para tener en cuenta (diciembre 2026):\n• 19/11 al 04/12: período de intensificación y profundización de noviembre (pendientes de ciclos anteriores).\n• 20/11: Expo Técnica 2026, de 9 a 14 hs, para la comunidad.\n• 27/11 al 04/12: los docentes firman las notas en las libretas y comunican a estudiantes y familias qué temas intensificar.\n• 03/12: Pasillo de Honor para 7° año, 11:30 hs.\n• Desde el 09/12: las notas se cargan en el boletín digital (página ABC).\n• 09/12 al 11/12: inscripción a completa carrera por formulario.\n• 09/12 al 22/12: período de intensificación de diciembre.\n• 09/12 al 18/12: reinscripción 2027 de alumnos promovidos.\n• 22/12: acto de colación, 18:00 hs (no se suspenden las clases).\n• 23 y 28/12: comisiones de previos de completa carrera.\nSi querés el detalle de alguna, preguntame.",
+    palabras: [
+      "fechas", "fechas importantes", "fechas para tener en cuenta", "fechas de diciembre", "calendario", "calendario escolar",
+      "agenda", "que pasa en diciembre", "cronograma de diciembre", "fin de ano", "cierre del ano", "cierre del ciclo lectivo",
+      "diciembre 2026", "proximas fechas", "proximos eventos",
+    ],
+    peso: 3,
+  },
+  {
+    id: "expo-tecnica",
+    titulo: "Expo Técnica 2026",
+    respuesta:
+      "La Expo Técnica 2026 fue el 20/11, de 9 a 14 hs, abierta a toda la comunidad. Las próximas actividades de la escuela se publican en Novedades.",
+    ruta: "/novedades",
+    accion: "Ver novedades",
+    palabras: ["expo", "expo tecnica", "exposicion", "muestra de proyectos", "feria de ciencias"],
+    peso: 4,
+  },
+  {
+    id: "actos-fin-de-ano",
+    titulo: "Pasillo de Honor y acto de colación",
+    respuesta:
+      "• Pasillo de Honor para los estudiantes de 7° año: 03/12, 11:30 hs.\n• Acto de colación: 22/12, 18:00 hs. Ese día no se suspenden las clases.",
+    palabras: [
+      "pasillo de honor", "pasillo", "colacion", "acto de colacion", "acto de fin de ano", "egresados", "egreso", "egresar",
+      "septimo", "7mo", "7° ano", "cuando es la colacion", "acto de egreso", "despedida de los 7mos",
+    ],
+    peso: 4,
+  },
+  {
+    id: "intensificacion-diciembre",
+    titulo: "Períodos de intensificación (noviembre y diciembre)",
+    respuesta:
+      "Hay dos períodos de intensificación:\n• Noviembre: del 19/11 al 04/12, de intensificación y profundización para quienes tienen pendientes de ciclos anteriores.\n• Diciembre: del 09/12 al 22/12. Las dos semanas son obligatorias para el estudiante que intensifica.\nEntre el 27/11 y el 04/12 los docentes firman las notas en las libretas y les comunican a estudiantes y familias qué temas y cómo intensificar.\nImportante: durante la intensificación los estudiantes no pueden retirarse solos; los debe retirar un adulto autorizado.",
+    ruta: "/previas",
+    accion: "Ver intensificación y previas",
+    palabras: [
+      "intensificacion de diciembre", "intensificacion diciembre", "intensificacion de noviembre", "intensificacion noviembre",
+      "periodo de intensificacion", "cuando es la intensificacion", "cuando es el periodo de intensificacion",
+      "fechas de intensificacion", "profundizacion", "retirarse solo", "retirarse solos", "puede retirarse solo",
+      "retirar a los alumnos", "retiro de alumnos", "quien retira", "adulto autorizado", "salir solo", "se puede ir solo",
+      "firma de notas", "fecha de intensificacion", "fechas para la intensificacion", "fechas hay para la intensificacion",
+      "cuando empieza la intensificacion", "cuando termina la intensificacion",
+    ],
+    peso: 4,
+  },
+  {
+    id: "reinscripcion-2027",
+    titulo: "Reinscripción 2027",
+    respuesta:
+      "Reinscripción para el ciclo 2027 (alumnos promovidos):\n• Del 09/12 al 18/12, con el preceptor o preceptora del curso actual, hasta con 4 materias pendientes. Los estudiantes de 3° año no: lo hacen en Secretaría.\n• De 3° a 4° año: del 11/12 al 18/12, de 8:00 a 10:00 hs, se anotan en Secretaría (hasta 4 materias). Lo pueden hacer los propios estudiantes.\nCualquier duda, escribinos a " +
+      CORREO +
+      ".",
+    ruta: "/inscripcion",
+    accion: "Ver inscripción",
+    enlaces: [enlaceCorreo],
+    palabras: [
+      "reinscripcion", "reinscribir", "reinscribirme", "reinscribo", "pasar de ano", "promovido", "promovidos",
+      "inscribir a 4to", "inscripcion a 4to", "inscripcion a cuarto", "anotarse en 4to", "anotarse a 4to", "pase a 4to", "pasar a 4to",
+      "reinscripcion 2027", "como me reinscribo", "cuando me reinscribo", "hasta 4 materias", "adeudo materias",
+    ],
+    peso: 4,
+  },
+  {
+    id: "completa-carrera",
+    titulo: "Completa carrera",
+    respuesta:
+      "Completa carrera: la inscripción es por formulario, del 09/12 al 11/12. Las comisiones de previos de completa carrera se hacen el 23 y el 28/12.",
+    ruta: "/previas",
+    accion: "Ver previas",
+    palabras: [
+      "completa carrera", "completar carrera", "completar la carrera", "completa la carrera", "comisiones de previos",
+      "comision de previos", "comisiones previas", "inscripcion a completa carrera", "mesa de completa carrera",
+    ],
+    peso: 4,
+  },
+  {
+    id: "boletin-digital",
+    titulo: "Boletín digital",
+    respuesta:
+      "Desde el 09/12 las notas se cargan en el boletín digital, en la página ABC. Los boletines se comunican a las familias a partir de esa fecha.",
+    palabras: [
+      "boletin digital", "boletin abc", "pagina abc", "abc", "cuando sale el boletin", "cuando suben las notas",
+      "cuando cargan las notas", "cuando puedo ver el boletin", "ver el boletin",
+    ],
+    peso: 4,
+  },
+
   /* ---------- Evaluación, boletín y previas ---------- */
   {
     id: "boletin",
