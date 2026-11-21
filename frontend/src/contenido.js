@@ -65,8 +65,8 @@ export const pasosPrevias = [
     "Cada materia entrega el plan con los saberes a intensificar y el material de estudio.",
   ],
   [
-    "Presentate en la mesa",
-    "Con DNI y el plan resuelto. Revisá día, hora y aula en el cronograma.",
+    "Intensificación",
+    "Trabajás los saberes pendientes con tu plan y rendís la instancia de acreditación en el período de intensificación.",
   ],
   [
     "Acreditación",

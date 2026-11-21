@@ -79,6 +79,40 @@ const columnas = [
 /* Cuántas materias se ven en "Todos" antes de tocar "Ver más". */
 const MATERIAS_VISIBLES = 8;
 
+/* Ícono según la materia: se busca por palabras del nombre (sin tildes ni mayúsculas).
+   El orden importa: lo más específico va primero. Si no coincide ninguna, un libro. */
+const ICONOS_MATERIA = [
+  [/educacion fisica|deporte/, "ph:basketball"],
+  [/fisicoquimic|quimic/, "ph:flask"],
+  [/fisic/, "ph:atom"],
+  [/matemat|calculo|algebra|estadistic/, "ph:function"],
+  [/lengua|literatur/, "ph:book-open-text"],
+  [/ingles|english|idioma/, "ph:translate"],
+  [/biolog|naturales|ambient/, "ph:dna"],
+  [/historia/, "ph:scroll"],
+  [/geograf/, "ph:globe-hemisphere-west"],
+  [/etica|ciudadan|constitu|derecho|politica/, "ph:scales"],
+  [/arte|artistic|plastic|visual/, "ph:palette"],
+  [/music/, "ph:music-notes"],
+  [/robotic/, "ph:robot"],
+  [/base.? de datos|datos/, "ph:database"],
+  [/program|algoritm|software|desarrollo|web/, "ph:code"],
+  [/redes|comunicacion/, "ph:network"],
+  [/electr/, "ph:lightning"],
+  [/dibujo|diseno|proyecto/, "ph:pencil-ruler"],
+  [/informatic|computa|sistema|hardware|digital/, "ph:desktop"],
+  [/tecnolog|taller|laboratorio|mecanic|practicas profesionalizantes/, "ph:wrench"],
+];
+
+const iconoDeMateria = (nombre = "") => {
+  const limpio = nombre
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  return ICONOS_MATERIA.find(([patron]) => patron.test(limpio))?.[1] ?? "ph:book-open-text";
+};
+
 /* Botones de año. De 5° a 7° hay uno por orientación. */
 const OPCIONES_ANIO = [
   { etiqueta: "Todos" },
@@ -298,9 +332,18 @@ export default function Previas({ params }) {
               return (
                 <tr key={mesa.id}>
                   <td data-label={columna("materia")}>
-                    <strong>
-                      <Texto id={clave("materia")} dueno={MESAS}>{mesa.materia}</Texto>
-                    </strong>
+                    <span className="materia">
+                      <Icon
+                        className="materia__icono"
+                        icon={iconoDeMateria(mesa.materia)}
+                        width={20}
+                        height={20}
+                        aria-hidden="true"
+                      />
+                      <strong>
+                        <Texto id={clave("materia")} dueno={MESAS}>{mesa.materia}</Texto>
+                      </strong>
+                    </span>
                   </td>
                   <td data-label={columna("anio")}>
                     <Texto id={clave("anio")} dueno={MESAS}>{mesa.anio}</Texto>
