@@ -12,7 +12,14 @@ const semilla = () => ({
   /* Qué rol edita cada página pública. null = el reparto por defecto de sesion.js. */
   edicionPaginas: null,
   /* Redes del pie de página ({ id, red, url }); sin link no se muestran. */
-  redes: ["instagram", "facebook", "youtube"].map((red) => ({ id: red, red, url: "" })),
+  redes: [
+    ["instagram", "https://www.instagram.com/tecnica1mg/?hl=es"],
+    [
+      "facebook",
+      "https://www.facebook.com/people/Escuela-Secundaria-T%C3%A9cnica-N1-Esteban-Echeverria/100064875789538/",
+    ],
+    ["youtube", "https://www.youtube.com/@Tecnica1MonteGrande"],
+  ].map(([red, url]) => ({ id: red, red, url })),
 });
 
 const CLAVE = "tec1-ajustes";
