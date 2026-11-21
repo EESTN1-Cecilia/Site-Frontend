@@ -2095,7 +2095,7 @@ main > .pagina-libre {
 
 /* ---------- Previas: ver como lista o como tarjetas (como en Drive) ---------- */
 .vista-toggle {
-  display: flex;
+  display: none;
   justify-content: flex-end;
   gap: 0;
   margin-bottom: 12px;
@@ -2138,67 +2138,73 @@ main > .pagina-libre {
   outline-offset: 2px;
 }
 
-/* Tarjetas: en cualquier ancho, en cuadrícula. */
-.tabla-scroll--tarjetas {
-  overflow-x: visible;
-}
+@media (max-width: 760px) {
+  /* Tarjetas: sólo en el celular, en cuadrícula. */
+  .tabla-scroll--tarjetas {
+    overflow-x: visible;
+  }
 
-.tabla-scroll--tarjetas .tabla,
-.tabla-scroll--tarjetas .tabla thead,
-.tabla-scroll--tarjetas .tabla tbody,
-.tabla-scroll--tarjetas .tabla tr,
-.tabla-scroll--tarjetas .tabla td {
-  display: block;
-  width: 100%;
-}
+  .tabla-scroll--tarjetas .tabla,
+  .tabla-scroll--tarjetas .tabla thead,
+  .tabla-scroll--tarjetas .tabla tbody,
+  .tabla-scroll--tarjetas .tabla tr,
+  .tabla-scroll--tarjetas .tabla td {
+    display: block;
+    width: 100%;
+  }
 
-.tabla-scroll--tarjetas .tabla {
-  background: transparent;
-}
+  .tabla-scroll--tarjetas .tabla {
+    background: transparent;
+  }
 
-.tabla-scroll--tarjetas .tabla thead {
-  display: none;
-}
+  .tabla-scroll--tarjetas .tabla thead {
+    display: none;
+  }
 
-.tabla-scroll--tarjetas .tabla tbody {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
-}
+  .tabla-scroll--tarjetas .tabla tbody {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
 
-.tabla-scroll--tarjetas .tabla tr {
-  margin: 0;
-  border: 1px solid var(--gris-claro);
-  border-radius: 16px;
-  overflow: hidden;
-  background: var(--blanco);
-}
+  .tabla-scroll--tarjetas .tabla tr {
+    margin: 0;
+    border: 1px solid var(--gris-claro);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--blanco);
+  }
 
-.tabla-scroll--tarjetas .tabla td {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  border-bottom: 1px solid var(--gris-claro);
-  text-align: right;
-}
+  .tabla-scroll--tarjetas .tabla td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid var(--gris-claro);
+    text-align: right;
+  }
 
-.tabla-scroll--tarjetas .tabla td:last-child {
-  border-bottom: 0;
-}
+  .tabla-scroll--tarjetas .tabla td:last-child {
+    border-bottom: 0;
+  }
 
-.tabla-scroll--tarjetas .tabla td::before {
-  content: attr(data-label);
-  color: var(--gris-medio);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  text-align: left;
+  .tabla-scroll--tarjetas .tabla td::before {
+    content: attr(data-label);
+    color: var(--gris-medio);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    text-align: left;
+  }
 }
 
 /* Lista en el celular: vuelve a ser tabla, más compacta. */
 @media (max-width: 760px) {
+  .vista-toggle {
+    display: flex;
+  }
+
   .tabla-scroll--lista .tabla {
     display: table;
     font-size: 14px;
@@ -2286,4 +2292,16 @@ main > .pagina-libre {
     animation: none;
     transition: none;
   }
+}
+
+/* Materia con su ícono (Previas). */
+.materia {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.materia__icono {
+  flex: none;
+  color: var(--rojo-institucional);
 }
